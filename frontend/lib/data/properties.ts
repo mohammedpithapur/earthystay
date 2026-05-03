@@ -1,0 +1,238 @@
+import { Property } from '../types'
+
+export const dummyProperties: Property[] = [
+  {
+    id: "1",
+    name: "Earthy Villa Goa",
+    description: "A stunning beachside villa nestled among coconut palms with direct ocean views. Perfect for families and groups looking for a luxurious yet earthy retreat.",
+    price_per_night: 8500,
+    cleaning_fee: 1000,
+    max_guests: 8,
+    bedrooms: 4,
+    bathrooms: 3,
+    city: "Goa",
+    state: "Goa",
+    country: "India",
+    latitude: 15.2993,
+    longitude: 74.1240,
+    is_published: true,
+    min_nights: 2,
+    pets_allowed: true,
+    pet_charge_per_night: 500,
+    images: [
+      {
+        id: "1",
+        property_id: "1",
+        image_url: "https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?w=800",
+        is_primary: true,
+        display_order: 1
+      },
+      {
+        id: "2",
+        property_id: "1",
+        image_url: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800",
+        is_primary: false,
+        display_order: 2
+      },
+    ],
+    amenities: ["WiFi", "Pool", "Parking", "Kitchen", "Air Conditioning", "Beach Access"],
+    avg_rating: 4.9,
+    review_count: 38,
+    created_at: "2024-01-01"
+  },
+  {
+    id: "2",
+    name: "Forest Retreat Coorg",
+    description: "Wake up to misty mountains and coffee plantations. This serene retreat offers the perfect escape into nature with modern comforts.",
+    price_per_night: 6500,
+    cleaning_fee: 800,
+    max_guests: 6,
+    bedrooms: 3,
+    bathrooms: 2,
+    city: "Coorg",
+    state: "Karnataka",
+    country: "India",
+    latitude: 12.4244,
+    longitude: 75.7382,
+    is_published: true,
+    min_nights: 2,
+    pets_allowed: true,
+    pet_charge_per_night: 300,
+    images: [
+      {
+        id: "3",
+        property_id: "2",
+        image_url: "https://images.unsplash.com/photo-1587061949409-02df41d5e562?w=800",
+        is_primary: true,
+        display_order: 1
+      },
+      {
+        id: "4",
+        property_id: "2",
+        image_url: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800",
+        is_primary: false,
+        display_order: 2
+      },
+    ],
+    amenities: ["WiFi", "Fireplace", "Kitchen", "Garden", "Mountain View"],
+    avg_rating: 4.7,
+    review_count: 24,
+    created_at: "2024-01-15"
+  },
+  {
+    id: "3",
+    name: "Heritage Haveli Jaipur",
+    description: "Experience royal Rajasthani hospitality in this beautifully restored heritage property in the heart of the Pink City.",
+    price_per_night: 12000,
+    cleaning_fee: 1500,
+    max_guests: 10,
+    bedrooms: 5,
+    bathrooms: 4,
+    city: "Jaipur",
+    state: "Rajasthan",
+    country: "India",
+    latitude: 26.9124,
+    longitude: 75.7873,
+    is_published: true,
+    min_nights: 1,
+    pets_allowed: false,
+    pet_charge_per_night: 0,
+    images: [
+      {
+        id: "5",
+        property_id: "3",
+        image_url: "https://images.unsplash.com/photo-1477587458883-47145ed68d21?w=800",
+        is_primary: true,
+        display_order: 1
+      },
+      {
+        id: "6",
+        property_id: "3",
+        image_url: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800",
+        is_primary: false,
+        display_order: 2
+      },
+    ],
+    amenities: ["WiFi", "Pool", "Parking", "Restaurant", "Spa", "Air Conditioning"],
+    avg_rating: 4.8,
+    review_count: 56,
+    created_at: "2024-02-01"
+  },
+  {
+    id: "4",
+    name: "Lakeside Cabin Munnar",
+    description: "A cozy wooden cabin perched above a shimmering lake surrounded by tea gardens. The ultimate romantic getaway in the hills of Kerala.",
+    price_per_night: 5500,
+    cleaning_fee: 700,
+    max_guests: 4,
+    bedrooms: 2,
+    bathrooms: 1,
+    city: "Munnar",
+    state: "Kerala",
+    country: "India",
+    latitude: 10.0889,
+    longitude: 77.0595,
+    is_published: true,
+    min_nights: 2,
+    pets_allowed: true,
+    pet_charge_per_night: 250,
+    images: [
+      {
+        id: "7",
+        property_id: "4",
+        image_url: "https://images.unsplash.com/photo-1542718610-a1d656d1884c?w=800",
+        is_primary: true,
+        display_order: 1
+      },
+      {
+        id: "8",
+        property_id: "4",
+        image_url: "https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=800",
+        is_primary: false,
+        display_order: 2
+      },
+    ],
+    amenities: ["WiFi", "Lake View", "Fireplace", "Kitchen", "Hiking Trails"],
+    avg_rating: 4.6,
+    review_count: 19,
+    created_at: "2024-02-15"
+  },
+  {
+    id: "5",
+    name: "Desert Camp Jaisalmer",
+    description: "Sleep under a blanket of stars in our luxury desert camp. Experience the magic of the Thar Desert with all modern comforts.",
+    price_per_night: 9500,
+    cleaning_fee: 1200,
+    max_guests: 6,
+    bedrooms: 3,
+    bathrooms: 3,
+    city: "Jaisalmer",
+    state: "Rajasthan",
+    country: "India",
+    latitude: 26.9157,
+    longitude: 70.9083,
+    is_published: true,
+    min_nights: 2,
+    pets_allowed: false,
+    pet_charge_per_night: 0,
+    images: [
+      {
+        id: "9",
+        property_id: "5",
+        image_url: "https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=800",
+        is_primary: true,
+        display_order: 1
+      },
+      {
+        id: "10",
+        property_id: "5",
+        image_url: "https://images.unsplash.com/photo-1471400974796-1c823d00a96f?w=800",
+        is_primary: false,
+        display_order: 2
+      },
+    ],
+    amenities: ["Desert Safari", "Bonfire", "Camel Ride", "Star Gazing", "Restaurant"],
+    avg_rating: 4.9,
+    review_count: 43,
+    created_at: "2024-03-01"
+  },
+  {
+    id: "6",
+    name: "Cliff House Rishikesh",
+    description: "A stunning property perched on the cliffs above the Ganges. Perfect for adventure seekers and spiritual travellers alike.",
+    price_per_night: 7000,
+    cleaning_fee: 900,
+    max_guests: 8,
+    bedrooms: 4,
+    bathrooms: 3,
+    city: "Rishikesh",
+    state: "Uttarakhand",
+    country: "India",
+    latitude: 30.0869,
+    longitude: 78.2676,
+    is_published: true,
+    min_nights: 1,
+    pets_allowed: true,
+    pet_charge_per_night: 400,
+    images: [
+      {
+        id: "11",
+        property_id: "6",
+        image_url: "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=800",
+        is_primary: true,
+        display_order: 1
+      },
+      {
+        id: "12",
+        property_id: "6",
+        image_url: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=800",
+        is_primary: false,
+        display_order: 2
+      },
+    ],
+    amenities: ["WiFi", "River View", "Yoga Deck", "Kitchen", "Adventure Activities"],
+    avg_rating: 4.7,
+    review_count: 31,
+    created_at: "2024-03-15"
+  },
+]
