@@ -10,6 +10,10 @@ export const dummyProperties: Property[] = [
     max_guests: 8,
     bedrooms: 4,
     bathrooms: 3,
+    bathrooms_detail: [
+      { type: 'ensuite', count: 2 },
+      { type: 'shared', count: 1 },
+    ],
     city: "Goa",
     state: "Goa",
     country: "India",
@@ -20,20 +24,8 @@ export const dummyProperties: Property[] = [
     pets_allowed: true,
     pet_charge_per_night: 500,
     images: [
-      {
-        id: "1",
-        property_id: "1",
-        image_url: "https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?w=800",
-        is_primary: true,
-        display_order: 1
-      },
-      {
-        id: "2",
-        property_id: "1",
-        image_url: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800",
-        is_primary: false,
-        display_order: 2
-      },
+      { id: "1", property_id: "1", image_url: "https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?w=800", is_primary: true, display_order: 1 },
+      { id: "2", property_id: "1", image_url: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800", is_primary: false, display_order: 2 },
     ],
     amenities: ["WiFi", "Pool", "Parking", "Kitchen", "Air Conditioning", "Beach Access"],
     avg_rating: 4.9,
@@ -49,6 +41,9 @@ export const dummyProperties: Property[] = [
     max_guests: 6,
     bedrooms: 3,
     bathrooms: 2,
+    bathrooms_detail: [
+      { type: 'ensuite', count: 2 },
+    ],
     city: "Coorg",
     state: "Karnataka",
     country: "India",
@@ -59,20 +54,8 @@ export const dummyProperties: Property[] = [
     pets_allowed: true,
     pet_charge_per_night: 300,
     images: [
-      {
-        id: "3",
-        property_id: "2",
-        image_url: "https://images.unsplash.com/photo-1587061949409-02df41d5e562?w=800",
-        is_primary: true,
-        display_order: 1
-      },
-      {
-        id: "4",
-        property_id: "2",
-        image_url: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800",
-        is_primary: false,
-        display_order: 2
-      },
+      { id: "3", property_id: "2", image_url: "https://images.unsplash.com/photo-1587061949409-02df41d5e562?w=800", is_primary: true, display_order: 1 },
+      { id: "4", property_id: "2", image_url: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800", is_primary: false, display_order: 2 },
     ],
     amenities: ["WiFi", "Fireplace", "Kitchen", "Garden", "Mountain View"],
     avg_rating: 4.7,
@@ -88,6 +71,11 @@ export const dummyProperties: Property[] = [
     max_guests: 10,
     bedrooms: 5,
     bathrooms: 4,
+    bathrooms_detail: [
+      { type: 'ensuite', count: 2 },
+      { type: 'detached_private', count: 1 },
+      { type: 'shared', count: 1 },
+    ],
     city: "Jaipur",
     state: "Rajasthan",
     country: "India",
@@ -98,20 +86,8 @@ export const dummyProperties: Property[] = [
     pets_allowed: false,
     pet_charge_per_night: 0,
     images: [
-      {
-        id: "5",
-        property_id: "3",
-        image_url: "https://images.unsplash.com/photo-1477587458883-47145ed68d21?w=800",
-        is_primary: true,
-        display_order: 1
-      },
-      {
-        id: "6",
-        property_id: "3",
-        image_url: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800",
-        is_primary: false,
-        display_order: 2
-      },
+      { id: "5", property_id: "3", image_url: "https://images.unsplash.com/photo-1477587458883-47145ed68d21?w=800", is_primary: true, display_order: 1 },
+      { id: "6", property_id: "3", image_url: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800", is_primary: false, display_order: 2 },
     ],
     amenities: ["WiFi", "Pool", "Parking", "Restaurant", "Spa", "Air Conditioning"],
     avg_rating: 4.8,
@@ -127,6 +103,9 @@ export const dummyProperties: Property[] = [
     max_guests: 4,
     bedrooms: 2,
     bathrooms: 1,
+    bathrooms_detail: [
+      { type: 'shared', count: 1 },
+    ],
     city: "Munnar",
     state: "Kerala",
     country: "India",
@@ -137,20 +116,8 @@ export const dummyProperties: Property[] = [
     pets_allowed: true,
     pet_charge_per_night: 250,
     images: [
-      {
-        id: "7",
-        property_id: "4",
-        image_url: "https://images.unsplash.com/photo-1542718610-a1d656d1884c?w=800",
-        is_primary: true,
-        display_order: 1
-      },
-      {
-        id: "8",
-        property_id: "4",
-        image_url: "https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=800",
-        is_primary: false,
-        display_order: 2
-      },
+      { id: "7", property_id: "4", image_url: "https://images.unsplash.com/photo-1542718610-a1d656d1884c?w=800", is_primary: true, display_order: 1 },
+      { id: "8", property_id: "4", image_url: "https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=800", is_primary: false, display_order: 2 },
     ],
     amenities: ["WiFi", "Lake View", "Fireplace", "Kitchen", "Hiking Trails"],
     avg_rating: 4.6,
@@ -166,6 +133,10 @@ export const dummyProperties: Property[] = [
     max_guests: 6,
     bedrooms: 3,
     bathrooms: 3,
+    bathrooms_detail: [
+      { type: 'ensuite', count: 2 },
+      { type: 'detached_private', count: 1 },
+    ],
     city: "Jaisalmer",
     state: "Rajasthan",
     country: "India",
@@ -176,20 +147,8 @@ export const dummyProperties: Property[] = [
     pets_allowed: false,
     pet_charge_per_night: 0,
     images: [
-      {
-        id: "9",
-        property_id: "5",
-        image_url: "https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=800",
-        is_primary: true,
-        display_order: 1
-      },
-      {
-        id: "10",
-        property_id: "5",
-        image_url: "https://images.unsplash.com/photo-1471400974796-1c823d00a96f?w=800",
-        is_primary: false,
-        display_order: 2
-      },
+      { id: "9", property_id: "5", image_url: "https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=800", is_primary: true, display_order: 1 },
+      { id: "10", property_id: "5", image_url: "https://images.unsplash.com/photo-1471400974796-1c823d00a96f?w=800", is_primary: false, display_order: 2 },
     ],
     amenities: ["Desert Safari", "Bonfire", "Camel Ride", "Star Gazing", "Restaurant"],
     avg_rating: 4.9,
@@ -205,6 +164,9 @@ export const dummyProperties: Property[] = [
     max_guests: 8,
     bedrooms: 4,
     bathrooms: 3,
+    bathrooms_detail: [
+      { type: 'ensuite', count: 3 },
+    ],
     city: "Rishikesh",
     state: "Uttarakhand",
     country: "India",
@@ -215,20 +177,8 @@ export const dummyProperties: Property[] = [
     pets_allowed: true,
     pet_charge_per_night: 400,
     images: [
-      {
-        id: "11",
-        property_id: "6",
-        image_url: "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=800",
-        is_primary: true,
-        display_order: 1
-      },
-      {
-        id: "12",
-        property_id: "6",
-        image_url: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=800",
-        is_primary: false,
-        display_order: 2
-      },
+      { id: "11", property_id: "6", image_url: "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?w=800", is_primary: true, display_order: 1 },
+      { id: "12", property_id: "6", image_url: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=800", is_primary: false, display_order: 2 },
     ],
     amenities: ["WiFi", "River View", "Yoga Deck", "Kitchen", "Adventure Activities"],
     avg_rating: 4.7,

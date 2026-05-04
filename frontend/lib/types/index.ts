@@ -1,3 +1,10 @@
+export type BathroomType = 'ensuite' | 'shared' | 'detached_private'
+
+export interface BathroomDetail {
+  type: BathroomType
+  count: number
+}
+
 export interface PropertyImage {
   id: string
   property_id: string
@@ -15,6 +22,7 @@ export interface Property {
   max_guests: number
   bedrooms: number
   bathrooms: number
+  bathrooms_detail: BathroomDetail[]
   city: string
   state: string
   country: string

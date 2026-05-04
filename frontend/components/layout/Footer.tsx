@@ -1,3 +1,5 @@
+"use client"
+
 import Link from 'next/link'
 
 export default function Footer() {
@@ -46,7 +48,7 @@ export default function Footer() {
               { label: 'Facebook', icon: '👍', href: '#' },
               { label: 'Twitter', icon: '🐦', href: '#' },
             ].map(social => (
-              
+              <a
                 key={social.label}
                 href={social.href}
                 title={social.label}
