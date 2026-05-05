@@ -37,6 +37,12 @@ export interface Property {
   avg_rating: number
   review_count: number
   created_at: string
+  address: string        // full address
+  contact_phone: string  // property contact number
+  contact_email: string  // property contact email
+  check_in_time: string  // e.g. "2:00 PM"
+  check_out_time: string // e.g. "11:00 AM"
+  house_rules: string[]  // list of rules
 }
 
 export interface Booking {

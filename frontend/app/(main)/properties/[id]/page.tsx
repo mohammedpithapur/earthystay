@@ -19,12 +19,18 @@ export default function PropertyDetailPage() {
   const [checkOut, setCheckOut] = useState('')
   const [guests, setGuests] = useState(1)
   const [pets, setPets] = useState(0)
+  const [activeTab, setActiveTab] = useState('overview')
 
   if (!property) {
     return (
       <div style={{ textAlign: 'center', padding: '120px 24px' }}>
-        <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '32px', marginBottom: '16px' }}>Property not found</h2>
-        <button onClick={() => router.push('/properties')} style={{ backgroundColor: '#C9A84C', color: '#1C1C1C', border: 'none', padding: '14px 32px', fontSize: '13px', letterSpacing: '1.5px', textTransform: 'uppercase', fontWeight: '700', cursor: 'pointer' }}>
+        <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '32px', marginBottom: '16px' }}>
+          Property not found
+        </h2>
+        <button
+          onClick={() => router.push('/properties')}
+          style={{ backgroundColor: '#C9A84C', color: '#1C1C1C', border: 'none', padding: '14px 32px', fontSize: '13px', letterSpacing: '1.5px', textTransform: 'uppercase', fontWeight: '700', cursor: 'pointer' }}
+        >
           Back to Properties
         </button>
       </div>
@@ -54,13 +60,19 @@ export default function PropertyDetailPage() {
     { id: 3, name: 'Anjali K.', rating: 4, comment: 'Beautiful property in a great location. The host was very responsive and helpful.', date: 'January 2024' },
   ]
 
+  const tabs = ['overview', 'amenities', 'house rules', 'location', 'reviews']
+
   return (
     <div style={{ backgroundColor: '#FAF8F5', minHeight: '100vh' }}>
 
       {/* Photo Gallery */}
       <div style={{ backgroundColor: '#1C1C1C', padding: '8px' }}>
         <div style={{ position: 'relative', height: '500px', overflow: 'hidden', marginBottom: '8px' }}>
-          <img src={property.images[activeImage]?.image_url} alt={property.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img
+            src={property.images[activeImage]?.image_url}
+            alt={property.name}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
           <div style={{ position: 'absolute', bottom: '16px', right: '16px', backgroundColor: 'rgba(0,0,0,0.6)', color: '#FAF8F5', padding: '6px 14px', fontSize: '13px' }}>
             {activeImage + 1} / {property.images.length}
           </div>
@@ -73,7 +85,11 @@ export default function PropertyDetailPage() {
         </div>
         <div style={{ display: 'flex', gap: '8px', overflowX: 'auto' }}>
           {property.images.map((img, i) => (
-            <img key={img.id} src={img.image_url} alt={`${property.name} ${i + 1}`} onClick={() => setActiveImage(i)}
+            <img
+              key={img.id}
+              src={img.image_url}
+              alt={`${property.name} ${i + 1}`}
+              onClick={() => setActiveImage(i)}
               style={{ width: '120px', height: '80px', objectFit: 'cover', cursor: 'pointer', flexShrink: 0, opacity: activeImage === i ? 1 : 0.5, border: activeImage === i ? '2px solid #C9A84C' : '2px solid transparent', transition: 'opacity 0.2s ease' }}
             />
           ))}
@@ -85,6 +101,7 @@ export default function PropertyDetailPage() {
 
         {/* Left Column */}
         <div>
+
           {/* Badges */}
           <div style={{ display: 'flex', gap: '12px', marginBottom: '12px', flexWrap: 'wrap' }}>
             <span style={{ backgroundColor: '#1C1C1C', color: '#C9A84C', padding: '4px 12px', fontSize: '12px', letterSpacing: '1px' }}>📍 {property.city}, {property.state}</span>
@@ -110,7 +127,7 @@ export default function PropertyDetailPage() {
             ))}
 
             {/* Bathrooms Detail */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '20px' }}>🚿</span>
                 <span style={{ fontSize: '14px', color: '#555', fontWeight: '600' }}>
@@ -119,77 +136,275 @@ export default function PropertyDetailPage() {
               </div>
               {property.bathrooms_detail.map((b, i) => (
                 <div key={i} style={{ paddingLeft: '28px' }}>
-                  <span style={{ fontSize: '12px', color: '#888' }}>
-                    {b.count}× {bathroomLabel[b.type]}
-                  </span>
+                  <span style={{ fontSize: '12px', color: '#888' }}>{b.count}× {bathroomLabel[b.type]}</span>
                 </div>
               ))}
             </div>
-          </div>
 
-          {/* Description */}
-          <div style={{ marginBottom: '40px' }}>
-            <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '24px', color: '#1C1C1C', marginBottom: '16px' }}>About This Property</h2>
-            <p style={{ color: '#555', fontSize: '15px', lineHeight: '1.9' }}>{property.description}</p>
-          </div>
-
-          {/* Amenities */}
-          <div style={{ marginBottom: '40px' }}>
-            <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '24px', color: '#1C1C1C', marginBottom: '24px' }}>Amenities</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '16px' }}>
-              {property.amenities.map(amenity => (
-                <div key={amenity} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px', backgroundColor: '#FFFFFF', border: '1px solid #E5E0D8' }}>
-                  <span style={{ color: '#C9A84C', fontSize: '18px' }}>✓</span>
-                  <span style={{ fontSize: '14px', color: '#1C1C1C' }}>{amenity}</span>
-                </div>
-              ))}
-              {property.pets_allowed && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px', backgroundColor: '#FFFFFF', border: '1px solid #E5E0D8' }}>
-                  <span style={{ color: '#C9A84C', fontSize: '18px' }}>✓</span>
-                  <span style={{ fontSize: '14px', color: '#1C1C1C' }}>🐾 Pets (+₹{property.pet_charge_per_night}/pet/night)</span>
-                </div>
-              )}
+            {/* Check in/out times */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '20px' }}>🕐</span>
+                <span style={{ fontSize: '14px', color: '#555', fontWeight: '600' }}>Times</span>
+              </div>
+              <span style={{ fontSize: '12px', color: '#888', paddingLeft: '28px' }}>In: {property.check_in_time}</span>
+              <span style={{ fontSize: '12px', color: '#888', paddingLeft: '28px' }}>Out: {property.check_out_time}</span>
             </div>
           </div>
 
-          {/* Non Refundable Warning */}
-          <div style={{ backgroundColor: '#FFF8E7', border: '1px solid #F0D080', padding: '20px 24px', marginBottom: '40px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-            <span style={{ fontSize: '24px' }}>⚠️</span>
+          {/* Tabs */}
+          <div style={{ display: 'flex', gap: '0', marginBottom: '32px', borderBottom: '1px solid #E5E0D8', overflowX: 'auto' }}>
+            {tabs.map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                style={{
+                  padding: '14px 20px',
+                  border: 'none',
+                  borderBottom: activeTab === tab ? '2px solid #C9A84C' : '2px solid transparent',
+                  backgroundColor: 'transparent',
+                  color: activeTab === tab ? '#C9A84C' : '#888',
+                  fontSize: '13px',
+                  letterSpacing: '1px',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  fontWeight: activeTab === tab ? '700' : '400',
+                  whiteSpace: 'nowrap',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab Content */}
+
+          {/* Overview Tab */}
+          {activeTab === 'overview' && (
             <div>
-              <h4 style={{ fontSize: '14px', fontWeight: '700', color: '#1C1C1C', marginBottom: '6px', letterSpacing: '0.5px' }}>Non-Refundable Booking</h4>
-              <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.6' }}>All bookings are non-refundable. Once payment is confirmed, cancellations will not be eligible for a refund. Please review your dates carefully before booking.</p>
-            </div>
-          </div>
+              <p style={{ color: '#555', fontSize: '15px', lineHeight: '1.9', marginBottom: '32px' }}>
+                {property.description}
+              </p>
 
-          {/* Reviews */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '28px' }}>
-              <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '24px', color: '#1C1C1C' }}>Guest Reviews</h2>
-              <span style={{ backgroundColor: '#1C1C1C', color: '#C9A84C', padding: '4px 12px', fontSize: '14px', fontWeight: '600' }}>★ {property.avg_rating}</span>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              {reviews.map(review => (
-                <div key={review.id} style={{ backgroundColor: '#FFFFFF', padding: '24px', border: '1px solid #E5E0D8' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div style={{ width: '40px', height: '40px', backgroundColor: '#C9A84C', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1C1C1C', fontWeight: '700', fontSize: '16px' }}>
-                        {review.name[0]}
-                      </div>
+              {/* Contact Info */}
+              <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E0D8', padding: '24px', marginBottom: '24px' }}>
+                <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '18px', color: '#1C1C1C', marginBottom: '16px' }}>
+                  Property Contact
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {[
+                    { icon: '📍', label: 'Address', value: property.address },
+                    { icon: '📞', label: 'Phone', value: property.contact_phone },
+                    { icon: '📧', label: 'Email', value: property.contact_email },
+                  ].map(item => (
+                    <div key={item.label} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                      <span style={{ fontSize: '18px', flexShrink: 0 }}>{item.icon}</span>
                       <div>
-                        <p style={{ fontWeight: '600', fontSize: '14px', color: '#1C1C1C' }}>{review.name}</p>
-                        <p style={{ fontSize: '12px', color: '#888' }}>{review.date}</p>
+                        <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', marginBottom: '2px' }}>{item.label}</p>
+                        <p style={{ fontSize: '14px', color: '#1C1C1C' }}>{item.value}</p>
                       </div>
                     </div>
-                    <div style={{ color: '#C9A84C', fontSize: '14px' }}>{'★'.repeat(review.rating)}</div>
-                  </div>
-                  <p style={{ fontSize: '14px', color: '#555', lineHeight: '1.7' }}>{review.comment}</p>
+                  ))}
                 </div>
-              ))}
+              </div>
+
+              {/* Non Refundable Warning */}
+              <div style={{ backgroundColor: '#FFF8E7', border: '1px solid #F0D080', padding: '20px 24px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                <span style={{ fontSize: '24px' }}>⚠️</span>
+                <div>
+                  <h4 style={{ fontSize: '14px', fontWeight: '700', color: '#1C1C1C', marginBottom: '6px' }}>Non-Refundable Booking</h4>
+                  <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.6' }}>All bookings are non-refundable. Once payment is confirmed, cancellations will not be eligible for a refund. Please review your dates carefully before booking.</p>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Amenities Tab */}
+          {activeTab === 'amenities' && (
+            <div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '16px' }}>
+                {property.amenities.map(amenity => (
+                  <div key={amenity} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px', backgroundColor: '#FFFFFF', border: '1px solid #E5E0D8' }}>
+                    <span style={{ color: '#C9A84C', fontSize: '18px' }}>✓</span>
+                    <span style={{ fontSize: '14px', color: '#1C1C1C' }}>{amenity}</span>
+                  </div>
+                ))}
+                {property.pets_allowed && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px', backgroundColor: '#FFFFFF', border: '1px solid #E5E0D8' }}>
+                    <span style={{ color: '#C9A84C', fontSize: '18px' }}>✓</span>
+                    <span style={{ fontSize: '14px', color: '#1C1C1C' }}>🐾 Pets (+₹{property.pet_charge_per_night}/pet/night)</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Bathroom Details */}
+              <div style={{ marginTop: '32px' }}>
+                <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '20px', color: '#1C1C1C', marginBottom: '16px' }}>Bathroom Details</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '16px' }}>
+                  {property.bathrooms_detail.map((b, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px', backgroundColor: '#FFFFFF', border: '1px solid #E5E0D8' }}>
+                      <span style={{ color: '#C9A84C', fontSize: '18px' }}>✓</span>
+                      <span style={{ fontSize: '14px', color: '#1C1C1C' }}>{b.count}× {bathroomLabel[b.type]}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Check in/out */}
+              <div style={{ marginTop: '32px', backgroundColor: '#FFFFFF', border: '1px solid #E5E0D8', padding: '24px' }}>
+                <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '20px', color: '#1C1C1C', marginBottom: '16px' }}>Check In & Out</h3>
+                <div style={{ display: 'flex', gap: '32px' }}>
+                  <div>
+                    <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', marginBottom: '8px' }}>Check In</p>
+                    <p style={{ fontSize: '20px', fontFamily: 'Georgia, serif', color: '#1C1C1C' }}>{property.check_in_time}</p>
+                  </div>
+                  <div style={{ width: '1px', backgroundColor: '#E5E0D8' }} />
+                  <div>
+                    <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', marginBottom: '8px' }}>Check Out</p>
+                    <p style={{ fontSize: '20px', fontFamily: 'Georgia, serif', color: '#1C1C1C' }}>{property.check_out_time}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* House Rules Tab */}
+          {activeTab === 'house rules' && (
+            <div>
+              <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E0D8', padding: '32px' }}>
+                <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '22px', color: '#1C1C1C', marginBottom: '8px' }}>
+                  House Rules
+                </h3>
+                <div style={{ width: '40px', height: '1px', backgroundColor: '#C9A84C', marginBottom: '24px' }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {property.house_rules.map((rule, i) => (
+                    <div key={i} style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', paddingBottom: '16px', borderBottom: i < property.house_rules.length - 1 ? '1px solid #E5E0D8' : 'none' }}>
+                      <span style={{ color: '#C9A84C', fontSize: '18px', flexShrink: 0, marginTop: '2px' }}>○</span>
+                      <p style={{ fontSize: '14px', color: '#555', lineHeight: '1.6' }}>{rule}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Non Refundable in rules too */}
+              <div style={{ backgroundColor: '#FFF8E7', border: '1px solid #F0D080', padding: '20px 24px', marginTop: '16px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                <span style={{ fontSize: '24px' }}>⚠️</span>
+                <div>
+                  <h4 style={{ fontSize: '14px', fontWeight: '700', color: '#1C1C1C', marginBottom: '6px' }}>Non-Refundable Booking Policy</h4>
+                  <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.6' }}>All bookings are non-refundable once payment is confirmed.</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Location Tab */}
+          {activeTab === 'location' && (
+            <div>
+              {/* Address Card */}
+              <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E0D8', padding: '24px', marginBottom: '24px' }}>
+                <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '20px', color: '#1C1C1C', marginBottom: '16px' }}>Address</h3>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: '24px' }}>📍</span>
+                  <div>
+                    <p style={{ fontSize: '15px', color: '#1C1C1C', fontWeight: '600', marginBottom: '4px' }}>{property.name}</p>
+                    <p style={{ fontSize: '14px', color: '#555', lineHeight: '1.6' }}>{property.address}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Map Placeholder — Leaflet will go here */}
+              <div style={{
+                width: '100%', height: '400px',
+                backgroundColor: '#E5E0D8',
+                display: 'flex', alignItems: 'center',
+                justifyContent: 'center', flexDirection: 'column',
+                gap: '12px', border: '1px solid #E5E0D8'
+              }}>
+                <span style={{ fontSize: '48px' }}>🗺️</span>
+                <p style={{ fontSize: '14px', color: '#888' }}>
+                  Map loading... ({property.latitude}, {property.longitude})
+                </p>
+                <p style={{ fontSize: '12px', color: '#aaa' }}>
+                  Leaflet map will be integrated here
+                </p>
+              </div>
+
+              {/* Contact */}
+              <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E0D8', padding: '24px', marginTop: '16px' }}>
+                <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '20px', color: '#1C1C1C', marginBottom: '16px' }}>Contact Property</h3>
+                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                  <a href={`tel:${property.contact_phone}`} style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    padding: '12px 24px', border: '1px solid #C9A84C',
+                    color: '#C9A84C', textDecoration: 'none', fontSize: '14px',
+                    fontWeight: '600'
+                  }}>
+                    📞 {property.contact_phone}
+                  </a>
+                  <a href={`mailto:${property.contact_email}`} style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    padding: '12px 24px', border: '1px solid #C9A84C',
+                    color: '#C9A84C', textDecoration: 'none', fontSize: '14px',
+                    fontWeight: '600'
+                  }}>
+                    📧 {property.contact_email}
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Reviews Tab */}
+          {activeTab === 'reviews' && (
+            <div>
+              {/* Rating Summary */}
+              <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E0D8', padding: '24px', marginBottom: '24px', display: 'flex', gap: '32px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{ fontFamily: 'Georgia, serif', fontSize: '56px', color: '#1C1C1C', lineHeight: '1' }}>{property.avg_rating}</p>
+                  <p style={{ color: '#C9A84C', fontSize: '20px', marginBottom: '4px' }}>{'★'.repeat(Math.floor(property.avg_rating))}</p>
+                  <p style={{ fontSize: '13px', color: '#888' }}>{property.review_count} reviews</p>
+                </div>
+                <div style={{ flex: 1, minWidth: '200px' }}>
+                  {[5, 4, 3, 2, 1].map(star => (
+                    <div key={star} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '12px', color: '#888', width: '20px' }}>{star}★</span>
+                      <div style={{ flex: 1, height: '6px', backgroundColor: '#E5E0D8', borderRadius: '3px' }}>
+                        <div style={{
+                          height: '100%', backgroundColor: '#C9A84C', borderRadius: '3px',
+                          width: star === 5 ? '70%' : star === 4 ? '20%' : star === 3 ? '7%' : '3%'
+                        }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Individual Reviews */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {reviews.map(review => (
+                  <div key={review.id} style={{ backgroundColor: '#FFFFFF', padding: '24px', border: '1px solid #E5E0D8' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: '40px', height: '40px', backgroundColor: '#C9A84C', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1C1C1C', fontWeight: '700', fontSize: '16px' }}>
+                          {review.name[0]}
+                        </div>
+                        <div>
+                          <p style={{ fontWeight: '600', fontSize: '14px', color: '#1C1C1C' }}>{review.name}</p>
+                          <p style={{ fontSize: '12px', color: '#888' }}>{review.date}</p>
+                        </div>
+                      </div>
+                      <div style={{ color: '#C9A84C', fontSize: '14px' }}>{'★'.repeat(review.rating)}</div>
+                    </div>
+                    <p style={{ fontSize: '14px', color: '#555', lineHeight: '1.7' }}>{review.comment}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Booking Widget */}
+        {/* Booking Widget — unchanged */}
         <div style={{ position: 'sticky', top: '100px', backgroundColor: '#FFFFFF', border: '1px solid #E5E0D8', padding: '32px' }}>
           <div style={{ marginBottom: '24px' }}>
             <span style={{ fontFamily: 'Georgia, serif', fontSize: '32px', fontWeight: '600', color: '#1C1C1C' }}>₹{property.price_per_night.toLocaleString('en-IN')}</span>
@@ -227,7 +442,6 @@ export default function PropertyDetailPage() {
             )}
           </div>
 
-          {/* Price Breakdown */}
           {nights > 0 && (
             <div style={{ backgroundColor: '#FAF8F5', padding: '16px', marginBottom: '16px', fontSize: '14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: '#555' }}>
