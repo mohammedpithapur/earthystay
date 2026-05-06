@@ -15,9 +15,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body style={{ backgroundColor: '#FAF8F5', margin: 0 }}>
+      <body style={{ backgroundColor: '#ffffff', margin: 0, overflowX: 'hidden' }}>
         <Navbar />
-        <main style={{ paddingTop: '72px' }}>
+        <main style={{ paddingTop: '72px', minHeight: '100vh' }}>
           {children}
         </main>
         <Footer />

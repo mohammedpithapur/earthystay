@@ -20,8 +20,35 @@ export default function Hero() {
     router.push(`/properties?${params.toString()}`)
   }
 
+  const fieldStyle = {
+    minWidth: 0,
+    padding: '14px 18px',
+    borderRight: '1px solid #e0d9c0',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '4px',
+  }
+
+  const labelStyle = {
+    fontSize: '10px',
+    letterSpacing: '1.5px',
+    color: '#888',
+    textTransform: 'uppercase' as const,
+    fontWeight: '600' as const,
+  }
+
+  const inputStyle = {
+    border: 'none',
+    outline: 'none',
+    fontSize: '14px',
+    color: '#1a1a1a',
+    backgroundColor: 'transparent',
+    width: '100%',
+    fontFamily: "'Figtree', sans-serif",
+  }
+
   return (
-    <section style={{ position: 'relative', height: '100vh', minHeight: '600px', overflow: 'hidden' }}>
+    <section style={{ position: 'relative', minHeight: 'clamp(620px, 100vh, 920px)', overflow: 'hidden' }}>
 
       {/* Background Image */}
       <div style={{
@@ -31,13 +58,13 @@ export default function Hero() {
         backgroundPosition: 'center',
       }} />
 
-      {/* Dark Overlay */}
+      {/* Overlay */}
       <div style={{
         position: 'absolute', inset: 0,
-        background: 'linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.7) 100%)'
+        background: 'linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.45) 60%, rgba(0,0,0,0.65) 100%)'
       }} />
 
-      {/* Hero Content */}
+      {/* Content */}
       <div style={{
         position: 'relative', zIndex: 10,
         height: '100%',
@@ -46,245 +73,161 @@ export default function Hero() {
         alignItems: 'center',
         justifyContent: 'center',
         padding: '0 24px',
-        textAlign: 'center'
+        textAlign: 'center',
       }}>
 
-        {/* Tagline */}
         <p style={{
-          color: '#C9A84C',
-          fontSize: '13px',
+          color: '#e1c391',
+          fontSize: '12px',
           letterSpacing: '4px',
           textTransform: 'uppercase',
-          marginBottom: '16px'
+          marginBottom: '16px',
+          fontWeight: '600',
         }}>
           Curated Luxury Stays
         </p>
 
-        {/* Main Heading */}
         <h1 style={{
-          fontFamily: 'Georgia, serif',
-          color: '#FAF8F5',
+          color: '#ffffff',
           fontSize: 'clamp(36px, 6vw, 80px)',
-          fontWeight: '400',
+          fontWeight: '800',
           lineHeight: '1.1',
           marginBottom: '24px',
-          maxWidth: '800px'
+          maxWidth: '820px',
         }}>
-          Discover Your Perfect <br />
-          <em style={{ color: '#C9A84C' }}>Earthy Escape</em>
+          Discover Your Perfect{' '}
+          <em style={{ color: '#e1c391', fontStyle: 'italic' }}>Earthy Escape</em>
         </h1>
 
-        {/* Subtitle */}
         <p style={{
-          color: 'rgba(250,248,245,0.85)',
-          fontSize: '16px',
+          color: 'rgba(255,255,255,0.85)',
+          fontSize: '17px',
           marginBottom: '48px',
           maxWidth: '500px',
-          lineHeight: '1.6'
+          lineHeight: '1.7',
+          fontWeight: '400',
         }}>
-          Handpicked luxury properties across India's most beautiful destinations
+          Handpicked luxury properties across India&apos;s most beautiful destinations
         </p>
 
         {/* Search Bar */}
         <div style={{
-          backgroundColor: 'rgba(255,255,255,0.97)',
-          borderRadius: '4px',
+          backgroundColor: 'rgba(255,255,255,0.98)',
+          borderRadius: '12px',
           padding: '8px',
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '4px',
+          display: 'grid',
+          gap: '2px',
           width: '100%',
-          maxWidth: '1000px',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+          maxWidth: '1020px',
+          boxShadow: '0 24px 64px rgba(0,0,0,0.28)',
+          gridTemplateColumns: 'repeat(5, minmax(0, 1fr)) auto',
         }}>
 
-          {/* Location */}
-          <div style={{
-            flex: '1 1 200px',
-            padding: '12px 16px',
-            borderRight: '1px solid #E5E0D8',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '4px'
-          }}>
-            <label style={{ fontSize: '10px', letterSpacing: '1.5px', color: '#888', textTransform: 'uppercase', fontWeight: '600' }}>
-              Destination
-            </label>
+          <div style={fieldStyle}>
+            <label style={labelStyle}>Destination</label>
             <input
               type="text"
               placeholder="Where are you going?"
               value={location}
               onChange={e => setLocation(e.target.value)}
-              style={{
-                border: 'none', outline: 'none',
-                fontSize: '14px', color: '#1C1C1C',
-                backgroundColor: 'transparent',
-                width: '100%'
-              }}
+              style={inputStyle}
             />
           </div>
 
-          {/* Check In */}
-          <div style={{
-            flex: '1 1 150px',
-            padding: '12px 16px',
-            borderRight: '1px solid #E5E0D8',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '4px'
-          }}>
-            <label style={{ fontSize: '10px', letterSpacing: '1.5px', color: '#888', textTransform: 'uppercase', fontWeight: '600' }}>
-              Check In
-            </label>
+          <div style={fieldStyle}>
+            <label style={labelStyle}>Check In</label>
             <input
               type="date"
               value={checkIn}
               onChange={e => setCheckIn(e.target.value)}
-              style={{
-                border: 'none', outline: 'none',
-                fontSize: '14px', color: '#1C1C1C',
-                backgroundColor: 'transparent',
-                width: '100%'
-              }}
+              style={inputStyle}
             />
           </div>
 
-          {/* Check Out */}
-          <div style={{
-            flex: '1 1 150px',
-            padding: '12px 16px',
-            borderRight: '1px solid #E5E0D8',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '4px'
-          }}>
-            <label style={{ fontSize: '10px', letterSpacing: '1.5px', color: '#888', textTransform: 'uppercase', fontWeight: '600' }}>
-              Check Out
-            </label>
+          <div style={fieldStyle}>
+            <label style={labelStyle}>Check Out</label>
             <input
               type="date"
               value={checkOut}
               onChange={e => setCheckOut(e.target.value)}
-              style={{
-                border: 'none', outline: 'none',
-                fontSize: '14px', color: '#1C1C1C',
-                backgroundColor: 'transparent',
-                width: '100%'
-              }}
+              style={inputStyle}
             />
           </div>
 
-          {/* Guests */}
-          <div style={{
-            flex: '1 1 120px',
-            padding: '12px 16px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '4px'
-          }}>
-            <label style={{ fontSize: '10px', letterSpacing: '1.5px', color: '#888', textTransform: 'uppercase', fontWeight: '600' }}>
-              Guests
-            </label>
+          <div style={{ ...fieldStyle, borderRight: '1px solid #e0d9c0' }}>
+            <label style={labelStyle}>Guests</label>
             <select
               value={guests}
               onChange={e => setGuests(e.target.value)}
-              style={{
-                border: 'none', outline: 'none',
-                fontSize: '14px', color: '#1C1C1C',
-                backgroundColor: 'transparent',
-                width: '100%'
-              }}
+              style={inputStyle}
             >
               {[1,2,3,4,5,6,7,8,9,10].map(n => (
                 <option key={n} value={n}>{n} Guest{n > 1 ? 's' : ''}</option>
               ))}
             </select>
           </div>
-            {/* Pets */}
-            <div style={{
-            flex: '1 1 120px',
-            padding: '12px 16px',
-            borderRight: '1px solid #E5E0D8',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '4px'
-            }}>
-            <label style={{ 
-                fontSize: '10px', 
-                letterSpacing: '1.5px', 
-                color: '#888', 
-                textTransform: 'uppercase', 
-                fontWeight: '600' 
-            }}>
-                Pets
-            </label>
+
+          <div style={{ ...fieldStyle, borderRight: 'none' }}>
+            <label style={labelStyle}>Pets</label>
             <select
-                value={pets}
-                onChange={e => setPets(e.target.value)}
-                style={{
-                border: 'none', outline: 'none',
-                fontSize: '14px', color: '#1C1C1C',
-                backgroundColor: 'transparent',
-                width: '100%'
-                }}
+              value={pets}
+              onChange={e => setPets(e.target.value)}
+              style={inputStyle}
             >
-                <option value="0">No Pets</option>
-                {[1,2,3,4].map(n => (
-                <option key={n} value={n}>
-                    {n} Pet{n > 1 ? 's' : ''}
-                </option>
-                ))}
+              <option value="0">No Pets</option>
+              {[1,2,3,4].map(n => (
+                <option key={n} value={n}>{n} Pet{n > 1 ? 's' : ''}</option>
+              ))}
             </select>
-            </div>
-          {/* Search Button */}
+          </div>
+
           <button
             onClick={handleSearch}
             style={{
-              backgroundColor: '#C9A84C',
-              color: '#1C1C1C',
+              backgroundColor: '#e1c391',
+              color: '#1a1a1a',
               border: 'none',
-              padding: '16px 32px',
+              padding: '16px 36px',
               fontSize: '13px',
               letterSpacing: '1.5px',
               fontWeight: '700',
               textTransform: 'uppercase',
               cursor: 'pointer',
-              borderRadius: '2px',
-              whiteSpace: 'nowrap'
+              borderRadius: '8px',
+              whiteSpace: 'nowrap',
+              margin: '4px',
+              transition: 'opacity 0.2s ease',
+              minHeight: '56px',
             }}
+            onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.opacity = '0.85'}
+            onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.opacity = '1'}
           >
             Search
           </button>
         </div>
 
-        {/* Stats Row */}
-        <div style={{
-          display: 'flex',
-          gap: '48px',
-          marginTop: '48px',
-          flexWrap: 'wrap',
-          justifyContent: 'center'
-        }}>
+        {/* Stats */}
+        <div className="hero-stats">
           {[
             { number: '50+', label: 'Properties' },
             { number: '20+', label: 'Destinations' },
-            { number: '4.9★', label: 'Average Rating' },
+            { number: '4.9 stars', label: 'Average Rating' },
           ].map(stat => (
             <div key={stat.label} style={{ textAlign: 'center' }}>
               <div style={{
-                fontFamily: 'Georgia, serif',
-                color: '#C9A84C',
+                color: '#e1c391',
                 fontSize: '28px',
-                fontWeight: '600'
+                fontWeight: '700',
               }}>
                 {stat.number}
               </div>
               <div style={{
-                color: 'rgba(250,248,245,0.7)',
+                color: 'rgba(255,255,255,0.7)',
                 fontSize: '12px',
                 letterSpacing: '2px',
                 textTransform: 'uppercase',
-                marginTop: '4px'
+                marginTop: '4px',
+                fontWeight: '500',
               }}>
                 {stat.label}
               </div>
@@ -295,25 +238,13 @@ export default function Hero() {
 
       {/* Scroll Indicator */}
       <div style={{
-        position: 'absolute',
-        bottom: '32px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '8px',
-        zIndex: 10
+        position: 'absolute', bottom: '32px', left: '50%', transform: 'translateX(-50%)',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', zIndex: 10,
       }}>
-        <span style={{ color: 'rgba(250,248,245,0.6)', fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' }}>
+        <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' }}>
           Scroll
         </span>
-        <div style={{
-          width: '1px',
-          height: '40px',
-          backgroundColor: '#C9A84C',
-          animation: 'pulse 2s infinite'
-        }} />
+        <div style={{ width: '1px', height: '40px', backgroundColor: '#e1c391' }} />
       </div>
     </section>
   )

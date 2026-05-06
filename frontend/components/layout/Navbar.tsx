@@ -5,27 +5,38 @@ import Link from 'next/link'
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
 
+  const navLinkStyle = {
+    color: '#FAF8F5',
+    fontSize: '13px',
+    letterSpacing: '1px',
+    textDecoration: 'none',
+    textTransform: 'uppercase' as const,
+    fontWeight: '500' as const,
+    transition: 'color 0.2s ease',
+  }
+
   return (
-    <nav style={{ backgroundColor: '#1C1C1C' }} className="fixed top-0 left-0 right-0 z-50">
-      
+    <nav style={{ backgroundColor: '#2c2c2c', position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, width: '100%' }}>
+
       {/* Top Bar */}
-      <div className="flex items-center justify-between px-6 py-4">
-        
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', maxWidth: '1400px', margin: '0 auto', width: '100%' }}>
+
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/" style={{ textDecoration: 'none' }}>
           <span style={{
-            fontFamily: 'Georgia, serif',
-            color: '#C9A84C',
-            fontSize: '22px',
-            fontWeight: '600',
-            letterSpacing: '2px'
+            fontFamily: "'Figtree', sans-serif",
+            color: '#e1c391',
+            fontSize: 'clamp(18px, 2vw, 22px)',
+            fontWeight: '800',
+            letterSpacing: '2px',
           }}>
             EARTHY STAY
           </span>
         </Link>
 
         {/* Desktop Nav Links */}
-        <div className="hidden md:flex items-center gap-8">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}
+          className="hidden md:flex">
           {[
             { label: 'Our Properties', href: '/properties' },
             { label: 'Destinations', href: '/destinations' },
@@ -35,8 +46,9 @@ export default function Navbar() {
             <Link
               key={link.href}
               href={link.href}
-              style={{ color: '#FAF8F5', fontSize: '13px', letterSpacing: '1px' }}
-              className="hover:text-yellow-400 transition-colors uppercase"
+              style={navLinkStyle}
+              onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = '#e1c391'}
+              onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = '#FAF8F5'}
             >
               {link.label}
             </Link>
@@ -44,25 +56,32 @@ export default function Navbar() {
         </div>
 
         {/* Right Side */}
-        <div className="hidden md:flex items-center gap-4">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}
+          className="hidden md:flex">
           <Link
             href="/login"
-            style={{ color: '#FAF8F5', fontSize: '13px', letterSpacing: '1px' }}
-            className="hover:text-yellow-400 transition-colors uppercase"
+            style={navLinkStyle}
+            onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = '#e1c391'}
+            onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = '#FAF8F5'}
           >
             Login
           </Link>
           <Link
             href="/properties"
             style={{
-              backgroundColor: '#C9A84C',
-              color: '#1C1C1C',
+              backgroundColor: '#e1c391',
+              color: '#1a1a1a',
               padding: '10px 24px',
               fontSize: '13px',
               letterSpacing: '1px',
-              fontWeight: '600'
+              fontWeight: '700',
+              textDecoration: 'none',
+              borderRadius: '8px',
+              textTransform: 'uppercase' as const,
+              transition: 'opacity 0.2s ease',
             }}
-            className="hover:opacity-90 transition-opacity uppercase"
+            onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.opacity = '0.85'}
+            onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.opacity = '1'}
           >
             Book Now
           </Link>
@@ -72,16 +91,18 @@ export default function Navbar() {
         <button
           onClick={() => setMenuOpen(!menuOpen)}
           className="md:hidden flex flex-col gap-1.5 p-2"
+          aria-label="Toggle navigation menu"
         >
-          <span style={{ backgroundColor: '#FAF8F5', height: '2px', width: '24px', display: 'block' }} />
-          <span style={{ backgroundColor: '#FAF8F5', height: '2px', width: '24px', display: 'block' }} />
-          <span style={{ backgroundColor: '#FAF8F5', height: '2px', width: '24px', display: 'block' }} />
+          <span style={{ backgroundColor: '#FAF8F5', height: '2px', width: '24px', display: 'block', borderRadius: '2px' }} />
+          <span style={{ backgroundColor: '#FAF8F5', height: '2px', width: '24px', display: 'block', borderRadius: '2px' }} />
+          <span style={{ backgroundColor: '#FAF8F5', height: '2px', width: '24px', display: 'block', borderRadius: '2px' }} />
         </button>
       </div>
 
       {/* Mobile Menu */}
       {menuOpen && (
-        <div style={{ backgroundColor: '#1C1C1C', borderTop: '1px solid #333' }} className="md:hidden px-6 py-4 flex flex-col gap-4">
+        <div style={{ backgroundColor: '#2c2c2c', borderTop: '1px solid #444', padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '1400px', margin: '0 auto', width: '100%' }}
+          className="md:hidden">
           {[
             { label: 'Our Properties', href: '/properties' },
             { label: 'Destinations', href: '/destinations' },
@@ -92,8 +113,7 @@ export default function Navbar() {
             <Link
               key={link.href}
               href={link.href}
-              style={{ color: '#FAF8F5', fontSize: '14px', letterSpacing: '1px' }}
-              className="hover:text-yellow-400 transition-colors uppercase"
+              style={{ color: '#FAF8F5', fontSize: '14px', letterSpacing: '1px', textDecoration: 'none', textTransform: 'uppercase' as const, fontWeight: '500' }}
               onClick={() => setMenuOpen(false)}
             >
               {link.label}
@@ -102,15 +122,17 @@ export default function Navbar() {
           <Link
             href="/properties"
             style={{
-              backgroundColor: '#C9A84C',
-              color: '#1C1C1C',
-              padding: '12px 24px',
+              backgroundColor: '#e1c391',
+              color: '#1a1a1a',
+              padding: '14px 24px',
               fontSize: '13px',
               letterSpacing: '1px',
-              fontWeight: '600',
-              textAlign: 'center'
+              fontWeight: '700',
+              textAlign: 'center' as const,
+              textDecoration: 'none',
+              borderRadius: '8px',
+              textTransform: 'uppercase' as const,
             }}
-            className="hover:opacity-90 transition-opacity uppercase"
             onClick={() => setMenuOpen(false)}
           >
             Book Now

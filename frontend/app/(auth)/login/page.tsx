@@ -22,23 +22,19 @@ export default function LoginPage() {
   const handleSubmit = async () => {
     if (!validate()) return
     setLoading(true)
-    // Simulate API call — real login will use Supabase Auth
-    setTimeout(() => {
-      setLoading(false)
-      router.push('/dashboard')
-    }, 1500)
+    setTimeout(() => { setLoading(false); router.push('/dashboard') }, 1500)
   }
 
   const inputStyle = (field: string) => ({
     width: '100%',
     padding: '14px 16px',
-    border: `1px solid ${errors[field] ? '#E53E3E' : '#E5E0D8'}`,
+    border: `1px solid ${errors[field] ? '#E53E3E' : '#e0d9c0'}`,
+    borderRadius: '8px',
     fontSize: '14px',
-    color: '#1C1C1C',
+    color: '#1a1a1a',
     outline: 'none',
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#ffffff',
     boxSizing: 'border-box' as const,
-    fontFamily: 'inherit'
   })
 
   const labelStyle = {
@@ -48,79 +44,52 @@ export default function LoginPage() {
     color: '#888',
     display: 'block',
     marginBottom: '8px',
-    fontWeight: '600' as const
+    fontWeight: '600' as const,
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      backgroundColor: '#FAF8F5',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '48px 24px'
-    }}>
-      <div style={{ width: '100%', maxWidth: '480px' }}>
+    <div className="auth-shell" style={{ backgroundColor: '#ede8d0' }}>
+      <div className="auth-card">
 
-        {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
           <Link href="/" style={{ textDecoration: 'none' }}>
-            <h1 style={{ fontFamily: 'Georgia, serif', color: '#C9A84C', fontSize: '28px', letterSpacing: '3px', marginBottom: '8px' }}>
+            <h1 style={{ color: '#1a1a1a', fontSize: '28px', letterSpacing: '3px', marginBottom: '8px', fontWeight: '800' }}>
               EARTHY STAY
             </h1>
           </Link>
           <p style={{ color: '#888', fontSize: '14px' }}>Welcome back</p>
         </div>
 
-        {/* Card */}
-        <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E0D8', padding: '40px' }}>
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '12px', padding: 'clamp(24px, 4vw, 40px)' }}>
 
-          <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '24px', color: '#1C1C1C', marginBottom: '8px' }}>
-            Sign In
-          </h2>
-          <div style={{ width: '40px', height: '1px', backgroundColor: '#C9A84C', marginBottom: '28px' }} />
+          <h2 style={{ fontSize: '24px', fontWeight: '800', color: '#1a1a1a', marginBottom: '8px' }}>Sign In</h2>
+          <div style={{ width: '40px', height: '2px', backgroundColor: '#e1c391', marginBottom: '28px' }} />
 
-          {/* Email */}
           <div style={{ marginBottom: '20px' }}>
             <label style={labelStyle}>Email Address</label>
-            <input
-              type="email"
-              placeholder="you@example.com"
-              value={form.email}
-              onChange={e => setForm({ ...form, email: e.target.value })}
-              style={inputStyle('email')}
-            />
+            <input type="email" placeholder="you@example.com" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} style={inputStyle('email')} />
             {errors.email && <p style={{ color: '#E53E3E', fontSize: '12px', marginTop: '4px' }}>{errors.email}</p>}
           </div>
 
-          {/* Password */}
           <div style={{ marginBottom: '12px' }}>
             <label style={labelStyle}>Password</label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={form.password}
-              onChange={e => setForm({ ...form, password: e.target.value })}
-              style={inputStyle('password')}
-            />
+            <input type="password" placeholder="••••••••" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} style={inputStyle('password')} />
             {errors.password && <p style={{ color: '#E53E3E', fontSize: '12px', marginTop: '4px' }}>{errors.password}</p>}
           </div>
 
-          {/* Forgot Password */}
           <div style={{ textAlign: 'right', marginBottom: '28px' }}>
-            <Link href="/forgot-password" style={{ fontSize: '13px', color: '#C9A84C', textDecoration: 'none' }}>
+            <Link href="/forgot-password" style={{ fontSize: '13px', color: '#e1c391', textDecoration: 'none', fontWeight: '600' }}>
               Forgot Password?
             </Link>
           </div>
 
-          {/* Submit */}
           <button
             onClick={handleSubmit}
             disabled={loading}
             style={{
               width: '100%',
-              backgroundColor: loading ? '#E8D5A3' : '#C9A84C',
-              color: '#1C1C1C',
+              backgroundColor: loading ? '#d4b87a' : '#e1c391',
+              color: '#1a1a1a',
               border: 'none',
               padding: '16px',
               fontSize: '13px',
@@ -129,26 +98,26 @@ export default function LoginPage() {
               textTransform: 'uppercase',
               cursor: loading ? 'not-allowed' : 'pointer',
               marginBottom: '24px',
-              transition: 'opacity 0.2s ease'
+              borderRadius: '8px',
+              transition: 'opacity 0.2s ease',
             }}
           >
             {loading ? 'Signing In...' : 'Sign In'}
           </button>
 
-          {/* Divider */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
-            <div style={{ flex: 1, height: '1px', backgroundColor: '#E5E0D8' }} />
+            <div style={{ flex: 1, height: '1px', backgroundColor: '#e0d9c0' }} />
             <span style={{ fontSize: '12px', color: '#888' }}>OR</span>
-            <div style={{ flex: 1, height: '1px', backgroundColor: '#E5E0D8' }} />
+            <div style={{ flex: 1, height: '1px', backgroundColor: '#e0d9c0' }} />
           </div>
 
-          {/* Google Login */}
           <button
             style={{
               width: '100%',
               backgroundColor: 'transparent',
-              color: '#1C1C1C',
-              border: '1px solid #E5E0D8',
+              color: '#1a1a1a',
+              border: '1px solid #e0d9c0',
+              borderRadius: '8px',
               padding: '14px',
               fontSize: '14px',
               cursor: 'pointer',
@@ -157,19 +126,19 @@ export default function LoginPage() {
               justifyContent: 'center',
               gap: '12px',
               marginBottom: '24px',
-              transition: 'border-color 0.2s ease'
+              transition: 'border-color 0.2s ease',
+              fontWeight: '600',
             }}
-            onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.borderColor = '#C9A84C'}
-            onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.borderColor = '#E5E0D8'}
+            onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.borderColor = '#e1c391'}
+            onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.borderColor = '#e0d9c0'}
           >
-            <span style={{ fontSize: '18px' }}>G</span>
+            <span style={{ fontSize: '16px', fontWeight: '800' }}>G</span>
             Continue with Google
           </button>
 
-          {/* Register Link */}
           <p style={{ textAlign: 'center', fontSize: '14px', color: '#888' }}>
             Don&apos;t have an account?{' '}
-            <Link href="/register" style={{ color: '#C9A84C', textDecoration: 'none', fontWeight: '600' }}>
+            <Link href="/register" style={{ color: '#e1c391', textDecoration: 'none', fontWeight: '700' }}>
               Create Account
             </Link>
           </p>

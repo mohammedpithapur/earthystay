@@ -1,141 +1,106 @@
 "use client"
 
+import Link from 'next/link'
+
 export default function WhyChooseUs() {
   const reasons = [
     {
-      icon: '🏡',
+      symbol: '✦',
       title: 'Handpicked Properties',
       description: 'Every property is personally verified and curated to meet our luxury standards. No surprises — only exceptional stays.'
     },
     {
-      icon: '📅',
+      symbol: '◈',
       title: 'Instant Booking',
-      description: 'Book your stay in minutes with our seamless booking system. Real-time availability so you always know what\'s free.'
+      description: "Book your stay in minutes with our seamless booking system. Real-time availability so you always know what's free."
     },
     {
-      icon: '💰',
+      symbol: '◉',
       title: 'Best Price Guarantee',
       description: 'Book directly with us and get the best possible rate. No hidden fees — what you see is exactly what you pay.'
     },
     {
-      icon: '🔒',
+      symbol: '◎',
       title: 'Secure Payments',
       description: 'All payments are processed securely through Razorpay. Your financial information is always protected.'
     },
     {
-      icon: '🐾',
+      symbol: '◆',
       title: 'Pet Friendly Options',
       description: 'Travelling with your furry friends? We have a curated selection of pet-friendly properties just for you.'
     },
     {
-      icon: '📞',
+      symbol: '◇',
       title: '24/7 Support',
-      description: 'Our team is always available to assist you before, during, and after your stay. We\'ve got you covered.'
+      description: "Our team is always available to assist you before, during, and after your stay. We've got you covered."
     },
   ]
 
   return (
-    <section style={{
-      backgroundColor: '#1C1C1C',
-      padding: '100px 24px',
-    }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <section className="section-shell" style={{ backgroundColor: '#2c2c2c' }}>
+      <div className="content-shell">
 
         {/* Section Header */}
         <div style={{ textAlign: 'center', marginBottom: '72px' }}>
           <p style={{
-            color: '#C9A84C',
+            color: '#e1c391',
             fontSize: '12px',
             letterSpacing: '4px',
             textTransform: 'uppercase',
-            marginBottom: '16px'
+            marginBottom: '16px',
+            fontWeight: '600',
           }}>
             The Earthy Stay Difference
           </p>
           <h2 style={{
-            fontFamily: 'Georgia, serif',
             fontSize: 'clamp(32px, 4vw, 52px)',
-            fontWeight: '400',
-            color: '#FAF8F5',
+            fontWeight: '800',
+            color: '#ffffff',
             marginBottom: '16px',
-            lineHeight: '1.2'
+            lineHeight: '1.2',
           }}>
             Why Choose Us
           </h2>
-          <div style={{
-            width: '60px',
-            height: '1px',
-            backgroundColor: '#C9A84C',
-            margin: '0 auto 24px'
-          }} />
+          <div style={{ width: '60px', height: '2px', backgroundColor: '#e1c391', margin: '0 auto 24px' }} />
           <p style={{
-            color: 'rgba(250,248,245,0.6)',
+            color: 'rgba(255,255,255,0.6)',
             fontSize: '16px',
             maxWidth: '500px',
             margin: '0 auto',
-            lineHeight: '1.7'
+            lineHeight: '1.7',
           }}>
             We go beyond just a place to stay — we create memories that last a lifetime
           </p>
         </div>
 
-        {/* Reasons Grid */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '2px',
-          backgroundColor: '#333'
-        }}>
+        {/* Grid */}
+        <div className="responsive-feature-grid" style={{ backgroundColor: '#3d3d3d' }}>
           {reasons.map((reason, index) => (
             <div
               key={index}
               style={{
-                backgroundColor: '#1C1C1C',
+                backgroundColor: '#2c2c2c',
                 padding: '48px 40px',
                 transition: 'background-color 0.3s ease',
-                cursor: 'default'
+                cursor: 'default',
               }}
-              onMouseEnter={e => {
-                (e.currentTarget as HTMLDivElement).style.backgroundColor = '#242424'
-              }}
-              onMouseLeave={e => {
-                (e.currentTarget as HTMLDivElement).style.backgroundColor = '#1C1C1C'
-              }}
+              onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.backgroundColor = '#333'}
+              onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.backgroundColor = '#2c2c2c'}
             >
-              {/* Icon */}
-              <div style={{
-                fontSize: '40px',
-                marginBottom: '24px'
-              }}>
-                {reason.icon}
+              <div style={{ fontSize: '32px', color: '#e1c391', marginBottom: '20px', lineHeight: '1' }}>
+                {reason.symbol}
               </div>
-
-              {/* Gold Line */}
-              <div style={{
-                width: '32px',
-                height: '2px',
-                backgroundColor: '#C9A84C',
-                marginBottom: '20px'
-              }} />
-
-              {/* Title */}
+              <div style={{ width: '32px', height: '2px', backgroundColor: '#e1c391', marginBottom: '20px' }} />
               <h3 style={{
-                fontFamily: 'Georgia, serif',
                 fontSize: '22px',
-                fontWeight: '500',
-                color: '#FAF8F5',
+                fontWeight: '700',
+                color: '#ffffff',
                 marginBottom: '16px',
-                lineHeight: '1.3'
+                lineHeight: '1.3',
               }}>
                 {reason.title}
               </h3>
-
-              {/* Description */}
-              <p style={{
-                color: 'rgba(250,248,245,0.6)',
-                fontSize: '14px',
-                lineHeight: '1.8',
-              }}>
+              <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px', lineHeight: '1.8' }}>
                 {reason.description}
               </p>
             </div>
@@ -145,36 +110,28 @@ export default function WhyChooseUs() {
         {/* Bottom Banner */}
         <div style={{
           marginTop: '80px',
-          border: '1px solid #333',
-          padding: '48px',
+          border: '1px solid #3d3d3d',
+          borderRadius: '12px',
+          padding: 'clamp(24px, 4vw, 48px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: '24px'
+          gap: '24px',
         }}>
           <div>
-            <h3 style={{
-              fontFamily: 'Georgia, serif',
-              fontSize: '28px',
-              fontWeight: '400',
-              color: '#FAF8F5',
-              marginBottom: '8px'
-            }}>
+            <h3 style={{ fontSize: '28px', fontWeight: '700', color: '#ffffff', marginBottom: '8px' }}>
               Ready for your next escape?
             </h3>
-            <p style={{
-              color: 'rgba(250,248,245,0.6)',
-              fontSize: '14px'
-            }}>
+            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '14px' }}>
               Browse our collection of handpicked luxury properties across India
             </p>
           </div>
-          <a
+          <Link
             href="/properties"
             style={{
-              backgroundColor: '#C9A84C',
-              color: '#1C1C1C',
+              backgroundColor: '#e1c391',
+              color: '#1a1a1a',
               padding: '18px 48px',
               fontSize: '13px',
               letterSpacing: '2px',
@@ -182,11 +139,15 @@ export default function WhyChooseUs() {
               textTransform: 'uppercase',
               textDecoration: 'none',
               whiteSpace: 'nowrap',
-              display: 'inline-block'
+              display: 'inline-block',
+              borderRadius: '8px',
+              transition: 'opacity 0.2s ease',
             }}
+            onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.opacity = '0.85'}
+            onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.opacity = '1'}
           >
             Explore Properties
-          </a>
+          </Link>
         </div>
       </div>
     </section>
