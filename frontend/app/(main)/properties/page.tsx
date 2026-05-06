@@ -3,6 +3,7 @@ import { useState, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { dummyProperties } from '@/lib/data/properties'
 import PropertyCard from '@/components/property/PropertyCard'
+import MapWrapper from '@/components/shared/MapWrapper'
 
 export default function PropertiesPage() {
   const searchParams = useSearchParams()

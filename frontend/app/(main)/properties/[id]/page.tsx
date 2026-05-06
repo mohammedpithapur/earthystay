@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { dummyProperties } from '@/lib/data/properties'
+import MapWrapper from '@/components/shared/MapWrapper'
 
 const bathroomLabel: Record<string, string> = {
   ensuite: '🛁 Private Ensuite',
@@ -314,21 +315,12 @@ export default function PropertyDetailPage() {
               </div>
 
               {/* Map Placeholder — Leaflet will go here */}
-              <div style={{
-                width: '100%', height: '400px',
-                backgroundColor: '#E5E0D8',
-                display: 'flex', alignItems: 'center',
-                justifyContent: 'center', flexDirection: 'column',
-                gap: '12px', border: '1px solid #E5E0D8'
-              }}>
-                <span style={{ fontSize: '48px' }}>🗺️</span>
-                <p style={{ fontSize: '14px', color: '#888' }}>
-                  Map loading... ({property.latitude}, {property.longitude})
-                </p>
-                <p style={{ fontSize: '12px', color: '#aaa' }}>
-                  Leaflet map will be integrated here
-                </p>
-              </div>
+              <MapWrapper
+                latitude={property.latitude}
+                longitude={property.longitude}
+                propertyName={property.name}
+                address={property.address}
+              />
 
               {/* Contact */}
               <div style={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E0D8', padding: '24px', marginTop: '16px' }}>
