@@ -46,7 +46,7 @@ export default function ConfirmationPage() {
         {/* Booking Details */}
         <div style={{ backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '12px', padding: '32px', marginBottom: '24px' }}>
 
-          <div style={{ textAlign: 'center', padding: '16px', backgroundColor: '#ede8d0', borderRadius: '8px', marginBottom: '28px', border: '1px dashed #e1c391' }}>
+          <div style={{ textAlign: 'center', padding: '16px', backgroundColor: 'var(--color-navbar)', borderRadius: '8px', marginBottom: '28px', border: '1px dashed var(--color-navbar-border)' }}>
             <p style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: '#888', marginBottom: '8px', fontWeight: '600' }}>Booking Reference</p>
             <p style={{ fontSize: '28px', color: '#1a1a1a', fontWeight: '800', letterSpacing: '4px' }}>
               {bookingRef}

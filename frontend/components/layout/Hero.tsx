@@ -22,7 +22,7 @@ export default function Hero() {
 
   const fieldStyle = {
     minWidth: 0,
-    padding: '14px 18px',
+    padding: '12px 16px',
     borderRight: '1px solid #e0d9c0',
     display: 'flex',
     flexDirection: 'column' as const,
@@ -110,17 +110,27 @@ export default function Hero() {
           Handpicked luxury properties across India&apos;s most beautiful destinations
         </p>
 
-        {/* Search Bar */}
-        <div style={{
+        {/* Mobile Search Hint */}
+        <p className="md:hidden" style={{
+          color: '#e1c391',
+          fontSize: '13px',
+          letterSpacing: '1px',
+          textTransform: 'uppercase',
+          marginBottom: '32px',
+          fontWeight: '600',
+        }}>
+          Tap the search icon in the navbar to find properties
+        </p>
+
+        {/* Search Bar - Hidden on Mobile */}
+        <div className="hidden md:flex" style={{
           backgroundColor: 'rgba(255,255,255,0.98)',
           borderRadius: '12px',
           padding: '8px',
-          display: 'grid',
           gap: '2px',
           width: '100%',
-          maxWidth: '1020px',
+          maxWidth: '900px',
           boxShadow: '0 24px 64px rgba(0,0,0,0.28)',
-          gridTemplateColumns: 'repeat(5, minmax(0, 1fr)) auto',
         }}>
 
           <div style={fieldStyle}>
@@ -187,7 +197,7 @@ export default function Hero() {
               backgroundColor: '#e1c391',
               color: '#1a1a1a',
               border: 'none',
-              padding: '16px 36px',
+              padding: '14px 28px',
               fontSize: '13px',
               letterSpacing: '1.5px',
               fontWeight: '700',
@@ -197,7 +207,7 @@ export default function Hero() {
               whiteSpace: 'nowrap',
               margin: '4px',
               transition: 'opacity 0.2s ease',
-              minHeight: '56px',
+              minHeight: '50px',
             }}
             onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.opacity = '0.85'}
             onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.opacity = '1'}

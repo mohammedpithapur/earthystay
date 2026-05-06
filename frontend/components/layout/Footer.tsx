@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 export default function Footer() {
   return (
-    <footer style={{ backgroundColor: '#2c2c2c', color: '#FAF8F5' }}>
+    <footer style={{ backgroundColor: 'var(--color-navbar)', color: 'var(--color-navbar-text)' }}>
 
       <div style={{
         maxWidth: '1200px',
@@ -76,7 +76,7 @@ export default function Footer() {
 
         {/* Quick Links */}
         <div>
-          <h4 style={{ color: '#FAF8F5', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '24px', fontWeight: '700' }}>
+          <h4 style={{ color: 'var(--color-navbar-text)', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '24px', fontWeight: '700' }}>
             Quick Links
           </h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -111,7 +111,7 @@ export default function Footer() {
 
         {/* Destinations */}
         <div>
-          <h4 style={{ color: '#FAF8F5', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '24px', fontWeight: '700' }}>
+          <h4 style={{ color: 'var(--color-navbar-text)', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '24px', fontWeight: '700' }}>
             Destinations
           </h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -147,7 +147,7 @@ export default function Footer() {
 
         {/* Contact */}
         <div>
-          <h4 style={{ color: '#FAF8F5', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '24px', fontWeight: '700' }}>
+          <h4 style={{ color: 'var(--color-navbar-text)', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '24px', fontWeight: '700' }}>
             Contact Us
           </h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
@@ -163,7 +163,7 @@ export default function Footer() {
             ))}
           </div>
 
-          <h4 style={{ color: '#FAF8F5', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '16px', fontWeight: '700' }}>
+          <h4 style={{ color: 'var(--color-navbar-text)', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '16px', fontWeight: '700' }}>
             Policies
           </h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

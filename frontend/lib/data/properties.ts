@@ -117,7 +117,7 @@ export const dummyProperties: Property[] = [
     pets_allowed: false,
     pet_charge_per_night: 0,
     images: [
-      { id: "5", property_id: "3", image_url: "https://images.unsplash.com/photo-1477587458883-47145ed68d21?w=800", is_primary: true, display_order: 1 },
+      { id: "5", property_id: "3", image_url: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800", is_primary: true, display_order: 1 },
       { id: "6", property_id: "3", image_url: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800", is_primary: false, display_order: 2 },
     ],
     amenities: ["WiFi", "Pool", "Parking", "Restaurant", "Spa", "Air Conditioning"],

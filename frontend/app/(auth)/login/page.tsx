@@ -1,13 +1,22 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
   const router = useRouter()
+  const redirectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [form, setForm] = useState({ email: '', password: '' })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimeoutRef.current) {
+        clearTimeout(redirectTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const validate = () => {
     const newErrors: Record<string, string> = {}
@@ -22,7 +31,9 @@ export default function LoginPage() {
   const handleSubmit = async () => {
     if (!validate()) return
     setLoading(true)
-    setTimeout(() => { setLoading(false); router.push('/dashboard') }, 1500)
+    redirectTimeoutRef.current = setTimeout(() => {
+      router.replace('/dashboard')
+    }, 1500)
   }
 
   const inputStyle = (field: string) => ({

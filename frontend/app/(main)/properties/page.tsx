@@ -24,6 +24,7 @@ export default function PropertiesPage() {
   const [petsOnly, setPetsOnly] = useState(initialPets !== '0')
   const [bathroomType, setBathroomType] = useState('all')
   const [sortBy, setSortBy] = useState('rating')
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   const filtered = useMemo(() => {
     let result = [...dummyProperties]
@@ -54,21 +55,11 @@ export default function PropertiesPage() {
     setSortBy('rating')
   }
 
-  const labelStyle = {
-    fontSize: '11px',
-    letterSpacing: '2px',
-    textTransform: 'uppercase' as const,
-    color: '#888',
-    display: 'block',
-    marginBottom: '12px',
-    fontWeight: '600' as const,
-  }
-
   return (
     <div className="page-shell" style={{ backgroundColor: '#ffffff' }}>
 
       {/* Page Header */}
-      <div style={{ backgroundColor: '#2c2c2c', padding: '64px 24px', textAlign: 'center' }}>
+      <div style={{ backgroundColor: 'var(--color-navbar)', padding: '64px 24px', textAlign: 'center' }}>
         <p style={{ color: '#e1c391', fontSize: '12px', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '12px', fontWeight: '600' }}>
           Explore
         </p>
@@ -80,162 +71,62 @@ export default function PropertiesPage() {
         </p>
       </div>
 
-      <div className="content-shell-lg" style={{ padding: '48px 0 72px' }}>
-      <div className="responsive-grid-2col">
+      <div className="content-shell-lg" style={{ padding: '48px 24px 72px' }}>
+        
+        {/* Filters Button */}
+        <div style={{ marginBottom: '28px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => setFiltersOpen(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '12px 20px',
+              border: '1px solid #e0d9c0',
+              borderRadius: '8px',
+              backgroundColor: '#ffffff',
+              color: '#1a1a1a',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 4a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v2.586a1 1 0 0 1-.293.707l-6.414 6.414a1 1 0 0 0-.293.707V17l-4 4v-6.586a1 1 0 0 0-.293-.707L3.293 7.293A1 1 0 0 1 3 6.586V4z" />
+            </svg>
+            Filters
+          </button>
+          <p style={{ color: '#555', fontSize: '14px' }}>
+            <strong>{filtered.length}</strong> properties
+          </p>
+        </div>
 
-        {/* Filter Sidebar */}
-        <aside className="sticky-desktop" style={{
-          backgroundColor: '#ffffff',
-          padding: '32px 24px',
-          border: '1px solid #e0d9c0',
-          borderRadius: '12px',
-        }}>
-
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-            <h3 style={{ fontSize: '20px', fontWeight: '700', color: '#1a1a1a' }}>Filters</h3>
-            <button onClick={resetFilters} style={{ background: 'none', border: 'none', color: '#e1c391', fontSize: '13px', cursor: 'pointer', fontWeight: '600' }}>
-              Reset All
-            </button>
-          </div>
-
-          {/* Location */}
-          <div style={{ marginBottom: '28px' }}>
-            <label style={labelStyle}>Destination</label>
-            <input
-              type="text"
-              placeholder="City or State..."
-              value={location}
-              onChange={e => setLocation(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                border: '1px solid #e0d9c0',
-                borderRadius: '8px',
-                fontSize: '14px',
-                color: '#1a1a1a',
-                outline: 'none',
-                backgroundColor: '#ffffff',
-                boxSizing: 'border-box' as const,
-              }}
-            />
-          </div>
-
-          <div style={{ height: '1px', backgroundColor: '#e0d9c0', marginBottom: '28px' }} />
-
-          {/* Price */}
-          <div style={{ marginBottom: '28px' }}>
-            <label style={labelStyle}>Price Per Night</label>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-              <span style={{ fontSize: '14px', color: '#1a1a1a', fontWeight: '600' }}>₹{minPrice.toLocaleString('en-IN')}</span>
-              <span style={{ fontSize: '14px', color: '#1a1a1a', fontWeight: '600' }}>₹{maxPrice.toLocaleString('en-IN')}</span>
-            </div>
-            <input type="range" min={0} max={20000} step={500} value={maxPrice} onChange={e => setMaxPrice(Number(e.target.value))} style={{ width: '100%', accentColor: '#e1c391' }} />
-          </div>
-
-          <div style={{ height: '1px', backgroundColor: '#e0d9c0', marginBottom: '28px' }} />
-
-          {/* Bedrooms */}
-          <div style={{ marginBottom: '28px' }}>
-            <label style={labelStyle}>Minimum Bedrooms</label>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {[0, 1, 2, 3, 4, 5].map(num => (
-                <button
-                  key={num}
-                  onClick={() => setBedrooms(num)}
-                  style={{
-                    padding: '8px 14px',
-                    border: `1px solid ${bedrooms === num ? '#e1c391' : '#e0d9c0'}`,
-                    borderRadius: '8px',
-                    backgroundColor: bedrooms === num ? '#e1c391' : 'transparent',
-                    color: bedrooms === num ? '#1a1a1a' : '#555',
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                    fontWeight: bedrooms === num ? '700' : '400',
-                    transition: 'all 0.2s ease',
-                  }}
-                >
-                  {num === 0 ? 'Any' : `${num}+`}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ height: '1px', backgroundColor: '#e0d9c0', marginBottom: '28px' }} />
-
-          {/* Bathroom Type */}
-          <div style={{ marginBottom: '28px' }}>
-            <label style={labelStyle}>Bathroom Type</label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {bathroomOptions.map(option => (
-                <button
-                  key={option.value}
-                  onClick={() => setBathroomType(option.value)}
-                  style={{
-                    padding: '10px 14px',
-                    border: `1px solid ${bathroomType === option.value ? '#e1c391' : '#e0d9c0'}`,
-                    borderRadius: '8px',
-                    backgroundColor: bathroomType === option.value ? '#e1c391' : 'transparent',
-                    color: bathroomType === option.value ? '#1a1a1a' : '#555',
-                    fontSize: '13px',
-                    cursor: 'pointer',
-                    fontWeight: bathroomType === option.value ? '700' : '400',
-                    textAlign: 'left' as const,
-                    transition: 'all 0.2s ease',
-                  }}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ height: '1px', backgroundColor: '#e0d9c0', marginBottom: '28px' }} />
-
-          {/* Pets */}
-          <div style={{ marginBottom: '28px' }}>
-            <label style={labelStyle}>Pet Friendly</label>
-            <button
-              onClick={() => setPetsOnly(!petsOnly)}
-              style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-            >
-              <div style={{ width: '44px', height: '24px', backgroundColor: petsOnly ? '#e1c391' : '#e0d9c0', borderRadius: '12px', position: 'relative', transition: 'background-color 0.3s ease' }}>
-                <div style={{ position: 'absolute', top: '3px', left: petsOnly ? '23px' : '3px', width: '18px', height: '18px', backgroundColor: '#ffffff', borderRadius: '50%', transition: 'left 0.3s ease' }} />
-              </div>
-              <span style={{ fontSize: '14px', color: '#1a1a1a', fontWeight: '500' }}>Pets Allowed Only</span>
-            </button>
-          </div>
-        </aside>
-
-        {/* Main Content */}
+        {/* Main Grid */}
         <div style={{ minWidth: 0 }}>
 
           {/* Sort Bar */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px', flexWrap: 'wrap', gap: '12px' }}>
-            <p style={{ color: '#555', fontSize: '15px' }}>
-              Showing <strong>{filtered.length}</strong> properties
-            </p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <label style={{ fontSize: '12px', color: '#888', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: '600' }}>Sort By</label>
-              <select
-                value={sortBy}
-                onChange={e => setSortBy(e.target.value)}
-                style={{
-                  padding: '10px 16px',
-                  border: '1px solid #e0d9c0',
-                  borderRadius: '8px',
-                  backgroundColor: '#ffffff',
-                  fontSize: '14px',
-                  color: '#1a1a1a',
-                  outline: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                <option value="rating">Highest Rated</option>
-                <option value="price_low">Price: Low to High</option>
-                <option value="price_high">Price: High to Low</option>
-                <option value="reviews">Most Reviewed</option>
-              </select>
-            </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '28px', gap: '12px' }}>
+            <label style={{ fontSize: '12px', color: '#888', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: '600' }}>Sort By</label>
+            <select
+              value={sortBy}
+              onChange={e => setSortBy(e.target.value)}
+              style={{
+                padding: '10px 16px',
+                border: '1px solid #e0d9c0',
+                borderRadius: '8px',
+                backgroundColor: '#ffffff',
+                fontSize: '14px',
+                color: '#1a1a1a',
+                outline: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              <option value="rating">Highest Rated</option>
+              <option value="price_low">Price: Low to High</option>
+              <option value="price_high">Price: High to Low</option>
+              <option value="reviews">Most Reviewed</option>
+            </select>
           </div>
 
           {/* Grid */}
@@ -277,7 +168,250 @@ export default function PropertiesPage() {
           )}
         </div>
       </div>
-      </div>
+
+      {/* Airbnb-Style Filter Modal */}
+      {filtersOpen && (
+        <>
+          {/* Overlay */}
+          <div
+            onClick={() => setFiltersOpen(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              zIndex: 40,
+              animation: 'fadeIn 0.3s ease',
+            }}
+          />
+
+          {/* Filter Drawer */}
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              right: 0,
+              bottom: 0,
+              width: '100%',
+              maxWidth: '480px',
+              backgroundColor: '#ffffff',
+              zIndex: 50,
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '-4px 0 16px rgba(0,0,0,0.15)',
+              animation: 'slideIn 0.3s ease',
+            }}
+            className="md:max-w-[480px]"
+          >
+            {/* Header */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '24px',
+              borderBottom: '1px solid #e0d9c0',
+              flexShrink: 0,
+            }}>
+              <h2 style={{ fontSize: '24px', fontWeight: '800', color: '#1a1a1a' }}>Filters</h2>
+              <button
+                onClick={() => setFiltersOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '28px',
+                  color: '#1a1a1a',
+                  cursor: 'pointer',
+                  padding: '0',
+                  lineHeight: '1',
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Filter Content */}
+            <div style={{
+              flex: 1,
+              overflowY: 'auto',
+              padding: '24px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '28px',
+            }}>
+              
+              {/* Location */}
+              <div>
+                <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: '#888', display: 'block', marginBottom: '12px', fontWeight: '600' }}>Destination</label>
+                <input
+                  type="text"
+                  placeholder="City or State..."
+                  value={location}
+                  onChange={e => setLocation(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    border: '1px solid #e0d9c0',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    color: '#1a1a1a',
+                    outline: 'none',
+                    backgroundColor: '#ffffff',
+                    boxSizing: 'border-box' as const,
+                  }}
+                />
+              </div>
+
+              <div style={{ height: '1px', backgroundColor: '#e0d9c0' }} />
+
+              {/* Price */}
+              <div>
+                <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: '#888', display: 'block', marginBottom: '12px', fontWeight: '600' }}>Price Per Night</label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <span style={{ fontSize: '14px', color: '#1a1a1a', fontWeight: '600' }}>₹{minPrice.toLocaleString('en-IN')}</span>
+                  <span style={{ fontSize: '14px', color: '#1a1a1a', fontWeight: '600' }}>₹{maxPrice.toLocaleString('en-IN')}</span>
+                </div>
+                <input type="range" min={0} max={20000} step={500} value={maxPrice} onChange={e => setMaxPrice(Number(e.target.value))} style={{ width: '100%', accentColor: '#e1c391' }} />
+              </div>
+
+              <div style={{ height: '1px', backgroundColor: '#e0d9c0' }} />
+
+              {/* Bedrooms */}
+              <div>
+                <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: '#888', display: 'block', marginBottom: '12px', fontWeight: '600' }}>Minimum Bedrooms</label>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {[0, 1, 2, 3, 4, 5].map(num => (
+                    <button
+                      key={num}
+                      onClick={() => setBedrooms(num)}
+                      style={{
+                        padding: '10px 14px',
+                        border: `1px solid ${bedrooms === num ? '#e1c391' : '#e0d9c0'}`,
+                        borderRadius: '8px',
+                        backgroundColor: bedrooms === num ? '#e1c391' : 'transparent',
+                        color: bedrooms === num ? '#1a1a1a' : '#555',
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        fontWeight: bedrooms === num ? '700' : '400',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      {num === 0 ? 'Any' : `${num}+`}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ height: '1px', backgroundColor: '#e0d9c0' }} />
+
+              {/* Bathroom Type */}
+              <div>
+                <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: '#888', display: 'block', marginBottom: '12px', fontWeight: '600' }}>Bathroom Type</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {bathroomOptions.map(option => (
+                    <button
+                      key={option.value}
+                      onClick={() => setBathroomType(option.value)}
+                      style={{
+                        padding: '10px 14px',
+                        border: `1px solid ${bathroomType === option.value ? '#e1c391' : '#e0d9c0'}`,
+                        borderRadius: '8px',
+                        backgroundColor: bathroomType === option.value ? '#e1c391' : 'transparent',
+                        color: bathroomType === option.value ? '#1a1a1a' : '#555',
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        fontWeight: bathroomType === option.value ? '700' : '400',
+                        textAlign: 'left' as const,
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ height: '1px', backgroundColor: '#e0d9c0' }} />
+
+              {/* Pets */}
+              <div>
+                <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: '#888', display: 'block', marginBottom: '12px', fontWeight: '600' }}>Pet Friendly</label>
+                <button
+                  onClick={() => setPetsOnly(!petsOnly)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                >
+                  <div style={{ width: '44px', height: '24px', backgroundColor: petsOnly ? '#e1c391' : '#e0d9c0', borderRadius: '12px', position: 'relative', transition: 'background-color 0.3s ease' }}>
+                    <div style={{ position: 'absolute', top: '3px', left: petsOnly ? '23px' : '3px', width: '18px', height: '18px', backgroundColor: '#ffffff', borderRadius: '50%', transition: 'left 0.3s ease' }} />
+                  </div>
+                  <span style={{ fontSize: '14px', color: '#1a1a1a', fontWeight: '500' }}>Pets Allowed Only</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div style={{
+              padding: '24px',
+              borderTop: '1px solid #e0d9c0',
+              display: 'flex',
+              gap: '12px',
+              flexShrink: 0,
+            }}>
+              <button
+                onClick={resetFilters}
+                style={{
+                  flex: 1,
+                  padding: '14px 20px',
+                  border: '1px solid #e0d9c0',
+                  borderRadius: '8px',
+                  backgroundColor: '#ffffff',
+                  color: '#1a1a1a',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                Reset
+              </button>
+              <button
+                onClick={() => setFiltersOpen(false)}
+                style={{
+                  flex: 1,
+                  padding: '14px 20px',
+                  border: 'none',
+                  borderRadius: '8px',
+                  backgroundColor: '#e1c391',
+                  color: '#1a1a1a',
+                  fontSize: '14px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  transition: 'opacity 0.2s ease',
+                }}
+              >
+                Show Results
+              </button>
+            </div>
+
+            {/* CSS Animations */}
+            <style>{`
+              @keyframes slideIn {
+                from {
+                  transform: translateX(100%);
+                }
+                to {
+                  transform: translateX(0);
+                }
+              }
+              @keyframes fadeIn {
+                from {
+                  opacity: 0;
+                }
+                to {
+                  opacity: 1;
+                }
+              }
+            `}</style>
+          </div>
+        </>
+      )}
     </div>
   )
 }

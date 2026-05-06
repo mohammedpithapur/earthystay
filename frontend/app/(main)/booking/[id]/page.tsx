@@ -94,7 +94,7 @@ export default function BookingPage() {
     <div className="page-shell" style={{ backgroundColor: '#ffffff' }}>
 
       {/* Header */}
-      <div style={{ backgroundColor: '#2c2c2c', padding: '40px 24px', textAlign: 'center' }}>
+      <div style={{ backgroundColor: 'var(--color-navbar)', padding: '40px 24px', textAlign: 'center' }}>
         <p style={{ color: '#e1c391', fontSize: '12px', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '8px', fontWeight: '600' }}>
           Almost There
         </p>
@@ -158,7 +158,7 @@ export default function BookingPage() {
                 alt={property.name}
                 width={120}
                 height={90}
-                style={{ objectFit: 'cover', flexShrink: 0, borderRadius: '8px' }}
+                style={{ width: '120px', height: '90px', objectFit: 'cover', flexShrink: 0, borderRadius: '8px' }}
               />
               <div style={{ flex: 1 }}>
                 <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1a1a1a', marginBottom: '4px' }}>{property.name}</h3>

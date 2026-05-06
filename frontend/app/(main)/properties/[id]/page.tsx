@@ -110,11 +110,11 @@ export default function PropertyDetailPage() {
       </div>
 
       {/* Main Content */}
-      <div className="content-shell" style={{ padding: '48px 0 72px' }}>
-      <div className="responsive-grid-detail">
+      <div className="content-shell-lg" style={{ padding: '48px 24px 72px' }}>
+      <div className="responsive-grid-detail md:grid-cols-2">
 
         {/* Left Column */}
-        <div>
+        <div style={{ minWidth: 0 }}>
 
           {/* Badges */}
           <div style={{ display: 'flex', gap: '10px', marginBottom: '12px', flexWrap: 'wrap' }}>
@@ -165,30 +165,62 @@ export default function PropertyDetailPage() {
             </div>
           </div>
 
-          {/* Tabs */}
-          <div style={{ display: 'flex', gap: '0', marginBottom: '32px', borderBottom: '1px solid #e0d9c0', overflowX: 'auto' }}>
-            {tabs.map(tab => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                style={{
-                  padding: '14px 20px',
-                  border: 'none',
-                  borderBottom: activeTab === tab ? '2px solid #e1c391' : '2px solid transparent',
-                  backgroundColor: 'transparent',
-                  color: activeTab === tab ? '#e1c391' : '#888',
-                  fontSize: '13px',
-                  letterSpacing: '1px',
-                  textTransform: 'uppercase',
-                  cursor: 'pointer',
-                  fontWeight: activeTab === tab ? '700' : '500',
-                  whiteSpace: 'nowrap',
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                {tab}
-              </button>
-            ))}
+          {/* Tabs - Vertical on Mobile, Horizontal on Desktop */}
+          <div className="flex md:flex-row flex-col" style={{ gap: '0', marginBottom: '32px', borderBottom: 'none' }}>
+            {/* Mobile: Vertical tabs with left border */}
+            <div className="md:hidden flex flex-col w-full" style={{ borderRight: '1px solid #e0d9c0' }}>
+              {tabs.map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  style={{
+                    padding: '16px 20px',
+                    border: 'none',
+                    borderLeft: activeTab === tab ? '3px solid #e1c391' : '3px solid transparent',
+                    borderRight: 'none',
+                    borderBottom: '1px solid #e0d9c0',
+                    backgroundColor: activeTab === tab ? '#f9f6f0' : 'transparent',
+                    color: activeTab === tab ? '#e1c391' : '#888',
+                    fontSize: '13px',
+                    letterSpacing: '1px',
+                    textTransform: 'uppercase',
+                    cursor: 'pointer',
+                    fontWeight: activeTab === tab ? '700' : '500',
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.2s ease',
+                    textAlign: 'left' as const,
+                  }}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
+
+            {/* Desktop: Horizontal tabs with bottom border */}
+            <div className="hidden md:flex md:w-full" style={{ borderBottom: '1px solid #e0d9c0', overflowX: 'auto', scrollBehavior: 'smooth' }}>
+              {tabs.map(tab => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  style={{
+                    padding: '14px 20px',
+                    border: 'none',
+                    borderBottom: activeTab === tab ? '2px solid #e1c391' : '2px solid transparent',
+                    backgroundColor: 'transparent',
+                    color: activeTab === tab ? '#e1c391' : '#888',
+                    fontSize: '13px',
+                    letterSpacing: '1px',
+                    textTransform: 'uppercase',
+                    cursor: 'pointer',
+                    fontWeight: activeTab === tab ? '700' : '500',
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  {tab}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Overview */}
@@ -377,7 +409,7 @@ export default function PropertyDetailPage() {
         </div>
 
         {/* Booking Widget */}
-        <div className="sticky-desktop" style={{ backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '12px', padding: '32px' }}>
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '12px', padding: '32px' }} className="sticky-desktop md:sticky">
           <div style={{ marginBottom: '24px' }}>
             <span style={{ fontSize: '32px', fontWeight: '800', color: '#1a1a1a' }}>&#8377;{property.price_per_night.toLocaleString('en-IN')}</span>
             <span style={{ fontSize: '14px', color: '#888', marginLeft: '6px' }}>/ night</span>

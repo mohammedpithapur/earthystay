@@ -42,6 +42,77 @@ export default function AdminPage() {
 
   const getProperty = (id: string) => dummyProperties.find(p => p.id === id)
 
+  const renderBookingCard = (booking: typeof dummyBookings[number], showActions = false) => {
+    const property = getProperty(booking.property_id)
+    if (!property) return null
+
+    return (
+      <div key={booking.id} style={{ backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '14px', padding: '18px', boxShadow: '0 8px 24px rgba(26,26,26,0.04)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '14px' }}>
+          <div style={{ minWidth: 0 }}>
+            <p style={{ fontSize: '10px', letterSpacing: '1.4px', textTransform: 'uppercase', color: '#888', fontWeight: '700', marginBottom: '4px' }}>Booking Ref</p>
+            <p style={{ fontSize: '14px', color: '#e1c391', fontWeight: '800' }}>{booking.booking_ref}</p>
+          </div>
+          <span style={{ backgroundColor: statusColors[booking.status]?.bg, color: statusColors[booking.status]?.color, padding: '5px 10px', fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', borderRadius: '999px', letterSpacing: '0.6px', flexShrink: 0 }}>
+            {booking.status}
+          </span>
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px' }}>
+          <Image
+            src={property.images.find(i => i.is_primary)?.image_url || property.images[0]?.image_url}
+            alt={property.name}
+            width={72}
+            height={72}
+            style={{ width: '72px', height: '72px', objectFit: 'cover', flexShrink: 0, borderRadius: '12px' }}
+          />
+          <div style={{ minWidth: 0 }}>
+            <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#1a1a1a', marginBottom: '4px' }}>{property.name}</h3>
+            <p style={{ fontSize: '13px', color: '#888' }}>{booking.guest_name}</p>
+            <p style={{ fontSize: '12px', color: '#888' }}>{property.city}, {property.state}</p>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '10px', marginBottom: '14px' }}>
+          {[
+            { label: 'Check In', value: formatDate(booking.check_in) },
+            { label: 'Check Out', value: formatDate(booking.check_out) },
+            { label: 'Guests', value: `${booking.guests}${booking.num_pets > 0 ? ` + ${booking.num_pets} pet${booking.num_pets > 1 ? 's' : ''}` : ''}` },
+            { label: 'Amount', value: `₹${booking.total_price.toLocaleString('en-IN')}` },
+          ].map(detail => (
+            <div key={detail.label} style={{ backgroundColor: '#fafaf8', border: '1px solid #f0ead8', borderRadius: '10px', padding: '10px 12px' }}>
+              <p style={{ fontSize: '10px', letterSpacing: '1.2px', textTransform: 'uppercase', color: '#888', fontWeight: '700', marginBottom: '4px' }}>{detail.label}</p>
+              <p style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '700', lineHeight: '1.35' }}>{detail.value}</p>
+            </div>
+          ))}
+        </div>
+
+        {showActions && (
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {booking.status === 'pending' && (
+              <>
+                <button onClick={() => updateBookingStatus(booking.id, 'confirmed')} style={{ padding: '9px 12px', backgroundColor: '#E8F5E9', color: '#2E7D32', border: 'none', fontSize: '12px', cursor: 'pointer', fontWeight: '800', borderRadius: '8px' }}>
+                  Confirm
+                </button>
+                <button onClick={() => updateBookingStatus(booking.id, 'cancelled')} style={{ padding: '9px 12px', backgroundColor: '#FFEBEE', color: '#C62828', border: 'none', fontSize: '12px', cursor: 'pointer', fontWeight: '800', borderRadius: '8px' }}>
+                  Cancel
+                </button>
+              </>
+            )}
+            {booking.status === 'confirmed' && (
+              <button onClick={() => updateBookingStatus(booking.id, 'completed')} style={{ padding: '9px 12px', backgroundColor: '#E3F2FD', color: '#1565C0', border: 'none', fontSize: '12px', cursor: 'pointer', fontWeight: '800', borderRadius: '8px' }}>
+                Complete
+              </button>
+            )}
+            <button style={{ padding: '9px 12px', backgroundColor: '#f5f2eb', color: '#555', border: '1px solid #e0d9c0', fontSize: '12px', cursor: 'pointer', borderRadius: '8px', fontWeight: '700' }}>
+              Voucher
+            </button>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   const tabs = [
     { id: 'overview', label: 'Overview' },
     { id: 'bookings', label: 'Bookings' },
@@ -55,7 +126,7 @@ export default function AdminPage() {
     <div style={{ backgroundColor: '#ffffff', minHeight: '100vh' }}>
 
       {/* Header */}
-      <div style={{ backgroundColor: '#2c2c2c', padding: '32px 24px' }}>
+      <div style={{ backgroundColor: 'var(--color-navbar)', padding: '32px 24px' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div>
             <p style={{ color: '#e1c391', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '8px', fontWeight: '600' }}>Admin Panel</p>
@@ -64,7 +135,7 @@ export default function AdminPage() {
             </h1>
           </div>
           <div style={{ display: 'flex', gap: '12px' }}>
-            <Link href="/" style={{ border: '1px solid #555', color: '#FAF8F5', padding: '10px 20px', fontSize: '13px', textDecoration: 'none', letterSpacing: '1px', borderRadius: '8px', fontWeight: '600' }}>
+            <Link href="/" style={{ border: '1px solid var(--color-navbar-border)', color: 'var(--color-navbar-text)', padding: '10px 20px', fontSize: '13px', textDecoration: 'none', letterSpacing: '1px', borderRadius: '8px', fontWeight: '600' }}>
               View Site
             </Link>
             <button style={{ backgroundColor: '#e1c391', color: '#1a1a1a', border: 'none', padding: '10px 20px', fontSize: '13px', fontWeight: '700', letterSpacing: '1px', cursor: 'pointer', borderRadius: '8px' }}>
@@ -124,15 +195,18 @@ export default function AdminPage() {
             </div>
 
             {/* Recent Bookings */}
-            <div style={{ ...cardStyle, marginBottom: '16px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#1a1a1a' }}>Recent Bookings</h2>
+            <div style={{ ...cardStyle, marginBottom: '16px', boxShadow: '0 8px 24px rgba(26,26,26,0.04)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '20px', gap: '12px', flexWrap: 'wrap' }}>
+                <div>
+                  <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#1a1a1a', marginBottom: '4px' }}>Recent Bookings</h2>
+                  <p style={{ fontSize: '13px', color: '#888' }}>Latest confirmed and pending stays at a glance</p>
+                </div>
                 <button onClick={() => setActiveTab('bookings')} style={{ background: 'none', border: 'none', color: '#e1c391', fontSize: '13px', cursor: 'pointer', fontWeight: '700' }}>
                   View All →
                 </button>
               </div>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <div className="hidden md:block" style={{ overflowX: 'auto' }}>
+                <table className="responsive-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid #e0d9c0' }}>
                       {['Ref', 'Guest', 'Property', 'Dates', 'Amount', 'Status'].map(h => (
@@ -145,18 +219,21 @@ export default function AdminPage() {
                       const property = getProperty(booking.property_id)
                       return (
                         <tr key={booking.id} style={{ borderBottom: '1px solid #f5f2eb', backgroundColor: i % 2 === 0 ? '#ffffff' : '#fafaf8' }}>
-                          <td style={{ padding: '14px 16px', fontSize: '13px', color: '#e1c391', fontWeight: '700' }}>{booking.booking_ref}</td>
+                          <td data-label="Ref" style={{ padding: '14px 16px', fontSize: '13px', color: '#e1c391', fontWeight: '700' }}>{booking.booking_ref}</td>
                           <td style={{ padding: '14px 16px' }}>
+                            <div className="responsive-table-label">Guest</div>
                             <p style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '700', marginBottom: '2px' }}>{booking.guest_name}</p>
                             <p style={{ fontSize: '12px', color: '#888' }}>{booking.guest_email}</p>
                           </td>
-                          <td style={{ padding: '14px 16px', fontSize: '13px', color: '#555' }}>{property?.name}</td>
+                          <td data-label="Property" style={{ padding: '14px 16px', fontSize: '13px', color: '#555' }}>{property?.name}</td>
                           <td style={{ padding: '14px 16px' }}>
+                            <div className="responsive-table-label">Dates</div>
                             <p style={{ fontSize: '12px', color: '#555' }}>{formatDate(booking.check_in)}</p>
                             <p style={{ fontSize: '12px', color: '#888' }}>to {formatDate(booking.check_out)}</p>
                           </td>
-                          <td style={{ padding: '14px 16px', fontSize: '14px', color: '#1a1a1a', fontWeight: '700' }}>&#8377;{booking.total_price.toLocaleString('en-IN')}</td>
+                          <td data-label="Amount" style={{ padding: '14px 16px', fontSize: '14px', color: '#1a1a1a', fontWeight: '700' }}>&#8377;{booking.total_price.toLocaleString('en-IN')}</td>
                           <td style={{ padding: '14px 16px' }}>
+                            <div className="responsive-table-label">Status</div>
                             <span style={{ backgroundColor: statusColors[booking.status]?.bg, color: statusColors[booking.status]?.color, padding: '4px 10px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', borderRadius: '6px' }}>
                               {booking.status}
                             </span>
@@ -166,6 +243,10 @@ export default function AdminPage() {
                     })}
                   </tbody>
                 </table>
+              </div>
+
+              <div className="md:hidden" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {bookings.slice(0, 4).map(booking => renderBookingCard(booking))}
               </div>
             </div>
 
@@ -180,7 +261,7 @@ export default function AdminPage() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
                 {dummyProperties.slice(0, 3).map(property => (
                   <div key={property.id} style={{ display: 'flex', gap: '12px', alignItems: 'center', padding: '16px', border: '1px solid #e0d9c0', borderRadius: '10px' }}>
-                    <Image src={property.images.find(i => i.is_primary)?.image_url || property.images[0]?.image_url} alt={property.name} width={64} height={48} style={{ objectFit: 'cover', flexShrink: 0, borderRadius: '6px' }} />
+                    <Image src={property.images.find(i => i.is_primary)?.image_url || property.images[0]?.image_url} alt={property.name} width={64} height={48} style={{ width: '64px', height: '48px', objectFit: 'cover', flexShrink: 0, borderRadius: '6px' }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontSize: '14px', color: '#1a1a1a', fontWeight: '700', marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{property.name}</p>
                       <p style={{ fontSize: '12px', color: '#888' }}>&#8377;{property.price_per_night.toLocaleString('en-IN')}/night · &#9733;{property.avg_rating}</p>
@@ -214,10 +295,10 @@ export default function AdminPage() {
             </div>
 
             <div style={{ backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '12px', overflow: 'hidden' }}>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <div className="hidden md:block" style={{ overflowX: 'auto' }}>
+                <table className="responsive-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
-                    <tr style={{ backgroundColor: '#2c2c2c' }}>
+                    <tr style={{ backgroundColor: 'var(--color-navbar)' }}>
                       {['Ref', 'Guest', 'Property', 'Check In', 'Check Out', 'Guests', 'Amount', 'Status', 'Actions'].map(h => (
                         <th key={h} style={{ padding: '14px 16px', textAlign: 'left', fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#e1c391', fontWeight: '700', whiteSpace: 'nowrap' }}>{h}</th>
                       ))}
@@ -228,24 +309,25 @@ export default function AdminPage() {
                       const property = getProperty(booking.property_id)
                       return (
                         <tr key={booking.id} style={{ borderBottom: '1px solid #f5f2eb', backgroundColor: i % 2 === 0 ? '#ffffff' : '#fafaf8' }}>
-                          <td style={{ padding: '14px 16px', fontSize: '13px', color: '#e1c391', fontWeight: '700', whiteSpace: 'nowrap' }}>{booking.booking_ref}</td>
+                          <td data-label="Ref" style={{ padding: '14px 16px', fontSize: '13px', color: '#e1c391', fontWeight: '700', whiteSpace: 'nowrap' }}>{booking.booking_ref}</td>
                           <td style={{ padding: '14px 16px' }}>
+                            <div className="responsive-table-label">Guest</div>
                             <p style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '700', marginBottom: '2px', whiteSpace: 'nowrap' }}>{booking.guest_name}</p>
                             <p style={{ fontSize: '11px', color: '#888' }}>{booking.guest_phone}</p>
                           </td>
-                          <td style={{ padding: '14px 16px', fontSize: '13px', color: '#555', whiteSpace: 'nowrap' }}>{property?.city}</td>
-                          <td style={{ padding: '14px 16px', fontSize: '13px', color: '#555', whiteSpace: 'nowrap' }}>{formatDate(booking.check_in)}</td>
-                          <td style={{ padding: '14px 16px', fontSize: '13px', color: '#555', whiteSpace: 'nowrap' }}>{formatDate(booking.check_out)}</td>
-                          <td style={{ padding: '14px 16px', fontSize: '13px', color: '#555' }}>
+                          <td data-label="Property" style={{ padding: '14px 16px', fontSize: '13px', color: '#555', whiteSpace: 'nowrap' }}>{property?.city}</td>
+                          <td data-label="Check In" style={{ padding: '14px 16px', fontSize: '13px', color: '#555', whiteSpace: 'nowrap' }}>{formatDate(booking.check_in)}</td>
+                          <td data-label="Check Out" style={{ padding: '14px 16px', fontSize: '13px', color: '#555', whiteSpace: 'nowrap' }}>{formatDate(booking.check_out)}</td>
+                          <td data-label="Guests" style={{ padding: '14px 16px', fontSize: '13px', color: '#555' }}>
                             {booking.guests}{booking.num_pets > 0 ? ` + ${booking.num_pets} pet${booking.num_pets > 1 ? 's' : ''}` : ''}
                           </td>
-                          <td style={{ padding: '14px 16px', fontSize: '13px', color: '#1a1a1a', fontWeight: '700', whiteSpace: 'nowrap' }}>&#8377;{booking.total_price.toLocaleString('en-IN')}</td>
-                          <td style={{ padding: '14px 16px' }}>
+                          <td data-label="Amount" style={{ padding: '14px 16px', fontSize: '13px', color: '#1a1a1a', fontWeight: '700', whiteSpace: 'nowrap' }}>&#8377;{booking.total_price.toLocaleString('en-IN')}</td>
+                          <td data-label="Status" style={{ padding: '14px 16px' }}>
                             <span style={{ backgroundColor: statusColors[booking.status]?.bg, color: statusColors[booking.status]?.color, padding: '4px 10px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', whiteSpace: 'nowrap', borderRadius: '6px' }}>
                               {booking.status}
                             </span>
                           </td>
-                          <td style={{ padding: '14px 16px' }}>
+                          <td data-label="Actions" style={{ padding: '14px 16px' }}>
                             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                               {booking.status === 'pending' && (
                                 <>
@@ -274,6 +356,10 @@ export default function AdminPage() {
                 </table>
               </div>
 
+              <div className="md:hidden" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {filteredBookings.map(booking => renderBookingCard(booking, true))}
+              </div>
+
               {filteredBookings.length === 0 && (
                 <div style={{ textAlign: 'center', padding: '48px', color: '#888' }}>
                   No bookings found matching your search
@@ -295,7 +381,7 @@ export default function AdminPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {dummyProperties.map(property => (
                 <div key={property.id} style={{ backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '12px', padding: '24px', display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <Image src={property.images.find(i => i.is_primary)?.image_url || property.images[0]?.image_url} alt={property.name} width={120} height={90} style={{ objectFit: 'cover', flexShrink: 0, borderRadius: '8px' }} />
+                  <Image src={property.images.find(i => i.is_primary)?.image_url || property.images[0]?.image_url} alt={property.name} width={120} height={90} style={{ width: '120px', height: '90px', objectFit: 'cover', flexShrink: 0, borderRadius: '8px' }} />
                   <div style={{ flex: 1, minWidth: '200px' }}>
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap' }}>
                       <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1a1a1a' }}>{property.name}</h3>
@@ -347,25 +433,28 @@ export default function AdminPage() {
             <div style={{ ...cardStyle, marginBottom: '24px' }}>
               <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#1a1a1a', marginBottom: '8px' }}>iCal Calendar Sync</h2>
               <div style={{ width: '40px', height: '2px', backgroundColor: '#e1c391', marginBottom: '16px' }} />
-              <p style={{ color: '#555', fontSize: '14px', lineHeight: '1.7' }}>
+              <p style={{ color: '#555', fontSize: '14px', lineHeight: '1.7', maxWidth: '760px' }}>
                 Keep your availability in sync across all platforms. Import calendars from Airbnb or Booking.com to block those dates here automatically. Export your calendar link to paste into other platforms.
               </p>
             </div>
 
             {dummyProperties.map(property => (
-              <div key={property.id} style={{ ...cardStyle, marginBottom: '16px' }}>
-                <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '24px' }}>
-                  <Image src={property.images.find(i => i.is_primary)?.image_url || property.images[0]?.image_url} alt={property.name} width={60} height={45} style={{ objectFit: 'cover', borderRadius: '6px' }} />
-                  <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1a1a1a' }}>{property.name}</h3>
+              <div key={property.id} style={{ ...cardStyle, marginBottom: '16px', boxShadow: '0 8px 24px rgba(26,26,26,0.04)' }}>
+                <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap' }}>
+                  <Image src={property.images.find(i => i.is_primary)?.image_url || property.images[0]?.image_url} alt={property.name} width={60} height={45} style={{ width: '60px', height: '45px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0 }} />
+                  <div>
+                    <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#1a1a1a', marginBottom: '4px' }}>{property.name}</h3>
+                    <p style={{ fontSize: '13px', color: '#888' }}>{property.city}, {property.state}</p>
+                  </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
-                  <div style={{ padding: '20px', backgroundColor: '#f0f7f0', border: '1px solid #C8E6C9', borderRadius: '10px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+                  <div style={{ padding: '20px', backgroundColor: '#f0f7f0', border: '1px solid #C8E6C9', borderRadius: '12px' }}>
                     <h4 style={{ fontSize: '13px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#2E7D32', marginBottom: '8px', fontWeight: '700' }}>Export Calendar</h4>
                     <p style={{ fontSize: '13px', color: '#555', marginBottom: '12px', lineHeight: '1.5' }}>
                       Copy this link and paste it into Airbnb, Booking.com or any other platform to sync your availability.
                     </p>
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                       <input readOnly value={`https://earthystay.com/api/ical/export/${property.id}`} style={{ flex: 1, padding: '10px 12px', border: '1px solid #C8E6C9', borderRadius: '8px', fontSize: '12px', color: '#555', backgroundColor: '#ffffff', outline: 'none' }} />
                       <button onClick={() => navigator.clipboard.writeText(`https://earthystay.com/api/ical/export/${property.id}`)} style={{ padding: '10px 16px', backgroundColor: '#2E7D32', color: '#ffffff', border: 'none', fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: '700', borderRadius: '8px' }}>
                         Copy
@@ -373,12 +462,12 @@ export default function AdminPage() {
                     </div>
                   </div>
 
-                  <div style={{ padding: '20px', backgroundColor: '#E3F2FD', border: '1px solid #BBDEFB', borderRadius: '10px' }}>
+                  <div style={{ padding: '20px', backgroundColor: '#E3F2FD', border: '1px solid #BBDEFB', borderRadius: '12px' }}>
                     <h4 style={{ fontSize: '13px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#1565C0', marginBottom: '8px', fontWeight: '700' }}>Import Calendar</h4>
                     <p style={{ fontSize: '13px', color: '#555', marginBottom: '12px', lineHeight: '1.5' }}>
                       Paste a calendar link from Airbnb or Booking.com to automatically block those dates here.
                     </p>
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                       <input placeholder="Paste .ics URL here..." style={{ flex: 1, padding: '10px 12px', border: '1px solid #BBDEFB', borderRadius: '8px', fontSize: '12px', color: '#555', backgroundColor: '#ffffff', outline: 'none' }} />
                       <button style={{ padding: '10px 16px', backgroundColor: '#1565C0', color: '#ffffff', border: 'none', fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: '700', borderRadius: '8px' }}>
                         Sync
@@ -387,11 +476,11 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#f9f8f5', border: '1px solid #e0d9c0', borderRadius: '8px' }}>
+                <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#f9f8f5', border: '1px solid #e0d9c0', borderRadius: '12px' }}>
                   <p style={{ fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', marginBottom: '12px', fontWeight: '700' }}>Connected Calendars</p>
                   <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                     {['Airbnb', 'Booking.com'].map(platform => (
-                      <div key={platform} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 14px', backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '8px' }}>
+                      <div key={platform} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '999px', flexWrap: 'wrap' }}>
                         <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#2E7D32' }} />
                         <span style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500' }}>{platform}</span>
                         <span style={{ fontSize: '11px', color: '#888' }}>Last synced: Today</span>
