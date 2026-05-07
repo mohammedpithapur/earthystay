@@ -37,7 +37,7 @@ export default function Navbar() {
 
   return (
     <nav style={{ backgroundColor: 'var(--color-navbar)', position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, width: '100%' }}>
-      <div className="px-4 py-4 md:px-6 md:py-5" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', maxWidth: '1400px', margin: '0 auto', width: '100%', minHeight: '74px' }}>
+      <div className="px-5 py-4 md:px-6 md:py-5" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', maxWidth: '1400px', margin: '0 auto', width: '100%', minHeight: '74px', paddingInline: '16px' }}>
         <Link href="/" style={{ textDecoration: 'none' }}>
           <span style={{
             fontFamily: "'Figtree', sans-serif",

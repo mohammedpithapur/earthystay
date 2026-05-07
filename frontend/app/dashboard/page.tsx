@@ -66,7 +66,7 @@ export default function DashboardPage() {
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div>
             <p style={{ color: '#e1c391', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '8px', fontWeight: '600' }}>Welcome Back</p>
-            <h1 style={{ color: '#ffffff', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: '800' }}>
+            <h1 style={{ color: '#1a1a1a', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: '800' }}>
               Mohammed Pithapur
             </h1>
           </div>
@@ -172,7 +172,7 @@ export default function DashboardPage() {
                           style={{ width: '120px', height: '90px', objectFit: 'cover', flexShrink: 0, borderRadius: '8px' }}
                         />
 
-                        <div style={{ flex: 1, minWidth: '200px' }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
                             <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1a1a1a' }}>{property.name}</h3>
                             <span style={{ backgroundColor: statusColors[booking.status]?.bg, color: statusColors[booking.status]?.color, padding: '4px 12px', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', borderRadius: '6px' }}>
@@ -296,7 +296,7 @@ export default function DashboardPage() {
                 return (
                   <div key={booking.id} style={{ backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '12px', padding: '24px', display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
                     <Image src={property.images.find(i => i.is_primary)?.image_url || property.images[0]?.image_url} alt={property.name} width={100} height={75} style={{ width: '100px', height: '75px', objectFit: 'cover', flexShrink: 0, opacity: 0.8, borderRadius: '8px' }} />
-                    <div style={{ flex: 1, minWidth: '200px' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
                       <h3 style={{ fontSize: '17px', fontWeight: '700', color: '#1a1a1a', marginBottom: '4px' }}>{property.name}</h3>
                       <p style={{ fontSize: '13px', color: '#888', marginBottom: '8px' }}>
                         {formatDate(booking.check_in)} to {formatDate(booking.check_out)}

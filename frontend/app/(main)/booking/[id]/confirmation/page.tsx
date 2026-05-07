@@ -81,10 +81,10 @@ export default function ConfirmationPage() {
 
         {/* Actions */}
         <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-          <Link
-            href="/dashboard"
-            style={{
-              flex: 1,
+            <Link
+              href="/dashboard"
+              style={{
+              flex: '1 1 180px',
               backgroundColor: '#e1c391',
               color: '#1a1a1a',
               padding: '16px',
@@ -95,8 +95,7 @@ export default function ConfirmationPage() {
               textDecoration: 'none',
               textAlign: 'center',
               display: 'block',
-              borderRadius: '8px',
-              minWidth: '220px',
+              minWidth: 0,
             }}
           >
             View My Bookings
@@ -104,7 +103,7 @@ export default function ConfirmationPage() {
           <Link
             href="/properties"
             style={{
-              flex: 1,
+              flex: '1 1 180px',
               border: '2px solid #e1c391',
               color: '#1a1a1a',
               padding: '16px',
@@ -115,8 +114,7 @@ export default function ConfirmationPage() {
               textDecoration: 'none',
               textAlign: 'center',
               display: 'block',
-              borderRadius: '8px',
-              minWidth: '220px',
+              minWidth: 0,
             }}
           >
             Explore More

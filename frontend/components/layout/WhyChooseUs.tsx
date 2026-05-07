@@ -108,7 +108,7 @@ export default function WhyChooseUs() {
         </div>
 
         {/* Bottom Banner */}
-        <div style={{
+        <div className="why-cta-banner" style={{
           marginTop: '80px',
           border: '1px solid #b8ab8d',
           borderRadius: '12px',
@@ -141,6 +141,8 @@ export default function WhyChooseUs() {
               whiteSpace: 'nowrap',
               display: 'inline-block',
               borderRadius: '8px',
+              maxWidth: '100%',
+              boxSizing: 'border-box',
               transition: 'opacity 0.2s ease',
             }}
             onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.opacity = '0.85'}

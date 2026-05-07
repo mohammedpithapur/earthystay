@@ -130,7 +130,7 @@ export default function AdminPage() {
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div>
             <p style={{ color: '#e1c391', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '8px', fontWeight: '600' }}>Admin Panel</p>
-            <h1 style={{ color: '#ffffff', fontSize: 'clamp(22px, 3vw, 32px)', fontWeight: '800' }}>
+            <h1 style={{ color: '#1a1a1a', fontSize: 'clamp(22px, 3vw, 32px)', fontWeight: '800' }}>
               Earthy Stay Dashboard
             </h1>
           </div>
@@ -283,7 +283,7 @@ export default function AdminPage() {
                 placeholder="Search by guest name, email or booking ref..."
                 value={searchBooking}
                 onChange={e => setSearchBooking(e.target.value)}
-                style={{ flex: 1, minWidth: '250px', padding: '12px 16px', border: '1px solid #e0d9c0', borderRadius: '8px', fontSize: '14px', color: '#1a1a1a', outline: 'none', backgroundColor: '#ffffff' }}
+                style={{ flex: 1, minWidth: 0, padding: '12px 16px', border: '1px solid #e0d9c0', borderRadius: '8px', fontSize: '14px', color: '#1a1a1a', outline: 'none', backgroundColor: '#ffffff' }}
               />
               <select style={{ padding: '12px 16px', border: '1px solid #e0d9c0', borderRadius: '8px', fontSize: '14px', color: '#1a1a1a', outline: 'none', backgroundColor: '#ffffff', cursor: 'pointer' }}>
                 <option>All Statuses</option>
@@ -382,7 +382,7 @@ export default function AdminPage() {
               {dummyProperties.map(property => (
                 <div key={property.id} style={{ backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '12px', padding: '24px', display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
                   <Image src={property.images.find(i => i.is_primary)?.image_url || property.images[0]?.image_url} alt={property.name} width={120} height={90} style={{ width: '120px', height: '90px', objectFit: 'cover', flexShrink: 0, borderRadius: '8px' }} />
-                  <div style={{ flex: 1, minWidth: '200px' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap' }}>
                       <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1a1a1a' }}>{property.name}</h3>
                       <span style={{ backgroundColor: '#E8F5E9', color: '#2E7D32', padding: '3px 10px', fontSize: '11px', fontWeight: '700', borderRadius: '6px' }}>Published</span>

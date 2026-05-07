@@ -63,10 +63,10 @@ export default function PropertiesPage() {
         <p style={{ color: '#e1c391', fontSize: '12px', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '12px', fontWeight: '600' }}>
           Explore
         </p>
-        <h1 style={{ color: '#ffffff', fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: '800', marginBottom: '8px' }}>
+        <h1 style={{ color: '#1a1a1a', fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: '800', marginBottom: '8px' }}>
           Our Properties
         </h1>
-        <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '15px' }}>
+        <p style={{ color: 'rgba(26,26,26,0.72)', fontSize: '15px' }}>
           {filtered.length} properties found
         </p>
       </div>

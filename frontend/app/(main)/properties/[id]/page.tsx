@@ -74,7 +74,7 @@ export default function PropertyDetailPage() {
     <div className="page-shell" style={{ backgroundColor: '#ffffff' }}>
 
       {/* Photo Gallery */}
-      <div style={{ backgroundColor: '#1a1a1a', padding: '8px' }}>
+      <div style={{ backgroundColor: 'var(--color-navbar)', padding: '6px' }}>
         <div style={{ position: 'relative', minHeight: 'clamp(280px, 55vw, 500px)', overflow: 'hidden', marginBottom: '8px' }}>
           <Image
             src={property.images[activeImage]?.image_url}
@@ -94,16 +94,16 @@ export default function PropertyDetailPage() {
             </>
           )}
         </div>
-        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto' }}>
+        <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', padding: '4px 4px' }}>
           {property.images.map((img, i) => (
             <Image
               key={img.id}
               src={img.image_url}
               alt={`${property.name} ${i + 1}`}
               onClick={() => setActiveImage(i)}
-              width={120}
-              height={80}
-              style={{ objectFit: 'cover', cursor: 'pointer', flexShrink: 0, opacity: activeImage === i ? 1 : 0.5, border: activeImage === i ? '2px solid #e1c391' : '2px solid transparent', borderRadius: '6px', transition: 'opacity 0.2s ease' }}
+              width={72}
+              height={48}
+              style={{ objectFit: 'cover', cursor: 'pointer', flexShrink: 0, opacity: activeImage === i ? 1 : 0.7, border: activeImage === i ? '2px solid #e1c391' : '2px solid transparent', borderRadius: '6px', transition: 'opacity 0.15s ease' }}
             />
           ))}
         </div>
@@ -373,7 +373,7 @@ export default function PropertyDetailPage() {
                   <p style={{ color: '#e1c391', fontSize: '20px', marginBottom: '4px' }}>{'★'.repeat(Math.floor(property.avg_rating))}</p>
                   <p style={{ fontSize: '13px', color: '#888' }}>{property.review_count} reviews</p>
                 </div>
-                <div style={{ flex: 1, minWidth: '200px' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   {[5, 4, 3, 2, 1].map(star => (
                     <div key={star} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                       <span style={{ fontSize: '12px', color: '#888', width: '24px' }}>{star}★</span>
@@ -409,21 +409,21 @@ export default function PropertyDetailPage() {
         </div>
 
         {/* Booking Widget */}
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '12px', padding: '32px' }} className="sticky-desktop md:sticky">
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '12px', padding: 'clamp(20px, 5vw, 32px)' }} className="sticky-desktop md:sticky">
           <div style={{ marginBottom: '24px' }}>
             <span style={{ fontSize: '32px', fontWeight: '800', color: '#1a1a1a' }}>&#8377;{property.price_per_night.toLocaleString('en-IN')}</span>
             <span style={{ fontSize: '14px', color: '#888', marginLeft: '6px' }}>/ night</span>
           </div>
 
           <div style={{ border: '1px solid #e0d9c0', borderRadius: '8px', marginBottom: '12px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1px solid #e0d9c0' }}>
+            <div className="booking-date-grid" style={{ display: 'grid', borderBottom: '1px solid #e0d9c0' }}>
               <div style={{ padding: '12px 16px', borderRight: '1px solid #e0d9c0' }}>
                 <label style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Check In</label>
-                <input type="date" value={checkIn} min={new Date().toISOString().split('T')[0]} onChange={e => setCheckIn(e.target.value)} style={{ border: 'none', outline: 'none', fontSize: '13px', color: '#1a1a1a', width: '100%', backgroundColor: 'transparent' }} />
+                <input type="date" value={checkIn} min={new Date().toISOString().split('T')[0]} onChange={e => setCheckIn(e.target.value)} style={{ border: 'none', outline: 'none', fontSize: '13px', color: '#1a1a1a', width: '100%', minWidth: 0, backgroundColor: 'transparent' }} />
               </div>
               <div style={{ padding: '12px 16px' }}>
                 <label style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Check Out</label>
-                <input type="date" value={checkOut} min={checkIn || new Date().toISOString().split('T')[0]} onChange={e => setCheckOut(e.target.value)} style={{ border: 'none', outline: 'none', fontSize: '13px', color: '#1a1a1a', width: '100%', backgroundColor: 'transparent' }} />
+                <input type="date" value={checkOut} min={checkIn || new Date().toISOString().split('T')[0]} onChange={e => setCheckOut(e.target.value)} style={{ border: 'none', outline: 'none', fontSize: '13px', color: '#1a1a1a', width: '100%', minWidth: 0, backgroundColor: 'transparent' }} />
               </div>
             </div>
             <div style={{ padding: '12px 16px', borderBottom: '1px solid #e0d9c0' }}>

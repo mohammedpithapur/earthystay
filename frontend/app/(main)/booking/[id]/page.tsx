@@ -98,7 +98,7 @@ export default function BookingPage() {
         <p style={{ color: '#e1c391', fontSize: '12px', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '8px', fontWeight: '600' }}>
           Almost There
         </p>
-        <h1 style={{ color: '#ffffff', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: '800' }}>
+        <h1 style={{ color: '#1a1a1a', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: '800' }}>
           Complete Your Booking
         </h1>
       </div>
@@ -116,7 +116,7 @@ export default function BookingPage() {
             </h2>
             <div style={{ width: '40px', height: '2px', backgroundColor: '#e1c391', marginBottom: '28px' }} />
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '20px' }}>
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={labelStyle}>Full Name</label>
                 <input type="text" placeholder="John Doe" value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} style={inputStyle('full_name')} />
@@ -152,7 +152,7 @@ export default function BookingPage() {
             </h2>
             <div style={{ width: '40px', height: '2px', backgroundColor: '#e1c391', marginBottom: '28px' }} />
 
-            <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
               <Image
                 src={property.images.find(i => i.is_primary)?.image_url || property.images[0]?.image_url}
                 alt={property.name}
@@ -160,7 +160,7 @@ export default function BookingPage() {
                 height={90}
                 style={{ width: '120px', height: '90px', objectFit: 'cover', flexShrink: 0, borderRadius: '8px' }}
               />
-              <div style={{ flex: 1 }}>
+              <div style={{ flex: '1 1 0', minWidth: 0 }}>
                 <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1a1a1a', marginBottom: '4px' }}>{property.name}</h3>
                 <p style={{ fontSize: '13px', color: '#888', marginBottom: '12px' }}>{property.city}, {property.state}</p>
                 <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
@@ -222,7 +222,7 @@ export default function BookingPage() {
         {/* Right — Price Summary */}
         <div className="sticky-desktop">
 
-          <div style={{ backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '12px', padding: '28px', marginBottom: '16px' }}>
+          <div style={{ backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '12px', padding: 'clamp(20px, 5vw, 28px)', marginBottom: '16px' }}>
             <h3 style={{ fontSize: '20px', fontWeight: '700', color: '#1a1a1a', marginBottom: '20px' }}>Price Breakdown</h3>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '20px' }}>
