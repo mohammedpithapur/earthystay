@@ -8,20 +8,3 @@ export default function PropertiesPage() {
     </Suspense>
   )
 }
-                }
-              }
-              @keyframes fadeIn {
-                from {
-                  opacity: 0;
-                }
-                to {
-                  opacity: 1;
-                }
-              }
-            `}</style>
-          </div>
-        </>
-      )}
-    </div>
-  )
-}
