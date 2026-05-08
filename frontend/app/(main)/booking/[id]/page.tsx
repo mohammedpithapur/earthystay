@@ -193,7 +193,7 @@ export default function BookingPage() {
                 Important: This booking is 100% Non-Refundable
               </h4>
               <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.7' }}>
-                Once your payment is confirmed, this booking cannot be cancelled or modified for a refund. The full amount of &#8377;{total.toLocaleString('en-IN')} will be charged and is non-refundable under any circumstances including weather, illness, or change of plans.
+                Once your payment is confirmed, this booking cannot be cancelled or modified for a refund. The full amount of ₹{total.toLocaleString('en-IN')} will be charged and is non-refundable under any circumstances including weather, illness, or change of plans.
               </p>
             </div>
 
@@ -227,18 +227,18 @@ export default function BookingPage() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#555' }}>
-                <span>&#8377;{property.price_per_night.toLocaleString('en-IN')} x {nights} nights</span>
-                <span>&#8377;{basePrice.toLocaleString('en-IN')}</span>
+                <span>₹{property.price_per_night.toLocaleString('en-IN')} x {nights} nights</span>
+                <span>₹{basePrice.toLocaleString('en-IN')}</span>
               </div>
               {pets > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#555' }}>
                   <span>{pets} pet{pets > 1 ? 's' : ''} x {nights} nights</span>
-                  <span>&#8377;{petCharge.toLocaleString('en-IN')}</span>
+                  <span>₹{petCharge.toLocaleString('en-IN')}</span>
                 </div>
               )}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#555' }}>
                 <span>Cleaning fee</span>
-                <span>&#8377;{property.cleaning_fee.toLocaleString('en-IN')}</span>
+                <span>₹{property.cleaning_fee.toLocaleString('en-IN')}</span>
               </div>
             </div>
 
@@ -246,7 +246,7 @@ export default function BookingPage() {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
               <span style={{ fontSize: '18px', fontWeight: '700', color: '#1a1a1a' }}>Total</span>
-              <span style={{ fontSize: '22px', fontWeight: '800', color: '#1a1a1a' }}>&#8377;{total.toLocaleString('en-IN')}</span>
+              <span style={{ fontSize: '22px', fontWeight: '800', color: '#1a1a1a' }}>₹{total.toLocaleString('en-IN')}</span>
             </div>
             <p style={{ fontSize: '12px', color: '#888' }}>Includes all fees and taxes</p>
           </div>
@@ -270,7 +270,7 @@ export default function BookingPage() {
               transition: 'opacity 0.2s ease',
             }}
           >
-            {loading ? 'Processing...' : `Pay &#8377;${total.toLocaleString('en-IN')}`}
+            {loading ? 'Processing...' : `Pay ₹${total.toLocaleString('en-IN')}`}
           </button>
 
           <div style={{ textAlign: 'center' }}>

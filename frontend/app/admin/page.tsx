@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Image from 'next/image'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { dummyProperties } from '@/lib/data/properties'
 
 const dummyBookings = [
@@ -19,6 +19,7 @@ const statusColors: Record<string, { bg: string, color: string }> = {
 }
 
 export default function AdminPage() {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState('overview')
   const [searchBooking, setSearchBooking] = useState('')
   const [bookings, setBookings] = useState(dummyBookings)
@@ -121,6 +122,22 @@ export default function AdminPage() {
   ]
 
   const cardStyle = { backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '12px', padding: '24px' }
+  const buttonStyle = {
+    border: '1px solid #e1c391',
+    backgroundColor: '#ffffff',
+    color: '#1a1a1a',
+    padding: '10px 20px',
+    fontSize: '13px',
+    fontWeight: '700' as const,
+    letterSpacing: '1px',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    textTransform: 'uppercase' as const,
+  }
+  const primaryButtonStyle = {
+    ...buttonStyle,
+    backgroundColor: '#e1c391',
+  }
 
   return (
     <div style={{ backgroundColor: '#ffffff', minHeight: '100vh' }}>
@@ -135,10 +152,10 @@ export default function AdminPage() {
             </h1>
           </div>
           <div style={{ display: 'flex', gap: '12px' }}>
-            <Link href="/" style={{ border: '1px solid var(--color-navbar-border)', color: 'var(--color-navbar-text)', padding: '10px 20px', fontSize: '13px', textDecoration: 'none', letterSpacing: '1px', borderRadius: '8px', fontWeight: '600' }}>
+            <button onClick={() => router.push('/')} style={buttonStyle} onMouseEnter={e => { const target = e.currentTarget as HTMLButtonElement; target.style.borderColor = '#e1c391'; target.style.color = '#e1c391' }} onMouseLeave={e => { const target = e.currentTarget as HTMLButtonElement; target.style.borderColor = '#e1c391'; target.style.color = '#1a1a1a' }}>
               View Site
-            </Link>
-            <button style={{ backgroundColor: '#e1c391', color: '#1a1a1a', border: 'none', padding: '10px 20px', fontSize: '13px', fontWeight: '700', letterSpacing: '1px', cursor: 'pointer', borderRadius: '8px' }}>
+            </button>
+            <button onClick={() => router.push('/admin/properties')} style={primaryButtonStyle} onMouseEnter={e => { const target = e.currentTarget as HTMLButtonElement; target.style.backgroundColor = '#d9b778' }} onMouseLeave={e => { const target = e.currentTarget as HTMLButtonElement; target.style.backgroundColor = '#e1c391' }}>
               + Add Property
             </button>
           </div>
@@ -373,7 +390,7 @@ export default function AdminPage() {
         {activeTab === 'properties' && (
           <div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px' }}>
-              <button style={{ backgroundColor: '#e1c391', color: '#1a1a1a', border: 'none', padding: '12px 24px', fontSize: '13px', fontWeight: '700', letterSpacing: '1px', cursor: 'pointer', borderRadius: '8px' }}>
+              <button onClick={() => router.push('/admin/properties')} style={primaryButtonStyle} onMouseEnter={e => { const target = e.currentTarget as HTMLButtonElement; target.style.backgroundColor = '#d9b778' }} onMouseLeave={e => { const target = e.currentTarget as HTMLButtonElement; target.style.backgroundColor = '#e1c391' }}>
                 + Add New Property
               </button>
             </div>
@@ -410,12 +427,12 @@ export default function AdminPage() {
                     </p>
                     <p style={{ fontSize: '12px', color: '#888', marginBottom: '16px' }}>per night</p>
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                      <button style={{ padding: '8px 16px', border: '1px solid #e1c391', borderRadius: '8px', backgroundColor: 'transparent', color: '#1a1a1a', fontSize: '13px', cursor: 'pointer', fontWeight: '700' }}>
+                      <button onClick={() => router.push(`/admin/properties?id=${property.id}`)} style={buttonStyle} onMouseEnter={e => { const target = e.currentTarget as HTMLButtonElement; target.style.borderColor = '#e1c391'; target.style.color = '#e1c391' }} onMouseLeave={e => { const target = e.currentTarget as HTMLButtonElement; target.style.borderColor = '#e1c391'; target.style.color = '#1a1a1a' }}>
                         Edit
                       </button>
-                      <Link href={`/properties/${property.id}`} style={{ padding: '8px 16px', border: '1px solid #e0d9c0', borderRadius: '8px', backgroundColor: 'transparent', color: '#555', fontSize: '13px', cursor: 'pointer', textDecoration: 'none', display: 'inline-block', fontWeight: '600' }}>
+                      <button onClick={() => router.push(`/properties/${property.id}`)} style={buttonStyle} onMouseEnter={e => { const target = e.currentTarget as HTMLButtonElement; target.style.borderColor = '#e1c391'; target.style.color = '#e1c391' }} onMouseLeave={e => { const target = e.currentTarget as HTMLButtonElement; target.style.borderColor = '#e1c391'; target.style.color = '#1a1a1a' }}>
                         View
-                      </Link>
+                      </button>
                       <button style={{ padding: '8px 16px', border: '1px solid #FFEBEE', borderRadius: '8px', backgroundColor: '#FFEBEE', color: '#C62828', fontSize: '13px', cursor: 'pointer', fontWeight: '700' }}>
                         Delete
                       </button>
