@@ -1,9 +1,11 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [logoHover, setLogoHover] = useState(false)
 
   const navLinkStyle = {
     color: 'var(--color-navbar-text)',
@@ -18,17 +20,27 @@ export default function Navbar() {
   return (
     <nav style={{ backgroundColor: 'var(--color-navbar)', position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, width: '100%' }}>
       <div className="px-5 py-4 md:px-6 md:py-5" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', maxWidth: '1400px', margin: '0 auto', width: '100%', minHeight: '74px', paddingInline: '16px' }}>
-        <Link href="/" style={{ textDecoration: 'none' }}>
-          <span style={{
-            fontFamily: "'Figtree', sans-serif",
-            color: 'var(--color-navbar-text)',
-            fontSize: 'clamp(18px, 3.8vw, 24px)',
-            fontWeight: '800',
-            letterSpacing: '2px',
-            lineHeight: 1,
-          }}>
-            EARTHY STAY
-          </span>
+        <Link
+          href="/"
+          style={{ textDecoration: 'none', cursor: 'pointer' }}
+          onMouseEnter={() => setLogoHover(true)}
+          onMouseLeave={() => setLogoHover(false)}
+        >
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <Image
+              src="/Untitled_design-removebg-preview.png"
+              alt="EARTHY STAY"
+              width={45}
+              height={45}
+              priority
+              style={{
+                objectFit: 'contain',
+                transform: logoHover ? 'scale(1.05)' : 'scale(1)',
+                transition: 'transform 150ms ease',
+                display: 'block',
+              }}
+            />
+          </div>
         </Link>
 
         <div className="hidden md:flex items-center gap-8">
