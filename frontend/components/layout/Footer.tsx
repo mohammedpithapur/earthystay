@@ -1,5 +1,7 @@
-'use client'
-import Link from 'next/link'
+/// <reference types="react" />
+"use client"
+import React from 'react'
+// Avoid importing next/link to prevent module/type resolution issues in some setups
 
 export default function Footer() {
   return (
@@ -34,9 +36,9 @@ export default function Footer() {
 
           <div style={{ display: 'flex', gap: '12px' }}>
             {[
-              { label: 'Instagram', text: 'Insta', href: '#' },
-              { label: 'Facebook', text: 'FB', href: '#' },
-              { label: 'Twitter', text: 'TW', href: '#' },
+              { label: 'Instagram', text: '/instagram.png', href: '#' },
+              { label: 'Facebook', text: '/facebook.png', href: '#' },
+              { label: 'Twitter', text: '/twitter.png', href: '#' },
             ].map(social => (
               <a
                 key={social.label}
@@ -56,16 +58,16 @@ export default function Footer() {
                   transition: 'border-color 0.3s ease, color 0.3s ease',
                   letterSpacing: '0.5px',
                 }}
-                onMouseEnter={e => {
+                onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => {
                   (e.currentTarget as HTMLAnchorElement).style.borderColor = 'var(--color-navbar-text)'
                   ;(e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-navbar-text)'
                 }}
-                onMouseLeave={e => {
+                onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => {
                   (e.currentTarget as HTMLAnchorElement).style.borderColor = 'var(--color-navbar-border)'
                   ;(e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.82)'
                 }}
               >
-                {social.text}
+                <img src={social.text} alt={social.label} style={{ width: '24px', height: '24px' }} />
               </a>
             ))}
           </div>
@@ -83,7 +85,7 @@ export default function Footer() {
               { label: 'About Us', href: '/about' },
               { label: 'Contact Us', href: '/contact' },
             ].map(link => (
-              <Link
+              <a
                 key={link.href}
                 href={link.href}
                 style={{
@@ -95,12 +97,12 @@ export default function Footer() {
                   gap: '8px',
                   transition: 'color 0.2s ease',
                 }}
-                onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-navbar-text)'}
-                onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.82)'}
+                onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-navbar-text)'}
+                onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.82)'}
               >
                 <span style={{ color: 'var(--color-navbar-text)', fontSize: '10px' }}>→</span>
                 {link.label}
-              </Link>
+              </a>
             ))}
           </div>
         </div>
@@ -118,7 +120,7 @@ export default function Footer() {
               { label: 'Rishikesh', href: '/properties?location=Rishikesh' },
               { label: 'Jaisalmer', href: '/properties?location=Jaisalmer' },
             ].map(link => (
-              <Link
+              <a
                 key={link.href}
                 href={link.href}
                 style={{
@@ -130,12 +132,12 @@ export default function Footer() {
                   gap: '8px',
                   transition: 'color 0.2s ease',
                 }}
-                onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-navbar-text)'}
-                onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.82)'}
+                onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-navbar-text)'}
+                onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.82)'}
               >
                 <span style={{ color: 'var(--color-navbar-text)', fontSize: '10px' }}>→</span>
                 {link.label}
-              </Link>
+              </a>
             ))}
           </div>
         </div>
@@ -166,15 +168,15 @@ export default function Footer() {
               { label: 'Terms & Conditions', href: '/terms' },
               { label: 'Cancellation Policy', href: '/cancellation' },
             ].map(link => (
-              <Link
+              <a
                 key={link.href}
                 href={link.href}
                 style={{ color: 'rgba(255,255,255,0.82)', fontSize: '14px', textDecoration: 'none', transition: 'color 0.2s ease' }}
-                onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-navbar-text)'}
-                onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.82)'}
+                onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-navbar-text)'}
+                onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.82)'}
               >
                 {link.label}
-              </Link>
+              </a>
             ))}
           </div>
         </div>
