@@ -130,7 +130,7 @@ export default function Hero() {
           padding: '12px',
           gap: '8px',
           width: '100%',
-          maxWidth: '900px',
+          maxWidth: '1000px',
           boxShadow: '0 24px 64px rgba(0,0,0,0.28)',
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
