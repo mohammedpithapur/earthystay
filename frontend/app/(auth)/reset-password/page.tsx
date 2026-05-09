@@ -32,39 +32,39 @@ export default function ResetPasswordPage() {
 
   const inputStyle = (field: string) => ({
     width: '100%', padding: '14px 16px',
-    border: `1px solid ${errors[field] ? '#E53E3E' : '#e0d9c0'}`,
-    borderRadius: '8px', fontSize: '14px', color: '#1a1a1a',
+    border: `1px solid ${errors[field] ? '#E53E3E' : 'var(--color-border)'}`,
+    borderRadius: '8px', fontSize: '14px', color: 'var(--color-text-primary)',
     outline: 'none', backgroundColor: '#ffffff',
     boxSizing: 'border-box' as const, fontFamily: 'inherit'
   })
 
   return (
-    <div className="auth-shell" style={{ backgroundColor: '#ede8d0' }}>
+    <div className="auth-shell" style={{ backgroundColor: 'var(--color-bg-soft)' }}>
       <div className="auth-card">
 
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
           <Link href="/" style={{ textDecoration: 'none' }}>
-            <h1 style={{ color: '#1a1a1a', fontSize: '28px', letterSpacing: '3px', marginBottom: '8px', fontWeight: '800' }}>
+            <h1 style={{ color: 'var(--color-text-primary)', fontSize: '28px', letterSpacing: '3px', marginBottom: '8px', fontWeight: '800' }}>
               EARTHY STAY
             </h1>
           </Link>
-          <p style={{ color: '#888', fontSize: '14px' }}>Create a new password</p>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Create a new password</p>
         </div>
 
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '12px', padding: 'clamp(24px, 4vw, 40px)' }}>
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: 'clamp(24px, 4vw, 40px)' }}>
 
           {!success ? (
             <>
-              <h2 style={{ fontSize: '24px', fontWeight: '800', color: '#1a1a1a', marginBottom: '8px' }}>
+              <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '8px' }}>
                 Reset Password
               </h2>
-              <div style={{ width: '40px', height: '2px', backgroundColor: '#e1c391', marginBottom: '16px' }} />
-              <p style={{ fontSize: '14px', color: '#555', marginBottom: '28px', lineHeight: '1.6' }}>
+              <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--color-gold)', marginBottom: '16px' }} />
+              <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', marginBottom: '28px', lineHeight: '1.6' }}>
                 Choose a strong password that you haven&apos;t used before.
               </p>
 
               <div style={{ marginBottom: '20px' }}>
-                <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: '#888', display: 'block', marginBottom: '8px', fontWeight: '600' }}>
+                <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '8px', fontWeight: '600' }}>
                   New Password
                 </label>
                 <input
@@ -78,7 +78,7 @@ export default function ResetPasswordPage() {
               </div>
 
               <div style={{ marginBottom: '28px' }}>
-                <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: '#888', display: 'block', marginBottom: '8px', fontWeight: '600' }}>
+                <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '8px', fontWeight: '600' }}>
                   Confirm New Password
                 </label>
                 <input
@@ -92,8 +92,8 @@ export default function ResetPasswordPage() {
               </div>
 
               {/* Password strength hint */}
-              <div style={{ backgroundColor: '#ede8d0', borderRadius: '8px', padding: '12px 16px', marginBottom: '24px' }}>
-                <p style={{ fontSize: '12px', color: '#555', lineHeight: '1.6' }}>
+              <div style={{ backgroundColor: 'var(--color-bg-soft)', borderRadius: '8px', padding: '12px 16px', marginBottom: '24px' }}>
+                <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>
                   Password must be at least 6 characters. Use a mix of letters, numbers and symbols for a stronger password.
                 </p>
               </div>
@@ -102,8 +102,8 @@ export default function ResetPasswordPage() {
                 onClick={handleSubmit}
                 disabled={loading}
                 style={{
-                  width: '100%', backgroundColor: loading ? '#d4b87a' : '#e1c391',
-                  color: '#1a1a1a', border: 'none', padding: '16px',
+                  width: '100%', backgroundColor: loading ? 'var(--color-gold)' : 'var(--color-gold)',
+                  color: 'var(--color-text-primary)', border: 'none', padding: '16px',
                   fontSize: '13px', letterSpacing: '2px', fontWeight: '700',
                   textTransform: 'uppercase', cursor: loading ? 'not-allowed' : 'pointer',
                   borderRadius: '8px'
@@ -115,18 +115,18 @@ export default function ResetPasswordPage() {
           ) : (
             <div style={{ textAlign: 'center', padding: '16px 0' }}>
               <div style={{
-                width: '64px', height: '64px', backgroundColor: '#e1c391',
+                width: '64px', height: '64px', backgroundColor: 'var(--color-gold)',
                 borderRadius: '50%', display: 'flex', alignItems: 'center',
                 justifyContent: 'center', margin: '0 auto 24px',
-                fontSize: '28px', fontWeight: '700', color: '#1a1a1a'
+                fontSize: '28px', fontWeight: '700', color: 'var(--color-text-primary)'
               }}>
                 &#10003;
               </div>
-              <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#1a1a1a', marginBottom: '12px' }}>
+              <h2 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '12px' }}>
                 Password Updated!
               </h2>
-              <div style={{ width: '40px', height: '2px', backgroundColor: '#e1c391', margin: '0 auto 16px' }} />
-              <p style={{ fontSize: '14px', color: '#555', lineHeight: '1.7' }}>
+              <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--color-gold)', margin: '0 auto 16px' }} />
+              <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', lineHeight: '1.7' }}>
                 Your password has been successfully updated. Redirecting you to sign in...
               </p>
             </div>

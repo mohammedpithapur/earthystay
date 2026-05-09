@@ -15,7 +15,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body style={{ backgroundColor: '#ffffff', margin: 0, overflowX: 'hidden' }}>
+      <body style={{ backgroundColor: 'var(--color-bg-page)', margin: 0, overflowX: 'hidden' }}>
         <Navbar />
         <main style={{ paddingTop: '72px', minHeight: '100vh' }}>
           {children}

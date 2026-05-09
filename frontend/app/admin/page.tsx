@@ -48,11 +48,11 @@ export default function AdminPage() {
     if (!property) return null
 
     return (
-      <div key={booking.id} style={{ backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '14px', padding: '18px', boxShadow: '0 8px 24px rgba(26,26,26,0.04)' }}>
+      <div key={booking.id} style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '14px', padding: '18px', boxShadow: '0 8px 24px rgba(26,26,26,0.04)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '14px' }}>
           <div style={{ minWidth: 0 }}>
-            <p style={{ fontSize: '10px', letterSpacing: '1.4px', textTransform: 'uppercase', color: '#888', fontWeight: '700', marginBottom: '4px' }}>Booking Ref</p>
-            <p style={{ fontSize: '14px', color: '#e1c391', fontWeight: '800' }}>{booking.booking_ref}</p>
+            <p style={{ fontSize: '10px', letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700', marginBottom: '4px' }}>Booking Ref</p>
+            <p style={{ fontSize: '14px', color: 'var(--color-gold)', fontWeight: '800' }}>{booking.booking_ref}</p>
           </div>
           <span style={{ backgroundColor: statusColors[booking.status]?.bg, color: statusColors[booking.status]?.color, padding: '5px 10px', fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', borderRadius: '999px', letterSpacing: '0.6px', flexShrink: 0 }}>
             {booking.status}
@@ -68,9 +68,9 @@ export default function AdminPage() {
             style={{ width: '72px', height: '72px', objectFit: 'cover', flexShrink: 0, borderRadius: '12px' }}
           />
           <div style={{ minWidth: 0 }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '800', color: '#1a1a1a', marginBottom: '4px' }}>{property.name}</h3>
-            <p style={{ fontSize: '13px', color: '#888' }}>{booking.guest_name}</p>
-            <p style={{ fontSize: '12px', color: '#888' }}>{property.city}, {property.state}</p>
+            <h3 style={{ fontSize: '16px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '4px' }}>{property.name}</h3>
+            <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>{booking.guest_name}</p>
+            <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>{property.city}, {property.state}</p>
           </div>
         </div>
 
@@ -81,9 +81,9 @@ export default function AdminPage() {
             { label: 'Guests', value: `${booking.guests}${booking.num_pets > 0 ? ` + ${booking.num_pets} pet${booking.num_pets > 1 ? 's' : ''}` : ''}` },
             { label: 'Amount', value: `₹${booking.total_price.toLocaleString('en-IN')}` },
           ].map(detail => (
-            <div key={detail.label} style={{ backgroundColor: '#fafaf8', border: '1px solid #f0ead8', borderRadius: '10px', padding: '10px 12px' }}>
-              <p style={{ fontSize: '10px', letterSpacing: '1.2px', textTransform: 'uppercase', color: '#888', fontWeight: '700', marginBottom: '4px' }}>{detail.label}</p>
-              <p style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '700', lineHeight: '1.35' }}>{detail.value}</p>
+            <div key={detail.label} style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: '10px', padding: '10px 12px' }}>
+              <p style={{ fontSize: '10px', letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700', marginBottom: '4px' }}>{detail.label}</p>
+              <p style={{ fontSize: '13px', color: 'var(--color-text-primary)', fontWeight: '700', lineHeight: '1.35' }}>{detail.value}</p>
             </div>
           ))}
         </div>
@@ -105,7 +105,7 @@ export default function AdminPage() {
                 Complete
               </button>
             )}
-            <button style={{ padding: '9px 12px', backgroundColor: '#f5f2eb', color: '#555', border: '1px solid #e0d9c0', fontSize: '12px', cursor: 'pointer', borderRadius: '8px', fontWeight: '700' }}>
+            <button style={{ padding: '9px 12px', backgroundColor: 'var(--color-bg-soft)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)', fontSize: '12px', cursor: 'pointer', borderRadius: '8px', fontWeight: '700' }}>
               Voucher
             </button>
           </div>
@@ -121,11 +121,11 @@ export default function AdminPage() {
     { id: 'ical', label: 'iCal Sync' },
   ]
 
-  const cardStyle = { backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '12px', padding: '24px' }
+  const cardStyle = { backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '24px' }
   const buttonStyle = {
-    border: '1px solid #e1c391',
+    border: '1px solid var(--color-gold)',
     backgroundColor: '#ffffff',
-    color: '#1a1a1a',
+    color: 'var(--color-text-primary)',
     padding: '10px 20px',
     fontSize: '13px',
     fontWeight: '700' as const,
@@ -136,7 +136,7 @@ export default function AdminPage() {
   }
   const primaryButtonStyle = {
     ...buttonStyle,
-    backgroundColor: '#e1c391',
+    backgroundColor: 'var(--color-gold)',
   }
 
   return (
@@ -146,16 +146,16 @@ export default function AdminPage() {
       <div style={{ backgroundColor: 'var(--color-navbar)', padding: '32px 24px' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div>
-            <p style={{ color: '#e1c391', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '8px', fontWeight: '600' }}>Admin Panel</p>
-            <h1 style={{ color: '#1a1a1a', fontSize: 'clamp(22px, 3vw, 32px)', fontWeight: '800' }}>
+            <p style={{ color: 'var(--color-gold)', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '8px', fontWeight: '600' }}>Admin Panel</p>
+            <h1 style={{ color: 'var(--color-text-primary)', fontSize: 'clamp(22px, 3vw, 32px)', fontWeight: '800' }}>
               Earthy Stay Dashboard
             </h1>
           </div>
           <div style={{ display: 'flex', gap: '12px' }}>
-            <button onClick={() => router.push('/')} style={buttonStyle} onMouseEnter={e => { const target = e.currentTarget as HTMLButtonElement; target.style.borderColor = '#e1c391'; target.style.color = '#e1c391' }} onMouseLeave={e => { const target = e.currentTarget as HTMLButtonElement; target.style.borderColor = '#e1c391'; target.style.color = '#1a1a1a' }}>
+            <button onClick={() => router.push('/')} style={buttonStyle} onMouseEnter={e => { const target = e.currentTarget as HTMLButtonElement; target.style.borderColor = 'var(--color-gold)'; target.style.color = 'var(--color-gold)' }} onMouseLeave={e => { const target = e.currentTarget as HTMLButtonElement; target.style.borderColor = 'var(--color-gold)'; target.style.color = 'var(--color-text-primary)' }}>
               View Site
             </button>
-            <button onClick={() => router.push('/admin/properties')} style={primaryButtonStyle} onMouseEnter={e => { const target = e.currentTarget as HTMLButtonElement; target.style.backgroundColor = '#d9b778' }} onMouseLeave={e => { const target = e.currentTarget as HTMLButtonElement; target.style.backgroundColor = '#e1c391' }}>
+            <button onClick={() => router.push('/admin/properties')} style={primaryButtonStyle} onMouseEnter={e => { const target = e.currentTarget as HTMLButtonElement; target.style.backgroundColor = 'var(--color-gold)' }} onMouseLeave={e => { const target = e.currentTarget as HTMLButtonElement; target.style.backgroundColor = 'var(--color-gold)' }}>
               + Add Property
             </button>
           </div>
@@ -163,7 +163,7 @@ export default function AdminPage() {
       </div>
 
       {/* Tabs */}
-      <div style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e0d9c0' }}>
+      <div style={{ backgroundColor: '#ffffff', borderBottom: '1px solid var(--color-border)' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 24px', display: 'flex', overflowX: 'auto' }}>
           {tabs.map(tab => (
             <button
@@ -172,9 +172,9 @@ export default function AdminPage() {
               style={{
                 padding: '16px 24px',
                 border: 'none',
-                borderBottom: activeTab === tab.id ? '2px solid #e1c391' : '2px solid transparent',
+                borderBottom: activeTab === tab.id ? '2px solid var(--color-gold)' : '2px solid transparent',
                 backgroundColor: 'transparent',
-                color: activeTab === tab.id ? '#e1c391' : '#888',
+                color: activeTab === tab.id ? 'var(--color-gold)' : 'var(--color-text-muted)',
                 fontSize: '14px',
                 cursor: 'pointer',
                 fontWeight: activeTab === tab.id ? '700' : '500',
@@ -195,7 +195,7 @@ export default function AdminPage() {
           <div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '40px' }}>
               {[
-                { label: 'Total Revenue', value: `&#8377;${totalRevenue.toLocaleString('en-IN')}`, color: '#e1c391' },
+                { label: 'Total Revenue', value: `&#8377;${totalRevenue.toLocaleString('en-IN')}`, color: 'var(--color-gold)' },
                 { label: 'Confirmed Bookings', value: confirmedBookings, color: '#2E7D32' },
                 { label: 'Pending Bookings', value: pendingBookings, color: '#F57F17' },
                 { label: 'Total Properties', value: dummyProperties.length, color: '#1565C0' },
@@ -203,7 +203,7 @@ export default function AdminPage() {
                 { label: 'Total Bookings', value: bookings.length, color: '#00838F' },
               ].map(stat => (
                 <div key={stat.label} style={cardStyle}>
-                  <p style={{ fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase', color: '#888', marginBottom: '12px', fontWeight: '600' }}>{stat.label}</p>
+                  <p style={{ fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '12px', fontWeight: '600' }}>{stat.label}</p>
                   <p style={{ fontSize: '32px', color: stat.color, fontWeight: '800' }}
                     dangerouslySetInnerHTML={{ __html: String(stat.value) }}
                   />
@@ -215,19 +215,19 @@ export default function AdminPage() {
             <div style={{ ...cardStyle, marginBottom: '16px', boxShadow: '0 8px 24px rgba(26,26,26,0.04)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '20px', gap: '12px', flexWrap: 'wrap' }}>
                 <div>
-                  <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#1a1a1a', marginBottom: '4px' }}>Recent Bookings</h2>
-                  <p style={{ fontSize: '13px', color: '#888' }}>Latest confirmed and pending stays at a glance</p>
+                  <h2 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '4px' }}>Recent Bookings</h2>
+                  <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>Latest confirmed and pending stays at a glance</p>
                 </div>
-                <button onClick={() => setActiveTab('bookings')} style={{ background: 'none', border: 'none', color: '#e1c391', fontSize: '13px', cursor: 'pointer', fontWeight: '700' }}>
+                <button onClick={() => setActiveTab('bookings')} style={{ background: 'none', border: 'none', color: 'var(--color-gold)', fontSize: '13px', cursor: 'pointer', fontWeight: '700' }}>
                   View All →
                 </button>
               </div>
               <div className="hidden md:block" style={{ overflowX: 'auto' }}>
                 <table className="responsive-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
-                    <tr style={{ borderBottom: '1px solid #e0d9c0' }}>
+                    <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
                       {['Ref', 'Guest', 'Property', 'Dates', 'Amount', 'Status'].map(h => (
-                        <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', fontWeight: '700' }}>{h}</th>
+                        <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -235,20 +235,20 @@ export default function AdminPage() {
                     {bookings.slice(0, 4).map((booking, i) => {
                       const property = getProperty(booking.property_id)
                       return (
-                        <tr key={booking.id} style={{ borderBottom: '1px solid #f5f2eb', backgroundColor: i % 2 === 0 ? '#ffffff' : '#fafaf8' }}>
-                          <td data-label="Ref" style={{ padding: '14px 16px', fontSize: '13px', color: '#e1c391', fontWeight: '700' }}>{booking.booking_ref}</td>
+                        <tr key={booking.id} style={{ borderBottom: '1px solid var(--color-bg-soft)', backgroundColor: i % 2 === 0 ? '#ffffff' : 'var(--color-bg-card)' }}>
+                          <td data-label="Ref" style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--color-gold)', fontWeight: '700' }}>{booking.booking_ref}</td>
                           <td style={{ padding: '14px 16px' }}>
                             <div className="responsive-table-label">Guest</div>
-                            <p style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '700', marginBottom: '2px' }}>{booking.guest_name}</p>
-                            <p style={{ fontSize: '12px', color: '#888' }}>{booking.guest_email}</p>
+                            <p style={{ fontSize: '13px', color: 'var(--color-text-primary)', fontWeight: '700', marginBottom: '2px' }}>{booking.guest_name}</p>
+                            <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>{booking.guest_email}</p>
                           </td>
-                          <td data-label="Property" style={{ padding: '14px 16px', fontSize: '13px', color: '#555' }}>{property?.name}</td>
+                          <td data-label="Property" style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--color-text-secondary)' }}>{property?.name}</td>
                           <td style={{ padding: '14px 16px' }}>
                             <div className="responsive-table-label">Dates</div>
-                            <p style={{ fontSize: '12px', color: '#555' }}>{formatDate(booking.check_in)}</p>
-                            <p style={{ fontSize: '12px', color: '#888' }}>to {formatDate(booking.check_out)}</p>
+                            <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>{formatDate(booking.check_in)}</p>
+                            <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>to {formatDate(booking.check_out)}</p>
                           </td>
-                          <td data-label="Amount" style={{ padding: '14px 16px', fontSize: '14px', color: '#1a1a1a', fontWeight: '700' }}>&#8377;{booking.total_price.toLocaleString('en-IN')}</td>
+                          <td data-label="Amount" style={{ padding: '14px 16px', fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: '700' }}>&#8377;{booking.total_price.toLocaleString('en-IN')}</td>
                           <td style={{ padding: '14px 16px' }}>
                             <div className="responsive-table-label">Status</div>
                             <span style={{ backgroundColor: statusColors[booking.status]?.bg, color: statusColors[booking.status]?.color, padding: '4px 10px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', borderRadius: '6px' }}>
@@ -270,18 +270,18 @@ export default function AdminPage() {
             {/* Properties Summary */}
             <div style={cardStyle}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#1a1a1a' }}>Properties</h2>
-                <button onClick={() => setActiveTab('properties')} style={{ background: 'none', border: 'none', color: '#e1c391', fontSize: '13px', cursor: 'pointer', fontWeight: '700' }}>
+                <h2 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--color-text-primary)' }}>Properties</h2>
+                <button onClick={() => setActiveTab('properties')} style={{ background: 'none', border: 'none', color: 'var(--color-gold)', fontSize: '13px', cursor: 'pointer', fontWeight: '700' }}>
                   Manage All →
                 </button>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
                 {dummyProperties.slice(0, 3).map(property => (
-                  <div key={property.id} style={{ display: 'flex', gap: '12px', alignItems: 'center', padding: '16px', border: '1px solid #e0d9c0', borderRadius: '10px' }}>
+                  <div key={property.id} style={{ display: 'flex', gap: '12px', alignItems: 'center', padding: '16px', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
                     <Image src={property.images.find(i => i.is_primary)?.image_url || property.images[0]?.image_url} alt={property.name} width={64} height={48} style={{ width: '64px', height: '48px', objectFit: 'cover', flexShrink: 0, borderRadius: '6px' }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: '14px', color: '#1a1a1a', fontWeight: '700', marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{property.name}</p>
-                      <p style={{ fontSize: '12px', color: '#888' }}>&#8377;{property.price_per_night.toLocaleString('en-IN')}/night · &#9733;{property.avg_rating}</p>
+                      <p style={{ fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: '700', marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{property.name}</p>
+                      <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>&#8377;{property.price_per_night.toLocaleString('en-IN')}/night · &#9733;{property.avg_rating}</p>
                     </div>
                     <span style={{ fontSize: '11px', backgroundColor: '#E8F5E9', color: '#2E7D32', padding: '3px 8px', fontWeight: '700', flexShrink: 0, borderRadius: '6px' }}>Live</span>
                   </div>
@@ -300,9 +300,9 @@ export default function AdminPage() {
                 placeholder="Search by guest name, email or booking ref..."
                 value={searchBooking}
                 onChange={e => setSearchBooking(e.target.value)}
-                style={{ flex: 1, minWidth: 0, padding: '12px 16px', border: '1px solid #e0d9c0', borderRadius: '8px', fontSize: '14px', color: '#1a1a1a', outline: 'none', backgroundColor: '#ffffff' }}
+                style={{ flex: 1, minWidth: 0, padding: '12px 16px', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '14px', color: 'var(--color-text-primary)', outline: 'none', backgroundColor: '#ffffff' }}
               />
-              <select style={{ padding: '12px 16px', border: '1px solid #e0d9c0', borderRadius: '8px', fontSize: '14px', color: '#1a1a1a', outline: 'none', backgroundColor: '#ffffff', cursor: 'pointer' }}>
+              <select style={{ padding: '12px 16px', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '14px', color: 'var(--color-text-primary)', outline: 'none', backgroundColor: '#ffffff', cursor: 'pointer' }}>
                 <option>All Statuses</option>
                 <option>Confirmed</option>
                 <option>Pending</option>
@@ -311,13 +311,13 @@ export default function AdminPage() {
               </select>
             </div>
 
-            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '12px', overflow: 'hidden' }}>
+            <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', overflow: 'hidden' }}>
               <div className="hidden md:block" style={{ overflowX: 'auto' }}>
                 <table className="responsive-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr style={{ backgroundColor: 'var(--color-navbar)' }}>
                       {['Ref', 'Guest', 'Property', 'Check In', 'Check Out', 'Guests', 'Amount', 'Status', 'Actions'].map(h => (
-                        <th key={h} style={{ padding: '14px 16px', textAlign: 'left', fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#e1c391', fontWeight: '700', whiteSpace: 'nowrap' }}>{h}</th>
+                        <th key={h} style={{ padding: '14px 16px', textAlign: 'left', fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-gold)', fontWeight: '700', whiteSpace: 'nowrap' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -325,20 +325,20 @@ export default function AdminPage() {
                     {filteredBookings.map((booking, i) => {
                       const property = getProperty(booking.property_id)
                       return (
-                        <tr key={booking.id} style={{ borderBottom: '1px solid #f5f2eb', backgroundColor: i % 2 === 0 ? '#ffffff' : '#fafaf8' }}>
-                          <td data-label="Ref" style={{ padding: '14px 16px', fontSize: '13px', color: '#e1c391', fontWeight: '700', whiteSpace: 'nowrap' }}>{booking.booking_ref}</td>
+                        <tr key={booking.id} style={{ borderBottom: '1px solid var(--color-bg-soft)', backgroundColor: i % 2 === 0 ? '#ffffff' : 'var(--color-bg-card)' }}>
+                          <td data-label="Ref" style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--color-gold)', fontWeight: '700', whiteSpace: 'nowrap' }}>{booking.booking_ref}</td>
                           <td style={{ padding: '14px 16px' }}>
                             <div className="responsive-table-label">Guest</div>
-                            <p style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '700', marginBottom: '2px', whiteSpace: 'nowrap' }}>{booking.guest_name}</p>
-                            <p style={{ fontSize: '11px', color: '#888' }}>{booking.guest_phone}</p>
+                            <p style={{ fontSize: '13px', color: 'var(--color-text-primary)', fontWeight: '700', marginBottom: '2px', whiteSpace: 'nowrap' }}>{booking.guest_name}</p>
+                            <p style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>{booking.guest_phone}</p>
                           </td>
-                          <td data-label="Property" style={{ padding: '14px 16px', fontSize: '13px', color: '#555', whiteSpace: 'nowrap' }}>{property?.city}</td>
-                          <td data-label="Check In" style={{ padding: '14px 16px', fontSize: '13px', color: '#555', whiteSpace: 'nowrap' }}>{formatDate(booking.check_in)}</td>
-                          <td data-label="Check Out" style={{ padding: '14px 16px', fontSize: '13px', color: '#555', whiteSpace: 'nowrap' }}>{formatDate(booking.check_out)}</td>
-                          <td data-label="Guests" style={{ padding: '14px 16px', fontSize: '13px', color: '#555' }}>
+                          <td data-label="Property" style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>{property?.city}</td>
+                          <td data-label="Check In" style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>{formatDate(booking.check_in)}</td>
+                          <td data-label="Check Out" style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>{formatDate(booking.check_out)}</td>
+                          <td data-label="Guests" style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--color-text-secondary)' }}>
                             {booking.guests}{booking.num_pets > 0 ? ` + ${booking.num_pets} pet${booking.num_pets > 1 ? 's' : ''}` : ''}
                           </td>
-                          <td data-label="Amount" style={{ padding: '14px 16px', fontSize: '13px', color: '#1a1a1a', fontWeight: '700', whiteSpace: 'nowrap' }}>&#8377;{booking.total_price.toLocaleString('en-IN')}</td>
+                          <td data-label="Amount" style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--color-text-primary)', fontWeight: '700', whiteSpace: 'nowrap' }}>&#8377;{booking.total_price.toLocaleString('en-IN')}</td>
                           <td data-label="Status" style={{ padding: '14px 16px' }}>
                             <span style={{ backgroundColor: statusColors[booking.status]?.bg, color: statusColors[booking.status]?.color, padding: '4px 10px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', whiteSpace: 'nowrap', borderRadius: '6px' }}>
                               {booking.status}
@@ -361,7 +361,7 @@ export default function AdminPage() {
                                   Complete
                                 </button>
                               )}
-                              <button style={{ padding: '6px 10px', backgroundColor: '#f5f2eb', color: '#555', border: '1px solid #e0d9c0', fontSize: '12px', cursor: 'pointer', borderRadius: '6px', fontWeight: '600' }}>
+                              <button style={{ padding: '6px 10px', backgroundColor: 'var(--color-bg-soft)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)', fontSize: '12px', cursor: 'pointer', borderRadius: '6px', fontWeight: '600' }}>
                                 Voucher
                               </button>
                             </div>
@@ -378,7 +378,7 @@ export default function AdminPage() {
               </div>
 
               {filteredBookings.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '48px', color: '#888' }}>
+                <div style={{ textAlign: 'center', padding: '48px', color: 'var(--color-text-muted)' }}>
                   No bookings found matching your search
                 </div>
               )}
@@ -390,21 +390,21 @@ export default function AdminPage() {
         {activeTab === 'properties' && (
           <div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px' }}>
-              <button onClick={() => router.push('/admin/properties')} style={primaryButtonStyle} onMouseEnter={e => { const target = e.currentTarget as HTMLButtonElement; target.style.backgroundColor = '#d9b778' }} onMouseLeave={e => { const target = e.currentTarget as HTMLButtonElement; target.style.backgroundColor = '#e1c391' }}>
+              <button onClick={() => router.push('/admin/properties')} style={primaryButtonStyle} onMouseEnter={e => { const target = e.currentTarget as HTMLButtonElement; target.style.backgroundColor = 'var(--color-gold)' }} onMouseLeave={e => { const target = e.currentTarget as HTMLButtonElement; target.style.backgroundColor = 'var(--color-gold)' }}>
                 + Add New Property
               </button>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {dummyProperties.map(property => (
-                <div key={property.id} style={{ backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '12px', padding: '24px', display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div key={property.id} style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '24px', display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
                   <Image src={property.images.find(i => i.is_primary)?.image_url || property.images[0]?.image_url} alt={property.name} width={120} height={90} style={{ width: '120px', height: '90px', objectFit: 'cover', flexShrink: 0, borderRadius: '8px' }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap' }}>
-                      <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1a1a1a' }}>{property.name}</h3>
+                      <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{property.name}</h3>
                       <span style={{ backgroundColor: '#E8F5E9', color: '#2E7D32', padding: '3px 10px', fontSize: '11px', fontWeight: '700', borderRadius: '6px' }}>Published</span>
                     </div>
-                    <p style={{ fontSize: '13px', color: '#888', marginBottom: '8px' }}>{property.city}, {property.state}</p>
+                    <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '8px' }}>{property.city}, {property.state}</p>
                     <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
                       {[
                         { label: `${property.bedrooms} beds` },
@@ -414,7 +414,7 @@ export default function AdminPage() {
                         { label: `${property.review_count} reviews` },
                         { label: property.pets_allowed ? 'Pet friendly' : 'No pets' },
                       ].map(detail => (
-                        <span key={detail.label} style={{ fontSize: '12px', color: '#555', fontWeight: '500' }}>
+                        <span key={detail.label} style={{ fontSize: '12px', color: 'var(--color-text-secondary)', fontWeight: '500' }}>
                           {detail.label}
                         </span>
                       ))}
@@ -422,15 +422,15 @@ export default function AdminPage() {
                   </div>
 
                   <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <p style={{ fontSize: '22px', color: '#1a1a1a', fontWeight: '800', marginBottom: '4px' }}>
+                    <p style={{ fontSize: '22px', color: 'var(--color-text-primary)', fontWeight: '800', marginBottom: '4px' }}>
                       &#8377;{property.price_per_night.toLocaleString('en-IN')}
                     </p>
-                    <p style={{ fontSize: '12px', color: '#888', marginBottom: '16px' }}>per night</p>
+                    <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '16px' }}>per night</p>
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                      <button onClick={() => router.push(`/admin/properties?id=${property.id}`)} style={buttonStyle} onMouseEnter={e => { const target = e.currentTarget as HTMLButtonElement; target.style.borderColor = '#e1c391'; target.style.color = '#e1c391' }} onMouseLeave={e => { const target = e.currentTarget as HTMLButtonElement; target.style.borderColor = '#e1c391'; target.style.color = '#1a1a1a' }}>
+                      <button onClick={() => router.push(`/admin/properties?id=${property.id}`)} style={buttonStyle} onMouseEnter={e => { const target = e.currentTarget as HTMLButtonElement; target.style.borderColor = 'var(--color-gold)'; target.style.color = 'var(--color-gold)' }} onMouseLeave={e => { const target = e.currentTarget as HTMLButtonElement; target.style.borderColor = 'var(--color-gold)'; target.style.color = 'var(--color-text-primary)' }}>
                         Edit
                       </button>
-                      <button onClick={() => router.push(`/properties/${property.id}`)} style={buttonStyle} onMouseEnter={e => { const target = e.currentTarget as HTMLButtonElement; target.style.borderColor = '#e1c391'; target.style.color = '#e1c391' }} onMouseLeave={e => { const target = e.currentTarget as HTMLButtonElement; target.style.borderColor = '#e1c391'; target.style.color = '#1a1a1a' }}>
+                      <button onClick={() => router.push(`/properties/${property.id}`)} style={buttonStyle} onMouseEnter={e => { const target = e.currentTarget as HTMLButtonElement; target.style.borderColor = 'var(--color-gold)'; target.style.color = 'var(--color-gold)' }} onMouseLeave={e => { const target = e.currentTarget as HTMLButtonElement; target.style.borderColor = 'var(--color-gold)'; target.style.color = 'var(--color-text-primary)' }}>
                         View
                       </button>
                       <button style={{ padding: '8px 16px', border: '1px solid #FFEBEE', borderRadius: '8px', backgroundColor: '#FFEBEE', color: '#C62828', fontSize: '13px', cursor: 'pointer', fontWeight: '700' }}>
@@ -448,9 +448,9 @@ export default function AdminPage() {
         {activeTab === 'ical' && (
           <div>
             <div style={{ ...cardStyle, marginBottom: '24px' }}>
-              <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#1a1a1a', marginBottom: '8px' }}>iCal Calendar Sync</h2>
-              <div style={{ width: '40px', height: '2px', backgroundColor: '#e1c391', marginBottom: '16px' }} />
-              <p style={{ color: '#555', fontSize: '14px', lineHeight: '1.7', maxWidth: '760px' }}>
+              <h2 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '8px' }}>iCal Calendar Sync</h2>
+              <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--color-gold)', marginBottom: '16px' }} />
+              <p style={{ color: 'var(--color-text-secondary)', fontSize: '14px', lineHeight: '1.7', maxWidth: '760px' }}>
                 Keep your availability in sync across all platforms. Import calendars from Airbnb or Booking.com to block those dates here automatically. Export your calendar link to paste into other platforms.
               </p>
             </div>
@@ -460,19 +460,19 @@ export default function AdminPage() {
                 <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap' }}>
                   <Image src={property.images.find(i => i.is_primary)?.image_url || property.images[0]?.image_url} alt={property.name} width={60} height={45} style={{ width: '60px', height: '45px', objectFit: 'cover', borderRadius: '8px', flexShrink: 0 }} />
                   <div>
-                    <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#1a1a1a', marginBottom: '4px' }}>{property.name}</h3>
-                    <p style={{ fontSize: '13px', color: '#888' }}>{property.city}, {property.state}</p>
+                    <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '4px' }}>{property.name}</h3>
+                    <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>{property.city}, {property.state}</p>
                   </div>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
                   <div style={{ padding: '20px', backgroundColor: '#f0f7f0', border: '1px solid #C8E6C9', borderRadius: '12px' }}>
                     <h4 style={{ fontSize: '13px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#2E7D32', marginBottom: '8px', fontWeight: '700' }}>Export Calendar</h4>
-                    <p style={{ fontSize: '13px', color: '#555', marginBottom: '12px', lineHeight: '1.5' }}>
+                    <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '12px', lineHeight: '1.5' }}>
                       Copy this link and paste it into Airbnb, Booking.com or any other platform to sync your availability.
                     </p>
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                      <input readOnly value={`https://earthystay.com/api/ical/export/${property.id}`} style={{ flex: 1, padding: '10px 12px', border: '1px solid #C8E6C9', borderRadius: '8px', fontSize: '12px', color: '#555', backgroundColor: '#ffffff', outline: 'none' }} />
+                      <input readOnly value={`https://earthystay.com/api/ical/export/${property.id}`} style={{ flex: 1, padding: '10px 12px', border: '1px solid #C8E6C9', borderRadius: '8px', fontSize: '12px', color: 'var(--color-text-secondary)', backgroundColor: '#ffffff', outline: 'none' }} />
                       <button onClick={() => navigator.clipboard.writeText(`https://earthystay.com/api/ical/export/${property.id}`)} style={{ padding: '10px 16px', backgroundColor: '#2E7D32', color: '#ffffff', border: 'none', fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: '700', borderRadius: '8px' }}>
                         Copy
                       </button>
@@ -481,11 +481,11 @@ export default function AdminPage() {
 
                   <div style={{ padding: '20px', backgroundColor: '#E3F2FD', border: '1px solid #BBDEFB', borderRadius: '12px' }}>
                     <h4 style={{ fontSize: '13px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#1565C0', marginBottom: '8px', fontWeight: '700' }}>Import Calendar</h4>
-                    <p style={{ fontSize: '13px', color: '#555', marginBottom: '12px', lineHeight: '1.5' }}>
+                    <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '12px', lineHeight: '1.5' }}>
                       Paste a calendar link from Airbnb or Booking.com to automatically block those dates here.
                     </p>
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                      <input placeholder="Paste .ics URL here..." style={{ flex: 1, padding: '10px 12px', border: '1px solid #BBDEFB', borderRadius: '8px', fontSize: '12px', color: '#555', backgroundColor: '#ffffff', outline: 'none' }} />
+                      <input placeholder="Paste .ics URL here..." style={{ flex: 1, padding: '10px 12px', border: '1px solid #BBDEFB', borderRadius: '8px', fontSize: '12px', color: 'var(--color-text-secondary)', backgroundColor: '#ffffff', outline: 'none' }} />
                       <button style={{ padding: '10px 16px', backgroundColor: '#1565C0', color: '#ffffff', border: 'none', fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: '700', borderRadius: '8px' }}>
                         Sync
                       </button>
@@ -493,18 +493,18 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#f9f8f5', border: '1px solid #e0d9c0', borderRadius: '12px' }}>
-                  <p style={{ fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', marginBottom: '12px', fontWeight: '700' }}>Connected Calendars</p>
+                <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#f9f8f5', border: '1px solid var(--color-border)', borderRadius: '12px' }}>
+                  <p style={{ fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '12px', fontWeight: '700' }}>Connected Calendars</p>
                   <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
                     {['Airbnb', 'Booking.com'].map(platform => (
-                      <div key={platform} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '999px', flexWrap: 'wrap' }}>
+                      <div key={platform} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 14px', backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '999px', flexWrap: 'wrap' }}>
                         <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#2E7D32' }} />
-                        <span style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '500' }}>{platform}</span>
-                        <span style={{ fontSize: '11px', color: '#888' }}>Last synced: Today</span>
+                        <span style={{ fontSize: '13px', color: 'var(--color-text-primary)', fontWeight: '500' }}>{platform}</span>
+                        <span style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>Last synced: Today</span>
                         <button style={{ background: 'none', border: 'none', color: '#C62828', cursor: 'pointer', fontSize: '16px', lineHeight: 1, fontWeight: '700' }}>x</button>
                       </div>
                     ))}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#e1c391', cursor: 'pointer', fontWeight: '700' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--color-gold)', cursor: 'pointer', fontWeight: '700' }}>
                       + Add Platform
                     </div>
                   </div>

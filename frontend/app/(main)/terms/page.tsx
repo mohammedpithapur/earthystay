@@ -175,26 +175,26 @@ export default function TermsPage() {
       {/* Hero */}
       <div style={{ backgroundColor: 'var(--color-navbar)', padding: '72px 24px 64px' }}>
         <div className="content-shell" style={{ textAlign: 'center' }}>
-          <p style={{ color: '#e1c391', fontSize: '12px', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '16px', fontWeight: '600' }}>
+          <p style={{ color: 'var(--color-gold)', fontSize: '12px', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '16px', fontWeight: '600' }}>
             Legal
           </p>
-          <h1 style={{ color: '#1a1a1a', fontSize: 'clamp(32px, 4vw, 52px)', fontWeight: '800', marginBottom: '16px', lineHeight: '1.2' }}>
+          <h1 style={{ color: 'var(--color-text-primary)', fontSize: 'clamp(32px, 4vw, 52px)', fontWeight: '800', marginBottom: '16px', lineHeight: '1.2' }}>
             Terms & Conditions
           </h1>
-          <div style={{ width: '60px', height: '2px', backgroundColor: '#e1c391', margin: '0 auto 24px' }} />
-          <p style={{ color: 'rgba(26,26,26,0.72)', fontSize: '15px', maxWidth: '560px', margin: '0 auto', lineHeight: '1.7' }}>
+          <div style={{ width: '60px', height: '2px', backgroundColor: 'var(--color-gold)', margin: '0 auto 24px' }} />
+          <p style={{ color: 'var(--color-text-primary)', fontSize: '15px', maxWidth: '560px', margin: '0 auto', lineHeight: '1.7' }}>
             Please read these terms carefully before using our platform. By booking with Earthy Stay, you agree to be bound by the following terms and conditions.
           </p>
-          <p style={{ color: '#888', fontSize: '13px', marginTop: '24px' }}>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '13px', marginTop: '24px' }}>
             Effective Date: 1st January 2025 &nbsp;·&nbsp; Last Updated: 1st January 2025
           </p>
         </div>
       </div>
 
       {/* Important Notice */}
-      <div style={{ backgroundColor: '#fffdf5', borderBottom: '1px solid #e1c391' }}>
+      <div style={{ backgroundColor: 'var(--color-bg-card)', borderBottom: '1px solid var(--color-gold)' }}>
         <div className="content-shell" style={{ padding: '20px 24px' }}>
-          <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.7', textAlign: 'center' }}>
+          <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.7', textAlign: 'center' }}>
             <strong>Important:</strong> All bookings made through Earthy Stay are <strong>strictly non-refundable</strong>. Please review our cancellation policy in Section 4 before making a reservation.
           </p>
         </div>
@@ -204,8 +204,8 @@ export default function TermsPage() {
       <div className="content-shell" style={{ padding: '64px 24px 80px' }}>
 
         {/* Table of Contents */}
-        <div style={{ backgroundColor: '#ede8d0', border: '1px solid #e0d9c0', borderRadius: '12px', padding: '32px', marginBottom: '48px' }}>
-          <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#1a1a1a', marginBottom: '20px', letterSpacing: '1px', textTransform: 'uppercase' }}>
+        <div style={{ backgroundColor: 'var(--color-bg-soft)', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '32px', marginBottom: '48px' }}>
+          <h2 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '20px', letterSpacing: '1px', textTransform: 'uppercase' }}>
             Table of Contents
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '10px' }}>
@@ -213,11 +213,11 @@ export default function TermsPage() {
               <a
                 key={section.id}
                 href={`#${section.id}`}
-                style={{ color: '#555', fontSize: '14px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', transition: 'color 0.2s ease' }}
-                onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = '#e1c391'}
-                onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = '#555'}
+                style={{ color: 'var(--color-text-secondary)', fontSize: '14px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '8px', transition: 'color 0.2s ease' }}
+                onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-gold)'}
+                onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-text-secondary)'}
               >
-                <span style={{ color: '#e1c391', fontSize: '10px' }}>→</span>
+                <span style={{ color: 'var(--color-gold)', fontSize: '10px' }}>→</span>
                 {section.title}
               </a>
             ))}
@@ -229,22 +229,22 @@ export default function TermsPage() {
           {sections.map((section) => (
             <div key={section.id} id={section.id} style={{ scrollMarginTop: '100px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '28px' }}>
-                <h2 style={{ fontSize: 'clamp(20px, 2.5vw, 26px)', fontWeight: '800', color: '#1a1a1a', whiteSpace: 'nowrap' }}>
+                <h2 style={{ fontSize: 'clamp(20px, 2.5vw, 26px)', fontWeight: '800', color: 'var(--color-text-primary)', whiteSpace: 'nowrap' }}>
                   {section.title}
                 </h2>
-                <div style={{ flex: 1, height: '1px', backgroundColor: '#e0d9c0' }} />
+                <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--color-border)' }} />
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                 {section.content.map((item, i) => (
                   <div
                     key={i}
-                    style={{ paddingLeft: '20px', borderLeft: `3px solid ${section.id === 'cancellation' ? '#E53E3E' : '#e1c391'}` }}
+                    style={{ paddingLeft: '20px', borderLeft: `3px solid ${section.id === 'cancellation' ? '#E53E3E' : 'var(--color-gold)'}` }}
                   >
-                    <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#1a1a1a', marginBottom: '8px' }}>
+                    <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '8px' }}>
                       {item.subtitle}
                     </h3>
-                    <p style={{ fontSize: '14px', color: '#555', lineHeight: '1.8' }}>
+                    <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', lineHeight: '1.8' }}>
                       {item.text}
                     </p>
                   </div>
@@ -255,23 +255,23 @@ export default function TermsPage() {
         </div>
 
         {/* Bottom CTA */}
-        <div style={{ marginTop: '64px', backgroundColor: '#fffdf5', border: '1px solid #e1c391', borderRadius: '12px', padding: '32px', display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+        <div style={{ marginTop: '64px', backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-gold)', borderRadius: '12px', padding: '32px', display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: '220px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#1a1a1a', marginBottom: '8px' }}>Need Clarification?</h3>
-            <p style={{ fontSize: '14px', color: '#555', lineHeight: '1.7' }}>
+            <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '8px' }}>Need Clarification?</h3>
+            <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', lineHeight: '1.7' }}>
               If any part of these terms is unclear, please reach out to us before making a booking.
             </p>
           </div>
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
             <a
               href="mailto:legal@earthystay.com"
-              style={{ backgroundColor: '#e1c391', color: '#1a1a1a', padding: '12px 24px', fontSize: '13px', letterSpacing: '1px', fontWeight: '700', textTransform: 'uppercase', textDecoration: 'none', borderRadius: '8px', display: 'inline-block' }}
+              style={{ backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', padding: '12px 24px', fontSize: '13px', letterSpacing: '1px', fontWeight: '700', textTransform: 'uppercase', textDecoration: 'none', borderRadius: '8px', display: 'inline-block' }}
             >
               Email Legal Team
             </a>
             <Link
               href="/contact"
-              style={{ border: '1px solid #e0d9c0', color: '#1a1a1a', padding: '12px 24px', fontSize: '13px', letterSpacing: '1px', fontWeight: '600', textTransform: 'uppercase', textDecoration: 'none', borderRadius: '8px', display: 'inline-block' }}
+              style={{ border: '1px solid var(--color-border)', color: 'var(--color-text-primary)', padding: '12px 24px', fontSize: '13px', letterSpacing: '1px', fontWeight: '600', textTransform: 'uppercase', textDecoration: 'none', borderRadius: '8px', display: 'inline-block' }}
             >
               Contact Us
             </Link>
@@ -288,14 +288,14 @@ export default function TermsPage() {
             <Link
               key={link.href}
               href={link.href}
-              style={{ fontSize: '13px', color: '#888', textDecoration: 'none', padding: '8px 16px', border: '1px solid #e0d9c0', borderRadius: '6px', transition: 'all 0.2s ease' }}
+              style={{ fontSize: '13px', color: 'var(--color-text-muted)', textDecoration: 'none', padding: '8px 16px', border: '1px solid var(--color-border)', borderRadius: '6px', transition: 'all 0.2s ease' }}
               onMouseEnter={e => {
-                (e.currentTarget as HTMLAnchorElement).style.borderColor = '#e1c391'
-                ;(e.currentTarget as HTMLAnchorElement).style.color = '#1a1a1a'
+                (e.currentTarget as HTMLAnchorElement).style.borderColor = 'var(--color-gold)'
+                ;(e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-text-primary)'
               }}
               onMouseLeave={e => {
-                (e.currentTarget as HTMLAnchorElement).style.borderColor = '#e0d9c0'
-                ;(e.currentTarget as HTMLAnchorElement).style.color = '#888'
+                (e.currentTarget as HTMLAnchorElement).style.borderColor = 'var(--color-border)'
+                ;(e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-text-muted)'
               }}
             >
               {link.label}

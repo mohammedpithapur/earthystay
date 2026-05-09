@@ -14,7 +14,7 @@ const Map = dynamic(() => import('./Map'), {
       gap: '12px'
     }}>
       <span style={{ fontSize: '32px' }}>🗺️</span>
-      <p style={{ color: '#888', fontSize: '14px' }}>Loading map...</p>
+      <p style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Loading map...</p>
     </div>
   )
 })

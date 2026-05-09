@@ -46,7 +46,7 @@ export default function Map({ latitude, longitude, propertyName, address }: MapP
           <div style={{ fontFamily: 'Georgia, serif' }}>
             <strong>{propertyName}</strong>
             <br />
-            <span style={{ fontSize: '12px', color: '#555' }}>{address}</span>
+            <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>{address}</span>
           </div>
         </Popup>
       </Marker>

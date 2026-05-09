@@ -39,15 +39,15 @@ export default function ContactPage() {
 
   const inputStyle = (field: string) => ({
     width: '100%', padding: '14px 16px',
-    border: `1px solid ${errors[field] ? '#E53E3E' : '#e0d9c0'}`,
-    borderRadius: '8px', fontSize: '14px', color: '#1a1a1a',
+    border: `1px solid ${errors[field] ? '#E53E3E' : 'var(--color-border)'}`,
+    borderRadius: '8px', fontSize: '14px', color: 'var(--color-text-primary)',
     outline: 'none', backgroundColor: '#ffffff',
     boxSizing: 'border-box' as const, fontFamily: 'inherit'
   })
 
   const labelStyle = {
     fontSize: '11px', letterSpacing: '2px',
-    textTransform: 'uppercase' as const, color: '#888',
+    textTransform: 'uppercase' as const, color: 'var(--color-text-muted)',
     display: 'block', marginBottom: '8px', fontWeight: '600' as const
   }
 
@@ -55,15 +55,15 @@ export default function ContactPage() {
     <div style={{ backgroundColor: '#ffffff', minHeight: '100vh' }}>
 
       {/* Header */}
-      <div style={{ backgroundColor: '#ede8d0', padding: 'clamp(48px, 8vw, 80px) 24px', textAlign: 'center' }}>
-        <p style={{ color: '#e1c391', fontSize: '12px', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '12px', fontWeight: '600' }}>
+      <div style={{ backgroundColor: 'var(--color-bg-soft)', padding: 'clamp(48px, 8vw, 80px) 24px', textAlign: 'center' }}>
+        <p style={{ color: 'var(--color-gold)', fontSize: '12px', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '12px', fontWeight: '600' }}>
           Get In Touch
         </p>
-        <h1 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: '800', color: '#1a1a1a', marginBottom: '16px' }}>
+        <h1 style={{ fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '16px' }}>
           Contact Us
         </h1>
-        <div style={{ width: '60px', height: '2px', backgroundColor: '#e1c391', margin: '0 auto 16px' }} />
-        <p style={{ fontSize: '15px', color: '#555', maxWidth: '480px', margin: '0 auto', lineHeight: '1.7' }}>
+        <div style={{ width: '60px', height: '2px', backgroundColor: 'var(--color-gold)', margin: '0 auto 16px' }} />
+        <p style={{ fontSize: '15px', color: 'var(--color-text-secondary)', maxWidth: '480px', margin: '0 auto', lineHeight: '1.7' }}>
           Have a question about a property or your booking? We&apos;re here to help.
         </p>
       </div>
@@ -79,7 +79,7 @@ export default function ContactPage() {
           ].map((item, i) => (
             <a key={i} href={item.href} style={{ textDecoration: 'none' }}>
               <div style={{
-                backgroundColor: '#ffffff', border: '1px solid #e0d9c0',
+                backgroundColor: '#ffffff', border: '1px solid var(--color-border)',
                 borderRadius: '12px', padding: '24px 20px',
                 transition: 'box-shadow 0.2s ease, transform 0.2s ease',
                 cursor: 'pointer'
@@ -95,10 +95,10 @@ export default function ContactPage() {
                   el.style.transform = 'translateY(0)'
                 }}
               >
-                <span style={{ fontSize: '24px', color: '#e1c391', display: 'block', marginBottom: '12px' }}>{item.symbol}</span>
-                <h3 style={{ fontSize: '16px', fontWeight: '700', color: '#1a1a1a', marginBottom: '6px' }}>{item.title}</h3>
-                <p style={{ fontSize: '14px', color: '#e1c391', fontWeight: '600', marginBottom: '4px' }}>{item.detail}</p>
-                <p style={{ fontSize: '12px', color: '#888' }}>{item.sub}</p>
+                <span style={{ fontSize: '24px', color: 'var(--color-gold)', display: 'block', marginBottom: '12px' }}>{item.symbol}</span>
+                <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '6px' }}>{item.title}</h3>
+                <p style={{ fontSize: '14px', color: 'var(--color-gold)', fontWeight: '600', marginBottom: '4px' }}>{item.detail}</p>
+                <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>{item.sub}</p>
               </div>
             </a>
           ))}
@@ -109,10 +109,10 @@ export default function ContactPage() {
 
           {/* Contact Form */}
           <div>
-            <h2 style={{ fontSize: 'clamp(22px, 3vw, 30px)', fontWeight: '800', color: '#1a1a1a', marginBottom: '8px' }}>
+            <h2 style={{ fontSize: 'clamp(22px, 3vw, 30px)', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '8px' }}>
               Send a Message
             </h2>
-            <div style={{ width: '40px', height: '2px', backgroundColor: '#e1c391', marginBottom: '28px' }} />
+            <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--color-gold)', marginBottom: '28px' }} />
 
             {!submitted ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -168,8 +168,8 @@ export default function ContactPage() {
                   onClick={handleSubmit}
                   disabled={loading}
                   style={{
-                    backgroundColor: loading ? '#d4b87a' : '#e1c391',
-                    color: '#1a1a1a', border: 'none', padding: '16px 32px',
+                    backgroundColor: loading ? 'var(--color-gold)' : 'var(--color-gold)',
+                    color: 'var(--color-text-primary)', border: 'none', padding: '16px 32px',
                     fontSize: '13px', letterSpacing: '2px', fontWeight: '700',
                     textTransform: 'uppercase', cursor: loading ? 'not-allowed' : 'pointer',
                     borderRadius: '8px', width: '100%'
@@ -179,17 +179,17 @@ export default function ContactPage() {
                 </button>
               </div>
             ) : (
-              <div style={{ backgroundColor: '#ede8d0', borderRadius: '12px', padding: '40px 32px', textAlign: 'center' }}>
+              <div style={{ backgroundColor: 'var(--color-bg-soft)', borderRadius: '12px', padding: '40px 32px', textAlign: 'center' }}>
                 <div style={{
-                  width: '64px', height: '64px', backgroundColor: '#e1c391',
+                  width: '64px', height: '64px', backgroundColor: 'var(--color-gold)',
                   borderRadius: '50%', display: 'flex', alignItems: 'center',
                   justifyContent: 'center', margin: '0 auto 20px',
-                  fontSize: '28px', fontWeight: '700', color: '#1a1a1a'
+                  fontSize: '28px', fontWeight: '700', color: 'var(--color-text-primary)'
                 }}>
                   &#10003;
                 </div>
-                <h3 style={{ fontSize: '20px', fontWeight: '800', color: '#1a1a1a', marginBottom: '12px' }}>Message Sent!</h3>
-                <p style={{ fontSize: '14px', color: '#555', lineHeight: '1.7' }}>
+                <h3 style={{ fontSize: '20px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '12px' }}>Message Sent!</h3>
+                <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', lineHeight: '1.7' }}>
                   Thank you for reaching out, <strong>{form.name}</strong>. We&apos;ll get back to you at <strong>{form.email}</strong> within 24 hours.
                 </p>
               </div>
@@ -198,14 +198,14 @@ export default function ContactPage() {
 
           {/* Map */}
           <div>
-            <h2 style={{ fontSize: 'clamp(22px, 3vw, 30px)', fontWeight: '800', color: '#1a1a1a', marginBottom: '8px' }}>
+            <h2 style={{ fontSize: 'clamp(22px, 3vw, 30px)', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '8px' }}>
               Our Reach
             </h2>
-            <div style={{ width: '40px', height: '2px', backgroundColor: '#e1c391', marginBottom: '28px' }} />
-            <p style={{ fontSize: '14px', color: '#555', marginBottom: '20px', lineHeight: '1.7' }}>
+            <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--color-gold)', marginBottom: '28px' }} />
+            <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', marginBottom: '20px', lineHeight: '1.7' }}>
               We operate across India with handpicked properties in Goa, Coorg, Jaipur, Munnar, Jaisalmer and Rishikesh — with more destinations added regularly.
             </p>
-            <div id="map" style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid #e0d9c0' }}>
+            <div id="map" style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--color-border)' }}>
               <MapWrapper
                 latitude={20.5937}
                 longitude={78.9629}
@@ -218,23 +218,23 @@ export default function ContactPage() {
       </section>
 
       {/* FAQ */}
-      <section style={{ backgroundColor: '#ede8d0', padding: 'clamp(64px, 8vw, 100px) 24px' }}>
+      <section style={{ backgroundColor: 'var(--color-bg-soft)', padding: 'clamp(64px, 8vw, 100px) 24px' }}>
         <div style={{ maxWidth: '760px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-            <p style={{ color: '#e1c391', fontSize: '12px', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '12px', fontWeight: '600' }}>
+            <p style={{ color: 'var(--color-gold)', fontSize: '12px', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '12px', fontWeight: '600' }}>
               Quick Answers
             </p>
-            <h2 style={{ fontSize: 'clamp(26px, 4vw, 40px)', fontWeight: '800', color: '#1a1a1a', marginBottom: '16px' }}>
+            <h2 style={{ fontSize: 'clamp(26px, 4vw, 40px)', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '16px' }}>
               Frequently Asked Questions
             </h2>
-            <div style={{ width: '60px', height: '2px', backgroundColor: '#e1c391', margin: '0 auto' }} />
+            <div style={{ width: '60px', height: '2px', backgroundColor: 'var(--color-gold)', margin: '0 auto' }} />
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {faqs.map((faq, i) => (
               <div
                 key={i}
-                style={{ backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '12px', overflow: 'hidden' }}
+                style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', overflow: 'hidden' }}
               >
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
@@ -245,11 +245,11 @@ export default function ContactPage() {
                     fontFamily: 'inherit'
                   }}
                 >
-                  <span style={{ fontSize: '15px', fontWeight: '700', color: '#1a1a1a', lineHeight: '1.4', paddingRight: '16px' }}>
+                  <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--color-text-primary)', lineHeight: '1.4', paddingRight: '16px' }}>
                     {faq.q}
                   </span>
                   <span style={{
-                    fontSize: '20px', color: '#e1c391', flexShrink: 0, fontWeight: '700',
+                    fontSize: '20px', color: 'var(--color-gold)', flexShrink: 0, fontWeight: '700',
                     transition: 'transform 0.2s ease',
                     transform: openFaq === i ? 'rotate(45deg)' : 'rotate(0deg)'
                   }}>
@@ -257,8 +257,8 @@ export default function ContactPage() {
                   </span>
                 </button>
                 {openFaq === i && (
-                  <div style={{ padding: '0 24px 20px', borderTop: '1px solid #e0d9c0' }}>
-                    <p style={{ fontSize: '14px', color: '#555', lineHeight: '1.8', paddingTop: '16px' }}>
+                  <div style={{ padding: '0 24px 20px', borderTop: '1px solid var(--color-border)' }}>
+                    <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', lineHeight: '1.8', paddingTop: '16px' }}>
                       {faq.a}
                     </p>
                   </div>

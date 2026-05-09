@@ -10,7 +10,7 @@ export default function FeaturedProperties() {
 
         <div style={{ textAlign: 'center', marginBottom: '64px' }}>
           <p style={{
-            color: '#e1c391',
+            color: 'var(--color-gold)',
             fontSize: '12px',
             letterSpacing: '4px',
             textTransform: 'uppercase',
@@ -22,15 +22,15 @@ export default function FeaturedProperties() {
           <h2 style={{
             fontSize: 'clamp(32px, 4vw, 52px)',
             fontWeight: '800',
-            color: '#1a1a1a',
+            color: 'var(--color-text-primary)',
             marginBottom: '16px',
             lineHeight: '1.2',
           }}>
             Featured Properties
           </h2>
-          <div style={{ width: '60px', height: '2px', backgroundColor: '#e1c391', margin: '0 auto 24px' }} />
+          <div style={{ width: '60px', height: '2px', backgroundColor: 'var(--color-gold)', margin: '0 auto 24px' }} />
           <p style={{
-            color: '#555555',
+            color: 'var(--color-text-secondary)',
             fontSize: '16px',
             maxWidth: '500px',
             margin: '0 auto',
@@ -51,8 +51,8 @@ export default function FeaturedProperties() {
             href="/properties"
             style={{
               display: 'inline-block',
-              border: '2px solid #e1c391',
-              color: '#e1c391',
+              border: '2px solid var(--color-gold)',
+              color: 'var(--color-gold)',
               padding: '16px 48px',
               fontSize: '13px',
               letterSpacing: '2px',
@@ -64,13 +64,13 @@ export default function FeaturedProperties() {
             }}
             onMouseEnter={e => {
               const el = e.currentTarget as HTMLAnchorElement
-              el.style.backgroundColor = '#e1c391'
-              el.style.color = '#1a1a1a'
+              el.style.backgroundColor = 'var(--color-gold)'
+              el.style.color = 'var(--color-text-primary)'
             }}
             onMouseLeave={e => {
               const el = e.currentTarget as HTMLAnchorElement
               el.style.backgroundColor = 'transparent'
-              el.style.color = '#e1c391'
+              el.style.color = 'var(--color-gold)'
             }}
           >
             View All Properties

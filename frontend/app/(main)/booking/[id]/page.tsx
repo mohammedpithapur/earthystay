@@ -27,7 +27,7 @@ export default function BookingPage() {
     return (
       <div style={{ textAlign: 'center', padding: '120px 24px' }}>
         <h2 style={{ fontSize: '32px', fontWeight: '700', marginBottom: '16px' }}>Property not found</h2>
-        <button onClick={() => router.push('/properties')} style={{ backgroundColor: '#e1c391', color: '#1a1a1a', border: 'none', padding: '14px 32px', fontSize: '13px', letterSpacing: '1.5px', textTransform: 'uppercase', fontWeight: '700', cursor: 'pointer', borderRadius: '8px' }}>
+        <button onClick={() => router.push('/properties')} style={{ backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', border: 'none', padding: '14px 32px', fontSize: '13px', letterSpacing: '1.5px', textTransform: 'uppercase', fontWeight: '700', cursor: 'pointer', borderRadius: '8px' }}>
           Back to Properties
         </button>
       </div>
@@ -63,10 +63,10 @@ export default function BookingPage() {
   const inputStyle = (field: string) => ({
     width: '100%',
     padding: '14px 16px',
-    border: `1px solid ${errors[field] ? '#E53E3E' : '#e0d9c0'}`,
+    border: `1px solid ${errors[field] ? '#E53E3E' : 'var(--color-border)'}`,
     borderRadius: '8px',
     fontSize: '14px',
-    color: '#1a1a1a',
+    color: 'var(--color-text-primary)',
     outline: 'none',
     backgroundColor: '#ffffff',
     boxSizing: 'border-box' as const,
@@ -76,7 +76,7 @@ export default function BookingPage() {
     fontSize: '11px',
     letterSpacing: '2px',
     textTransform: 'uppercase' as const,
-    color: '#888',
+    color: 'var(--color-text-muted)',
     display: 'block',
     marginBottom: '8px',
     fontWeight: '600' as const,
@@ -84,7 +84,7 @@ export default function BookingPage() {
 
   const cardStyle = {
     backgroundColor: '#ffffff',
-    border: '1px solid #e0d9c0',
+    border: '1px solid var(--color-border)',
     borderRadius: '12px',
     padding: '32px',
     marginBottom: '24px',
@@ -95,10 +95,10 @@ export default function BookingPage() {
 
       {/* Header */}
       <div style={{ backgroundColor: 'var(--color-navbar)', padding: '40px 24px', textAlign: 'center' }}>
-        <p style={{ color: '#e1c391', fontSize: '12px', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '8px', fontWeight: '600' }}>
+        <p style={{ color: 'var(--color-gold)', fontSize: '12px', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '8px', fontWeight: '600' }}>
           Almost There
         </p>
-        <h1 style={{ color: '#1a1a1a', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: '800' }}>
+        <h1 style={{ color: 'var(--color-text-primary)', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: '800' }}>
           Complete Your Booking
         </h1>
       </div>
@@ -111,10 +111,10 @@ export default function BookingPage() {
 
           {/* Guest Info */}
           <div style={cardStyle}>
-            <h2 style={{ fontSize: '22px', fontWeight: '700', color: '#1a1a1a', marginBottom: '8px' }}>
+            <h2 style={{ fontSize: '22px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '8px' }}>
               1. Guest Information
             </h2>
-            <div style={{ width: '40px', height: '2px', backgroundColor: '#e1c391', marginBottom: '28px' }} />
+            <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--color-gold)', marginBottom: '28px' }} />
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '20px' }}>
               <div style={{ gridColumn: '1 / -1' }}>
@@ -147,10 +147,10 @@ export default function BookingPage() {
 
           {/* Booking Summary */}
           <div style={cardStyle}>
-            <h2 style={{ fontSize: '22px', fontWeight: '700', color: '#1a1a1a', marginBottom: '8px' }}>
+            <h2 style={{ fontSize: '22px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '8px' }}>
               2. Booking Summary
             </h2>
-            <div style={{ width: '40px', height: '2px', backgroundColor: '#e1c391', marginBottom: '28px' }} />
+            <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--color-gold)', marginBottom: '28px' }} />
 
             <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
               <Image
@@ -161,8 +161,8 @@ export default function BookingPage() {
                 style={{ width: '120px', height: '90px', objectFit: 'cover', flexShrink: 0, borderRadius: '8px' }}
               />
               <div style={{ flex: '1 1 0', minWidth: 0 }}>
-                <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1a1a1a', marginBottom: '4px' }}>{property.name}</h3>
-                <p style={{ fontSize: '13px', color: '#888', marginBottom: '12px' }}>{property.city}, {property.state}</p>
+                <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '4px' }}>{property.name}</h3>
+                <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '12px' }}>{property.city}, {property.state}</p>
                 <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
                   {[
                     { label: 'Check In', value: formatDate(checkIn) },
@@ -172,8 +172,8 @@ export default function BookingPage() {
                     { label: 'Duration', value: `${nights} Night${nights > 1 ? 's' : ''}` },
                   ].map(detail => (
                     <div key={detail.label}>
-                      <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', marginBottom: '4px', fontWeight: '600' }}>{detail.label}</p>
-                      <p style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '700' }}>{detail.value}</p>
+                      <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '4px', fontWeight: '600' }}>{detail.label}</p>
+                      <p style={{ fontSize: '13px', color: 'var(--color-text-primary)', fontWeight: '700' }}>{detail.value}</p>
                     </div>
                   ))}
                 </div>
@@ -182,17 +182,17 @@ export default function BookingPage() {
           </div>
 
           {/* Cancellation Policy */}
-          <div style={{ backgroundColor: '#fffdf5', border: '1px solid #e1c391', borderRadius: '12px', padding: '32px', marginBottom: '24px' }}>
-            <h2 style={{ fontSize: '22px', fontWeight: '700', color: '#1a1a1a', marginBottom: '8px' }}>
+          <div style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-gold)', borderRadius: '12px', padding: '32px', marginBottom: '24px' }}>
+            <h2 style={{ fontSize: '22px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '8px' }}>
               3. Cancellation Policy
             </h2>
-            <div style={{ width: '40px', height: '2px', backgroundColor: '#e1c391', marginBottom: '20px' }} />
+            <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--color-gold)', marginBottom: '20px' }} />
 
             <div style={{ marginBottom: '20px' }}>
-              <h4 style={{ fontSize: '15px', fontWeight: '700', color: '#1a1a1a', marginBottom: '8px' }}>
+              <h4 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '8px' }}>
                 Important: This booking is 100% Non-Refundable
               </h4>
-              <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.7' }}>
+              <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.7' }}>
                 Once your payment is confirmed, this booking cannot be cancelled or modified for a refund. The full amount of ₹{total.toLocaleString('en-IN')} will be charged and is non-refundable under any circumstances including weather, illness, or change of plans.
               </p>
             </div>
@@ -203,15 +203,15 @@ export default function BookingPage() {
             >
               <div style={{
                 width: '20px', height: '20px', flexShrink: 0,
-                border: `2px solid ${errors.agreed ? '#E53E3E' : agreed ? '#e1c391' : '#888'}`,
+                border: `2px solid ${errors.agreed ? '#E53E3E' : agreed ? 'var(--color-gold)' : 'var(--color-text-muted)'}`,
                 borderRadius: '4px',
-                backgroundColor: agreed ? '#e1c391' : 'transparent',
+                backgroundColor: agreed ? 'var(--color-gold)' : 'transparent',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 marginTop: '2px', transition: 'all 0.2s ease',
               }}>
-                {agreed && <span style={{ color: '#1a1a1a', fontSize: '12px', fontWeight: '700' }}>&#10003;</span>}
+                {agreed && <span style={{ color: 'var(--color-text-primary)', fontSize: '12px', fontWeight: '700' }}>&#10003;</span>}
               </div>
-              <span style={{ fontSize: '13px', color: '#1a1a1a', lineHeight: '1.6' }}>
+              <span style={{ fontSize: '13px', color: 'var(--color-text-primary)', lineHeight: '1.6' }}>
                 I understand and agree that this booking is <strong>non-refundable</strong>. I have reviewed all booking details and confirm they are correct.
               </span>
             </button>
@@ -222,33 +222,33 @@ export default function BookingPage() {
         {/* Right — Price Summary */}
         <div className="sticky-desktop">
 
-          <div style={{ backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '12px', padding: 'clamp(20px, 5vw, 28px)', marginBottom: '16px' }}>
-            <h3 style={{ fontSize: '20px', fontWeight: '700', color: '#1a1a1a', marginBottom: '20px' }}>Price Breakdown</h3>
+          <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: 'clamp(20px, 5vw, 28px)', marginBottom: '16px' }}>
+            <h3 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '20px' }}>Price Breakdown</h3>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#555' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--color-text-secondary)' }}>
                 <span>₹{property.price_per_night.toLocaleString('en-IN')} x {nights} nights</span>
                 <span>₹{basePrice.toLocaleString('en-IN')}</span>
               </div>
               {pets > 0 && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#555' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--color-text-secondary)' }}>
                   <span>{pets} pet{pets > 1 ? 's' : ''} x {nights} nights</span>
                   <span>₹{petCharge.toLocaleString('en-IN')}</span>
                 </div>
               )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#555' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--color-text-secondary)' }}>
                 <span>Cleaning fee</span>
                 <span>₹{property.cleaning_fee.toLocaleString('en-IN')}</span>
               </div>
             </div>
 
-            <div style={{ height: '1px', backgroundColor: '#e0d9c0', marginBottom: '16px' }} />
+            <div style={{ height: '1px', backgroundColor: 'var(--color-border)', marginBottom: '16px' }} />
 
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <span style={{ fontSize: '18px', fontWeight: '700', color: '#1a1a1a' }}>Total</span>
-              <span style={{ fontSize: '22px', fontWeight: '800', color: '#1a1a1a' }}>₹{total.toLocaleString('en-IN')}</span>
+              <span style={{ fontSize: '18px', fontWeight: '700', color: 'var(--color-text-primary)' }}>Total</span>
+              <span style={{ fontSize: '22px', fontWeight: '800', color: 'var(--color-text-primary)' }}>₹{total.toLocaleString('en-IN')}</span>
             </div>
-            <p style={{ fontSize: '12px', color: '#888' }}>Includes all fees and taxes</p>
+            <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>Includes all fees and taxes</p>
           </div>
 
           <button
@@ -256,8 +256,8 @@ export default function BookingPage() {
             disabled={loading}
             style={{
               width: '100%',
-              backgroundColor: loading ? '#d4b87a' : '#e1c391',
-              color: '#1a1a1a',
+              backgroundColor: loading ? 'var(--color-gold)' : 'var(--color-gold)',
+              color: 'var(--color-text-primary)',
               border: 'none',
               padding: '20px',
               fontSize: '14px',
@@ -274,7 +274,7 @@ export default function BookingPage() {
           </button>
 
           <div style={{ textAlign: 'center' }}>
-            <p style={{ fontSize: '12px', color: '#888', marginBottom: '8px' }}>
+            <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '8px' }}>
               Secured by Razorpay
             </p>
             <p style={{ fontSize: '11px', color: '#aaa', lineHeight: '1.6' }}>

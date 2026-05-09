@@ -39,10 +39,10 @@ export default function DashboardPage() {
   const inputStyle = {
     width: '100%',
     padding: '14px 16px',
-    border: '1px solid #e0d9c0',
+    border: '1px solid var(--color-border)',
     borderRadius: '8px',
     fontSize: '14px',
-    color: '#1a1a1a',
+    color: 'var(--color-text-primary)',
     outline: 'none',
     backgroundColor: '#ffffff',
     boxSizing: 'border-box' as const,
@@ -52,7 +52,7 @@ export default function DashboardPage() {
     fontSize: '11px',
     letterSpacing: '2px',
     textTransform: 'uppercase' as const,
-    color: '#888',
+    color: 'var(--color-text-muted)',
     display: 'block',
     marginBottom: '8px',
     fontWeight: '600' as const,
@@ -65,14 +65,14 @@ export default function DashboardPage() {
       <div style={{ backgroundColor: 'var(--color-navbar)', padding: '48px 24px' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
           <div>
-            <p style={{ color: '#e1c391', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '8px', fontWeight: '600' }}>Welcome Back</p>
-            <h1 style={{ color: '#1a1a1a', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: '800' }}>
+            <p style={{ color: 'var(--color-gold)', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '8px', fontWeight: '600' }}>Welcome Back</p>
+            <h1 style={{ color: 'var(--color-text-primary)', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: '800' }}>
               Mohammed Pithapur
             </h1>
           </div>
           <Link
             href="/properties"
-            style={{ backgroundColor: '#e1c391', color: '#1a1a1a', padding: '14px 28px', fontSize: '13px', letterSpacing: '1.5px', fontWeight: '700', textTransform: 'uppercase', textDecoration: 'none', borderRadius: '8px' }}
+            style={{ backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', padding: '14px 28px', fontSize: '13px', letterSpacing: '1.5px', fontWeight: '700', textTransform: 'uppercase', textDecoration: 'none', borderRadius: '8px' }}
           >
             Book New Stay
           </Link>
@@ -80,7 +80,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats */}
-      <div style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e0d9c0' }}>
+      <div style={{ backgroundColor: '#ffffff', borderBottom: '1px solid var(--color-border)' }}>
         <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '24px', display: 'flex', gap: '0', flexWrap: 'wrap' }}>
           {[
             { label: 'Total Bookings', value: dummyBookings.length },
@@ -88,11 +88,11 @@ export default function DashboardPage() {
             { label: 'Past Stays', value: pastBookings.length },
             { label: 'Total Spent', value: `&#8377;${dummyBookings.reduce((acc, b) => acc + b.total_price, 0).toLocaleString('en-IN')}` },
           ].map((stat, i) => (
-            <div key={stat.label} style={{ flex: '1 1 150px', padding: '16px 24px', borderRight: i < 3 ? '1px solid #e0d9c0' : 'none', textAlign: 'center' }}>
-              <p style={{ fontSize: '28px', color: '#1a1a1a', fontWeight: '800', marginBottom: '4px' }}
+            <div key={stat.label} style={{ flex: '1 1 150px', padding: '16px 24px', borderRight: i < 3 ? '1px solid var(--color-border)' : 'none', textAlign: 'center' }}>
+              <p style={{ fontSize: '28px', color: 'var(--color-text-primary)', fontWeight: '800', marginBottom: '4px' }}
                 dangerouslySetInnerHTML={{ __html: String(stat.value) }}
               />
-              <p style={{ fontSize: '12px', color: '#888', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: '600' }}>
+              <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: '600' }}>
                 {stat.label}
               </p>
             </div>
@@ -103,7 +103,7 @@ export default function DashboardPage() {
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '40px 24px' }}>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', gap: '0', marginBottom: '32px', borderBottom: '1px solid #e0d9c0' }}>
+        <div style={{ display: 'flex', gap: '0', marginBottom: '32px', borderBottom: '1px solid var(--color-border)' }}>
           {tabs.map(tab => (
             <button
               key={tab.id}
@@ -111,9 +111,9 @@ export default function DashboardPage() {
               style={{
                 padding: '14px 24px',
                 border: 'none',
-                borderBottom: activeTab === tab.id ? '2px solid #e1c391' : '2px solid transparent',
+                borderBottom: activeTab === tab.id ? '2px solid var(--color-gold)' : '2px solid transparent',
                 backgroundColor: 'transparent',
-                color: activeTab === tab.id ? '#e1c391' : '#888',
+                color: activeTab === tab.id ? 'var(--color-gold)' : 'var(--color-text-muted)',
                 fontSize: '14px',
                 cursor: 'pointer',
                 fontWeight: activeTab === tab.id ? '700' : '500',
@@ -127,8 +127,8 @@ export default function DashboardPage() {
               {tab.label}
               {tab.count !== null && (
                 <span style={{
-                  backgroundColor: activeTab === tab.id ? '#e1c391' : '#e0d9c0',
-                  color: activeTab === tab.id ? '#1a1a1a' : '#888',
+                  backgroundColor: activeTab === tab.id ? 'var(--color-gold)' : 'var(--color-border)',
+                  color: activeTab === tab.id ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
                   borderRadius: '50%',
                   width: '20px', height: '20px',
                   fontSize: '11px',
@@ -146,10 +146,10 @@ export default function DashboardPage() {
         {activeTab === 'bookings' && (
           <div>
             {upcomingBookings.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '80px 24px', backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '12px' }}>
-                <h3 style={{ fontSize: '24px', fontWeight: '700', color: '#1a1a1a', marginBottom: '12px' }}>No upcoming bookings</h3>
-                <p style={{ color: '#888', fontSize: '14px', marginBottom: '24px' }}>Ready for your next escape?</p>
-                <Link href="/properties" style={{ backgroundColor: '#e1c391', color: '#1a1a1a', padding: '14px 32px', fontSize: '13px', letterSpacing: '1.5px', textTransform: 'uppercase', fontWeight: '700', textDecoration: 'none', borderRadius: '8px' }}>
+              <div style={{ textAlign: 'center', padding: '80px 24px', backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px' }}>
+                <h3 style={{ fontSize: '24px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '12px' }}>No upcoming bookings</h3>
+                <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', marginBottom: '24px' }}>Ready for your next escape?</p>
+                <Link href="/properties" style={{ backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', padding: '14px 32px', fontSize: '13px', letterSpacing: '1.5px', textTransform: 'uppercase', fontWeight: '700', textDecoration: 'none', borderRadius: '8px' }}>
                   Explore Properties
                 </Link>
               </div>
@@ -161,7 +161,7 @@ export default function DashboardPage() {
                   const isExpanded = activeBooking === booking.id
 
                   return (
-                    <div key={booking.id} style={{ backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '12px', overflow: 'hidden' }}>
+                    <div key={booking.id} style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', overflow: 'hidden' }}>
 
                       <div style={{ padding: '24px', display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
                         <Image
@@ -174,12 +174,12 @@ export default function DashboardPage() {
 
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
-                            <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#1a1a1a' }}>{property.name}</h3>
+                            <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{property.name}</h3>
                             <span style={{ backgroundColor: statusColors[booking.status]?.bg, color: statusColors[booking.status]?.color, padding: '4px 12px', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', borderRadius: '6px' }}>
                               {booking.status}
                             </span>
                           </div>
-                          <p style={{ fontSize: '13px', color: '#888', marginBottom: '12px' }}>{property.city}, {property.state}</p>
+                          <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '12px' }}>{property.city}, {property.state}</p>
                           <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
                             {[
                               { label: 'Check In', value: formatDate(booking.check_in) },
@@ -188,26 +188,26 @@ export default function DashboardPage() {
                               { label: 'Guests', value: `${booking.guests} guests${booking.num_pets > 0 ? ` + ${booking.num_pets} pet${booking.num_pets > 1 ? 's' : ''}` : ''}` },
                             ].map(detail => (
                               <div key={detail.label}>
-                                <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', marginBottom: '2px', fontWeight: '600' }}>{detail.label}</p>
-                                <p style={{ fontSize: '13px', color: '#1a1a1a', fontWeight: '700' }}>{detail.value}</p>
+                                <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '2px', fontWeight: '600' }}>{detail.label}</p>
+                                <p style={{ fontSize: '13px', color: 'var(--color-text-primary)', fontWeight: '700' }}>{detail.value}</p>
                               </div>
                             ))}
                           </div>
                         </div>
 
                         <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                          <p style={{ fontSize: '22px', color: '#1a1a1a', fontWeight: '800', marginBottom: '4px' }}>
+                          <p style={{ fontSize: '22px', color: 'var(--color-text-primary)', fontWeight: '800', marginBottom: '4px' }}>
                             &#8377;{booking.total_price.toLocaleString('en-IN')}
                           </p>
-                          <p style={{ fontSize: '11px', color: '#888', marginBottom: '16px' }}>Total Paid</p>
+                          <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginBottom: '16px' }}>Total Paid</p>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                             <button
                               onClick={() => setActiveBooking(isExpanded ? null : booking.id)}
-                              style={{ padding: '8px 16px', border: '1px solid #e0d9c0', borderRadius: '8px', backgroundColor: 'transparent', fontSize: '13px', color: '#555', cursor: 'pointer', fontWeight: '500' }}
+                              style={{ padding: '8px 16px', border: '1px solid var(--color-border)', borderRadius: '8px', backgroundColor: 'transparent', fontSize: '13px', color: 'var(--color-text-secondary)', cursor: 'pointer', fontWeight: '500' }}
                             >
                               {isExpanded ? 'Hide Details' : 'View Details'}
                             </button>
-                            <button style={{ padding: '8px 16px', border: '1px solid #e1c391', borderRadius: '8px', backgroundColor: '#e1c391', color: '#1a1a1a', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>
+                            <button style={{ padding: '8px 16px', border: '1px solid var(--color-gold)', borderRadius: '8px', backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>
                               Download Voucher
                             </button>
                           </div>
@@ -215,44 +215,44 @@ export default function DashboardPage() {
                       </div>
 
                       {isExpanded && (
-                        <div style={{ borderTop: '1px solid #e0d9c0', padding: '24px', backgroundColor: '#ede8d0' }}>
+                        <div style={{ borderTop: '1px solid var(--color-border)', padding: '24px', backgroundColor: 'var(--color-bg-soft)' }}>
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px' }}>
                             <div>
-                              <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', marginBottom: '8px', fontWeight: '600' }}>Booking Reference</p>
-                              <p style={{ fontSize: '20px', color: '#1a1a1a', fontWeight: '800', letterSpacing: '2px' }}>{booking.booking_ref}</p>
+                              <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '600' }}>Booking Reference</p>
+                              <p style={{ fontSize: '20px', color: 'var(--color-text-primary)', fontWeight: '800', letterSpacing: '2px' }}>{booking.booking_ref}</p>
                             </div>
                             <div>
-                              <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', marginBottom: '8px', fontWeight: '600' }}>Check In Time</p>
-                              <p style={{ fontSize: '15px', color: '#1a1a1a', fontWeight: '700' }}>{property.check_in_time}</p>
+                              <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '600' }}>Check In Time</p>
+                              <p style={{ fontSize: '15px', color: 'var(--color-text-primary)', fontWeight: '700' }}>{property.check_in_time}</p>
                             </div>
                             <div>
-                              <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', marginBottom: '8px', fontWeight: '600' }}>Check Out Time</p>
-                              <p style={{ fontSize: '15px', color: '#1a1a1a', fontWeight: '700' }}>{property.check_out_time}</p>
+                              <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '600' }}>Check Out Time</p>
+                              <p style={{ fontSize: '15px', color: 'var(--color-text-primary)', fontWeight: '700' }}>{property.check_out_time}</p>
                             </div>
                             <div>
-                              <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', marginBottom: '8px', fontWeight: '600' }}>Property Address</p>
-                              <p style={{ fontSize: '14px', color: '#1a1a1a', lineHeight: '1.5' }}>{property.address}</p>
+                              <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '600' }}>Property Address</p>
+                              <p style={{ fontSize: '14px', color: 'var(--color-text-primary)', lineHeight: '1.5' }}>{property.address}</p>
                             </div>
                             <div>
-                              <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', marginBottom: '8px', fontWeight: '600' }}>Property Contact</p>
-                              <p style={{ fontSize: '14px', color: '#1a1a1a' }}>{property.contact_phone}</p>
-                              <p style={{ fontSize: '14px', color: '#1a1a1a' }}>{property.contact_email}</p>
+                              <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '600' }}>Property Contact</p>
+                              <p style={{ fontSize: '14px', color: 'var(--color-text-primary)' }}>{property.contact_phone}</p>
+                              <p style={{ fontSize: '14px', color: 'var(--color-text-primary)' }}>{property.contact_email}</p>
                             </div>
                             <div>
-                              <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', marginBottom: '8px', fontWeight: '600' }}>Price Breakdown</p>
+                              <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '600' }}>Price Breakdown</p>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#555' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--color-text-secondary)' }}>
                                   <span>Base price</span><span>&#8377;{booking.base_price.toLocaleString('en-IN')}</span>
                                 </div>
                                 {booking.pet_charge > 0 && (
-                                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#555' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--color-text-secondary)' }}>
                                     <span>Pet charge</span><span>&#8377;{booking.pet_charge.toLocaleString('en-IN')}</span>
                                   </div>
                                 )}
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#555' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--color-text-secondary)' }}>
                                   <span>Cleaning fee</span><span>&#8377;{booking.cleaning_fee.toLocaleString('en-IN')}</span>
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#1a1a1a', fontWeight: '800', borderTop: '1px solid #e0d9c0', paddingTop: '4px', marginTop: '4px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: '800', borderTop: '1px solid var(--color-border)', paddingTop: '4px', marginTop: '4px' }}>
                                   <span>Total</span><span>&#8377;{booking.total_price.toLocaleString('en-IN')}</span>
                                 </div>
                               </div>
@@ -260,14 +260,14 @@ export default function DashboardPage() {
                           </div>
 
                           {booking.special_requests && (
-                            <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '8px' }}>
-                              <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', marginBottom: '8px', fontWeight: '600' }}>Special Requests</p>
-                              <p style={{ fontSize: '14px', color: '#555', lineHeight: '1.6' }}>{booking.special_requests}</p>
+                            <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '8px' }}>
+                              <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '600' }}>Special Requests</p>
+                              <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>{booking.special_requests}</p>
                             </div>
                           )}
 
-                          <div style={{ marginTop: '16px', backgroundColor: '#fffdf5', border: '1px solid #e1c391', borderRadius: '8px', padding: '12px 16px' }}>
-                            <p style={{ fontSize: '12px', color: '#555' }}>
+                          <div style={{ marginTop: '16px', backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-gold)', borderRadius: '8px', padding: '12px 16px' }}>
+                            <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
                               <strong>Important:</strong> This booking is <strong>non-refundable</strong>. Cancellation will not result in a refund.
                             </p>
                           </div>
@@ -285,20 +285,20 @@ export default function DashboardPage() {
         {activeTab === 'past' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {pastBookings.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '80px 24px', backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '12px' }}>
-                <h3 style={{ fontSize: '24px', fontWeight: '700', color: '#1a1a1a', marginBottom: '12px' }}>No past stays yet</h3>
-                <p style={{ color: '#888', fontSize: '14px' }}>Your completed stays will appear here</p>
+              <div style={{ textAlign: 'center', padding: '80px 24px', backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px' }}>
+                <h3 style={{ fontSize: '24px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '12px' }}>No past stays yet</h3>
+                <p style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Your completed stays will appear here</p>
               </div>
             ) : (
               pastBookings.map(booking => {
                 const property = getProperty(booking.property_id)
                 if (!property) return null
                 return (
-                  <div key={booking.id} style={{ backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '12px', padding: '24px', display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <div key={booking.id} style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '24px', display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
                     <Image src={property.images.find(i => i.is_primary)?.image_url || property.images[0]?.image_url} alt={property.name} width={100} height={75} style={{ width: '100px', height: '75px', objectFit: 'cover', flexShrink: 0, opacity: 0.8, borderRadius: '8px' }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <h3 style={{ fontSize: '17px', fontWeight: '700', color: '#1a1a1a', marginBottom: '4px' }}>{property.name}</h3>
-                      <p style={{ fontSize: '13px', color: '#888', marginBottom: '8px' }}>
+                      <h3 style={{ fontSize: '17px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '4px' }}>{property.name}</h3>
+                      <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '8px' }}>
                         {formatDate(booking.check_in)} to {formatDate(booking.check_out)}
                       </p>
                       <span style={{ backgroundColor: statusColors.completed.bg, color: statusColors.completed.color, padding: '3px 10px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', borderRadius: '6px' }}>
@@ -306,10 +306,10 @@ export default function DashboardPage() {
                       </span>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <p style={{ fontSize: '18px', color: '#1a1a1a', fontWeight: '800', marginBottom: '8px' }}>
+                      <p style={{ fontSize: '18px', color: 'var(--color-text-primary)', fontWeight: '800', marginBottom: '8px' }}>
                         &#8377;{booking.total_price.toLocaleString('en-IN')}
                       </p>
-                      <button style={{ padding: '8px 16px', border: '1px solid #e1c391', borderRadius: '8px', backgroundColor: 'transparent', color: '#1a1a1a', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>
+                      <button style={{ padding: '8px 16px', border: '1px solid var(--color-gold)', borderRadius: '8px', backgroundColor: 'transparent', color: 'var(--color-text-primary)', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>
                         Download Voucher
                       </button>
                     </div>
@@ -323,17 +323,17 @@ export default function DashboardPage() {
         {/* Profile */}
         {activeTab === 'profile' && (
           <div style={{ maxWidth: '600px' }}>
-            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '12px', padding: '32px' }}>
-              <h2 style={{ fontSize: '22px', fontWeight: '800', color: '#1a1a1a', marginBottom: '8px' }}>My Profile</h2>
-              <div style={{ width: '40px', height: '2px', backgroundColor: '#e1c391', marginBottom: '28px' }} />
+            <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '32px' }}>
+              <h2 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '8px' }}>My Profile</h2>
+              <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--color-gold)', marginBottom: '28px' }} />
 
               <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '32px' }}>
-                <div style={{ width: '72px', height: '72px', backgroundColor: '#e1c391', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', fontWeight: '800', color: '#1a1a1a' }}>
+                <div style={{ width: '72px', height: '72px', backgroundColor: 'var(--color-gold)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '28px', fontWeight: '800', color: 'var(--color-text-primary)' }}>
                   M
                 </div>
                 <div>
-                  <p style={{ fontSize: '18px', fontWeight: '700', color: '#1a1a1a', marginBottom: '4px' }}>{profileForm.full_name}</p>
-                  <p style={{ fontSize: '13px', color: '#888' }}>Guest Account</p>
+                  <p style={{ fontSize: '18px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '4px' }}>{profileForm.full_name}</p>
+                  <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>Guest Account</p>
                 </div>
               </div>
 
@@ -356,7 +356,7 @@ export default function DashboardPage() {
 
               <button
                 onClick={() => { setProfileSaved(true); setTimeout(() => setProfileSaved(false), 3000) }}
-                style={{ backgroundColor: '#e1c391', color: '#1a1a1a', border: 'none', padding: '14px 32px', fontSize: '13px', letterSpacing: '1.5px', fontWeight: '700', textTransform: 'uppercase', cursor: 'pointer', marginTop: '8px', borderRadius: '8px' }}
+                style={{ backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', border: 'none', padding: '14px 32px', fontSize: '13px', letterSpacing: '1.5px', fontWeight: '700', textTransform: 'uppercase', cursor: 'pointer', marginTop: '8px', borderRadius: '8px' }}
               >
                 Save Changes
               </button>
@@ -368,16 +368,16 @@ export default function DashboardPage() {
               )}
             </div>
 
-            <div style={{ backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '12px', padding: '32px', marginTop: '16px' }}>
-              <h3 style={{ fontSize: '20px', fontWeight: '800', color: '#1a1a1a', marginBottom: '8px' }}>Change Password</h3>
-              <div style={{ width: '40px', height: '2px', backgroundColor: '#e1c391', marginBottom: '24px' }} />
+            <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '32px', marginTop: '16px' }}>
+              <h3 style={{ fontSize: '20px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '8px' }}>Change Password</h3>
+              <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--color-gold)', marginBottom: '24px' }} />
               {['Current Password', 'New Password', 'Confirm New Password'].map(label => (
                 <div key={label} style={{ marginBottom: '16px' }}>
                   <label style={labelStyle}>{label}</label>
                   <input type="password" placeholder="••••••••" style={inputStyle} />
                 </div>
               ))}
-              <button style={{ backgroundColor: '#1a1a1a', color: '#ffffff', border: 'none', padding: '14px 32px', fontSize: '13px', letterSpacing: '1.5px', fontWeight: '700', textTransform: 'uppercase', cursor: 'pointer', marginTop: '8px', borderRadius: '8px' }}>
+              <button style={{ backgroundColor: 'var(--color-text-primary)', color: '#ffffff', border: 'none', padding: '14px 32px', fontSize: '13px', letterSpacing: '1.5px', fontWeight: '700', textTransform: 'uppercase', cursor: 'pointer', marginTop: '8px', borderRadius: '8px' }}>
                 Update Password
               </button>
             </div>
@@ -385,7 +385,7 @@ export default function DashboardPage() {
             <div style={{ marginTop: '16px', textAlign: 'center' }}>
               <button
                 onClick={() => router.push('/')}
-                style={{ background: 'none', border: 'none', color: '#888', fontSize: '14px', cursor: 'pointer', textDecoration: 'underline' }}
+                style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', fontSize: '14px', cursor: 'pointer', textDecoration: 'underline' }}
               >
                 Sign Out
               </button>

@@ -127,26 +127,26 @@
 //   const inputStyle = (field: keyof PropertyDraft) => ({
 //     width: '100%',
 //     padding: '13px 14px',
-//     border: `1px solid ${errors[field] ? '#C62828' : '#e0d9c0'}`,
+//     border: `1px solid ${errors[field] ? '#C62828' : 'var(--color-border)'}`,
 //     borderRadius: '8px',
 //     fontSize: '14px',
-//     color: '#1a1a1a',
+//     color: 'var(--color-text-primary)',
 //     outline: 'none',
 //     backgroundColor: '#ffffff',
 //     boxSizing: 'border-box' as const,
 //   })
 
-//   const cardStyle = { backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '14px', padding: '24px' }
+//   const cardStyle = { backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '14px', padding: '24px' }
 
 //   return (
-//     <div style={{ backgroundColor: '#fafaf8', minHeight: '100vh' }}>
+//     <div style={{ backgroundColor: 'var(--color-bg-card)', minHeight: '100vh' }}>
 //       <div style={{ backgroundColor: 'var(--color-navbar)', padding: '28px 24px' }}>
 //         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
 //           <div>
-//             <p style={{ color: '#e1c391', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '8px', fontWeight: '700' }}>{property ? 'Edit Property' : 'Add Property'}</p>
-//             <h1 style={{ color: '#1a1a1a', fontSize: 'clamp(24px, 3vw, 34px)', fontWeight: '800' }}>{property ? 'Update the listing details' : 'Create a new listing'}</h1>
+//             <p style={{ color: 'var(--color-gold)', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '8px', fontWeight: '700' }}>{property ? 'Edit Property' : 'Add Property'}</p>
+//             <h1 style={{ color: 'var(--color-text-primary)', fontSize: 'clamp(24px, 3vw, 34px)', fontWeight: '800' }}>{property ? 'Update the listing details' : 'Create a new listing'}</h1>
 //           </div>
-//           <Link href={backHref} style={navLinkStyle} onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = '#e1c391'} onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-navbar-text)'}>
+//           <Link href={backHref} style={navLinkStyle} onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-gold)'} onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-navbar-text)'}>
 //             Back to Admin
 //           </Link>
 //         </div>
@@ -163,22 +163,22 @@
 //           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(300px, 0.8fr)', gap: '20px', alignItems: 'start' }}>
 //             <div style={{ display: 'grid', gap: '20px' }}>
 //               <div style={cardStyle}>
-//                 <h2 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '18px', color: '#1a1a1a' }}>Core Details</h2>
+//                 <h2 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '18px', color: 'var(--color-text-primary)' }}>Core Details</h2>
 //                 <div style={{ display: 'grid', gap: '16px' }}>
 //                   <div>
-//                     <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', marginBottom: '8px', fontWeight: '700' }}>Property Name</label>
+//                     <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '700' }}>Property Name</label>
 //                     <input value={draft.name} onChange={event => updateField('name', event.target.value)} style={inputStyle('name')} />
 //                     {errors.name && <p style={{ marginTop: '6px', color: '#C62828', fontSize: '12px' }}>{errors.name}</p>}
 //                   </div>
 
 //                   <div>
-//                     <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', marginBottom: '8px', fontWeight: '700' }}>Description</label>
+//                     <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '700' }}>Description</label>
 //                     <textarea value={draft.description} onChange={event => updateField('description', event.target.value)} rows={5} style={{ ...inputStyle('description'), resize: 'vertical' }} />
 //                     {errors.description && <p style={{ marginTop: '6px', color: '#C62828', fontSize: '12px' }}>{errors.description}</p>}
 //                   </div>
 
 //                   <div>
-//                     <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', marginBottom: '8px', fontWeight: '700' }}>Address</label>
+//                     <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '700' }}>Address</label>
 //                     <input value={draft.address} onChange={event => updateField('address', event.target.value)} style={inputStyle('address')} />
 //                     {errors.address && <p style={{ marginTop: '6px', color: '#C62828', fontSize: '12px' }}>{errors.address}</p>}
 //                   </div>
@@ -190,7 +190,7 @@
 //                       ['country', 'Country'],
 //                     ].map(([field, label]) => (
 //                       <div key={field}>
-//                         <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', marginBottom: '8px', fontWeight: '700' }}>{label}</label>
+//                         <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '700' }}>{label}</label>
 //                         <input value={draft[field as keyof PropertyDraft] as string} onChange={event => updateField(field as keyof PropertyDraft, event.target.value as PropertyDraft[keyof PropertyDraft])} style={inputStyle(field as keyof PropertyDraft)} />
 //                         {errors[field] && <p style={{ marginTop: '6px', color: '#C62828', fontSize: '12px' }}>{errors[field]}</p>}
 //                       </div>
@@ -200,7 +200,7 @@
 //               </div>
 
 //               <div style={cardStyle}>
-//                 <h2 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '18px', color: '#1a1a1a' }}>Pricing and Rules</h2>
+//                 <h2 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '18px', color: 'var(--color-text-primary)' }}>Pricing and Rules</h2>
 //                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '14px' }}>
 //                   {[
 //                     ['price_per_night', 'Price Per Night'],
@@ -214,25 +214,25 @@
 //                     ['review_count', 'Review Count'],
 //                   ].map(([field, label]) => (
 //                     <div key={field}>
-//                       <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', marginBottom: '8px', fontWeight: '700' }}>{label}</label>
+//                       <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '700' }}>{label}</label>
 //                       <input type="number" value={draft[field as keyof PropertyDraft] as string} onChange={event => updateField(field as keyof PropertyDraft, event.target.value as PropertyDraft[keyof PropertyDraft])} style={inputStyle(field as keyof PropertyDraft)} />
 //                     </div>
 //                   ))}
 //                 </div>
 
 //                 <div style={{ marginTop: '16px' }}>
-//                   <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', marginBottom: '8px', fontWeight: '700' }}>House Rules</label>
+//                   <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '700' }}>House Rules</label>
 //                   <textarea value={draft.house_rules} onChange={event => updateField('house_rules', event.target.value)} rows={4} placeholder="One rule per line" style={{ ...inputStyle('house_rules'), resize: 'vertical' }} />
 //                 </div>
 
 //                 <div style={{ marginTop: '16px' }}>
-//                   <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', marginBottom: '8px', fontWeight: '700' }}>Amenities</label>
+//                   <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '700' }}>Amenities</label>
 //                   <textarea value={draft.amenities} onChange={event => updateField('amenities', event.target.value)} rows={4} placeholder="One amenity per line" style={{ ...inputStyle('amenities'), resize: 'vertical' }} />
 //                 </div>
 //               </div>
 
 //               <div style={cardStyle}>
-//                 <h2 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '18px', color: '#1a1a1a' }}>Operations</h2>
+//                 <h2 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '18px', color: 'var(--color-text-primary)' }}>Operations</h2>
 //                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
 //                   {[
 //                     ['check_in_time', 'Check In Time'],
@@ -243,7 +243,7 @@
 //                     ['longitude', 'Longitude'],
 //                   ].map(([field, label]) => (
 //                     <div key={field}>
-//                       <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', marginBottom: '8px', fontWeight: '700' }}>{label}</label>
+//                       <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '700' }}>{label}</label>
 //                       <input value={draft[field as keyof PropertyDraft] as string} onChange={event => updateField(field as keyof PropertyDraft, event.target.value as PropertyDraft[keyof PropertyDraft])} style={inputStyle(field as keyof PropertyDraft)} />
 //                       {errors[field] && <p style={{ marginTop: '6px', color: '#C62828', fontSize: '12px' }}>{errors[field]}</p>}
 //                     </div>
@@ -254,38 +254,38 @@
 
 //             <div style={{ display: 'grid', gap: '20px' }}>
 //               <div style={cardStyle}>
-//                 <h2 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '18px', color: '#1a1a1a' }}>Status and Media</h2>
+//                 <h2 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '18px', color: 'var(--color-text-primary)' }}>Status and Media</h2>
 //                 <div style={{ display: 'grid', gap: '16px' }}>
-//                   <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', color: '#1a1a1a', fontWeight: '600' }}>
+//                   <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: '600' }}>
 //                     <input type="checkbox" checked={draft.is_published} onChange={event => updateField('is_published', event.target.checked)} />
 //                     Published
 //                   </label>
 
-//                   <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', color: '#1a1a1a', fontWeight: '600' }}>
+//                   <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: '600' }}>
 //                     <input type="checkbox" checked={draft.pets_allowed} onChange={event => updateField('pets_allowed', event.target.checked)} />
 //                     Pets allowed
 //                   </label>
 
 //                   <div>
-//                     <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', marginBottom: '8px', fontWeight: '700' }}>Primary Image URL</label>
+//                     <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '700' }}>Primary Image URL</label>
 //                     <input value={draft.primary_image_url} onChange={event => updateField('primary_image_url', event.target.value)} style={inputStyle('primary_image_url')} />
 //                     {errors.primary_image_url && <p style={{ marginTop: '6px', color: '#C62828', fontSize: '12px' }}>{errors.primary_image_url}</p>}
 //                   </div>
 
 //                   <div>
-//                     <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', marginBottom: '8px', fontWeight: '700' }}>Secondary Image URL</label>
+//                     <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '700' }}>Secondary Image URL</label>
 //                     <input value={draft.secondary_image_url} onChange={event => updateField('secondary_image_url', event.target.value)} style={inputStyle('secondary_image_url')} />
 //                   </div>
 
 //                   {draft.primary_image_url && (
-//                     <div style={{ border: '1px solid #e0d9c0', borderRadius: '12px', overflow: 'hidden', backgroundColor: '#fafaf8' }}>
+//                     <div style={{ border: '1px solid var(--color-border)', borderRadius: '12px', overflow: 'hidden', backgroundColor: 'var(--color-bg-card)' }}>
 //                       <div style={{ position: 'relative', width: '100%', aspectRatio: '4 / 3' }}>
 //                         <Image src={draft.primary_image_url} alt={draft.name || 'Property preview'} fill sizes="(max-width: 768px) 100vw, 360px" style={{ objectFit: 'cover' }} />
 //                       </div>
 //                       <div style={{ padding: '14px 16px' }}>
-//                         <p style={{ fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', marginBottom: '4px', fontWeight: '700' }}>Preview</p>
-//                         <p style={{ fontSize: '14px', color: '#1a1a1a', fontWeight: '700' }}>{draft.name || 'Untitled property'}</p>
-//                         <p style={{ fontSize: '12px', color: '#777' }}>{draft.city || 'City'}, {draft.state || 'State'}</p>
+//                         <p style={{ fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '4px', fontWeight: '700' }}>Preview</p>
+//                         <p style={{ fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: '700' }}>{draft.name || 'Untitled property'}</p>
+//                         <p style={{ fontSize: '12px', color: 'var(--color-text-primary)' }}>{draft.city || 'City'}, {draft.state || 'State'}</p>
 //                       </div>
 //                     </div>
 //                   )}
@@ -293,15 +293,15 @@
 //               </div>
 
 //               <div style={cardStyle}>
-//                 <h2 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '14px', color: '#1a1a1a' }}>Save</h2>
-//                 <p style={{ fontSize: '14px', color: '#666', lineHeight: '1.6', marginBottom: '18px' }}>
+//                 <h2 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '14px', color: 'var(--color-text-primary)' }}>Save</h2>
+//                 <p style={{ fontSize: '14px', color: 'var(--color-text-primary)', lineHeight: '1.6', marginBottom: '18px' }}>
 //                   This is a single add/edit page. Open it without an id for a fresh form, or with ?id=... to edit an existing property.
 //                 </p>
 //                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-//                   <button type="submit" disabled={isSaving} style={{ backgroundColor: '#e1c391', color: '#1a1a1a', border: 'none', padding: '12px 18px', fontSize: '13px', fontWeight: '800', letterSpacing: '1px', cursor: 'pointer', borderRadius: '8px', opacity: isSaving ? 0.8 : 1 }}>
+//                   <button type="submit" disabled={isSaving} style={{ backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', border: 'none', padding: '12px 18px', fontSize: '13px', fontWeight: '800', letterSpacing: '1px', cursor: 'pointer', borderRadius: '8px', opacity: isSaving ? 0.8 : 1 }}>
 //                     {isSaving ? 'Saving...' : property ? 'Save Changes' : 'Create Property'}
 //                   </button>
-//                   <Link href={backHref} style={navLinkStyle} onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = '#e1c391'} onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-navbar-text)'}>
+//                   <Link href={backHref} style={navLinkStyle} onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-gold)'} onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-navbar-text)'}>
 //                     Cancel
 //                   </Link>
 //                 </div>
@@ -321,14 +321,14 @@
 
 //   if (propertyId && !property) {
 //     return (
-//       <div style={{ backgroundColor: '#fafaf8', minHeight: '100vh' }}>
+//       <div style={{ backgroundColor: 'var(--color-bg-card)', minHeight: '100vh' }}>
 //         <div style={{ backgroundColor: 'var(--color-navbar)', padding: '28px 24px' }}>
 //           <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
 //             <div>
-//               <p style={{ color: '#e1c391', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '8px', fontWeight: '700' }}>Edit Property</p>
-//               <h1 style={{ color: '#1a1a1a', fontSize: 'clamp(24px, 3vw, 34px)', fontWeight: '800' }}>Property not found</h1>
+//               <p style={{ color: 'var(--color-gold)', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '8px', fontWeight: '700' }}>Edit Property</p>
+//               <h1 style={{ color: 'var(--color-text-primary)', fontSize: 'clamp(24px, 3vw, 34px)', fontWeight: '800' }}>Property not found</h1>
 //             </div>
-//             <Link href="/admin" style={navLinkStyle} onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = '#e1c391'} onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-navbar-text)'}>
+//             <Link href="/admin" style={navLinkStyle} onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-gold)'} onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-navbar-text)'}>
 //               Back to Admin
 //             </Link>
 //           </div>
@@ -336,7 +336,7 @@
 
 //         <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '32px 24px 72px' }}>
 //           <div style={cardStyle}>
-//             <p style={{ fontSize: '15px', color: '#555', lineHeight: '1.7' }}>
+//             <p style={{ fontSize: '15px', color: 'var(--color-text-secondary)', lineHeight: '1.7' }}>
 //               The property id in the edit link does not match any demo property.
 //             </p>
 //           </div>
@@ -496,31 +496,31 @@ function Stepper({ value, onChange, min = 0, max = 20, label }: {
   value: number; onChange: (v: number) => void; min?: number; max?: number; label: string
 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', borderBottom: '1px solid #f0ead8' }}>
-      <span style={{ fontSize: '15px', color: '#1a1a1a', fontWeight: '500' }}>{label}</span>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', borderBottom: '1px solid var(--color-border)' }}>
+      <span style={{ fontSize: '15px', color: 'var(--color-text-primary)', fontWeight: '500' }}>{label}</span>
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
         <button
           onClick={() => onChange(Math.max(min, value - 1))}
           disabled={value <= min}
           style={{
             width: '32px', height: '32px', borderRadius: '50%',
-            border: `1px solid ${value <= min ? '#e0d9c0' : '#1a1a1a'}`,
+            border: `1px solid ${value <= min ? 'var(--color-border)' : 'var(--color-text-primary)'}`,
             backgroundColor: 'transparent', cursor: value <= min ? 'not-allowed' : 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '18px', color: value <= min ? '#ccc' : '#1a1a1a',
+            fontSize: '18px', color: value <= min ? '#ccc' : 'var(--color-text-primary)',
             fontWeight: '300', lineHeight: 1,
           }}
         >−</button>
-        <span style={{ fontSize: '16px', fontWeight: '700', color: '#1a1a1a', minWidth: '24px', textAlign: 'center' }}>{value}</span>
+        <span style={{ fontSize: '16px', fontWeight: '700', color: 'var(--color-text-primary)', minWidth: '24px', textAlign: 'center' }}>{value}</span>
         <button
           onClick={() => onChange(Math.min(max, value + 1))}
           disabled={value >= max}
           style={{
             width: '32px', height: '32px', borderRadius: '50%',
-            border: `1px solid ${value >= max ? '#e0d9c0' : '#1a1a1a'}`,
+            border: `1px solid ${value >= max ? 'var(--color-border)' : 'var(--color-text-primary)'}`,
             backgroundColor: 'transparent', cursor: value >= max ? 'not-allowed' : 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '18px', color: value >= max ? '#ccc' : '#1a1a1a',
+            fontSize: '18px', color: value >= max ? '#ccc' : 'var(--color-text-primary)',
             fontWeight: '300', lineHeight: 1,
           }}
         >+</button>
@@ -535,16 +535,16 @@ function Toggle({ value, onChange, label, description }: {
   value: boolean; onChange: (v: boolean) => void; label: string; description?: string
 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', borderBottom: '1px solid #f0ead8' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', borderBottom: '1px solid var(--color-border)' }}>
       <div>
-        <p style={{ fontSize: '15px', color: '#1a1a1a', fontWeight: '500', marginBottom: description ? '4px' : 0 }}>{label}</p>
-        {description && <p style={{ fontSize: '13px', color: '#888' }}>{description}</p>}
+        <p style={{ fontSize: '15px', color: 'var(--color-text-primary)', fontWeight: '500', marginBottom: description ? '4px' : 0 }}>{label}</p>
+        {description && <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>{description}</p>}
       </div>
       <button
         onClick={() => onChange(!value)}
         style={{
           width: '48px', height: '26px', borderRadius: '13px',
-          backgroundColor: value ? '#1a1a1a' : '#e0d9c0',
+          backgroundColor: value ? 'var(--color-text-primary)' : 'var(--color-border)',
           border: 'none', cursor: 'pointer', position: 'relative',
           transition: 'background-color 0.2s ease', flexShrink: 0,
         }}
@@ -566,7 +566,7 @@ function Toggle({ value, onChange, label, description }: {
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <label style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', display: 'block', marginBottom: '8px', fontWeight: '600' }}>
+    <label style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '8px', fontWeight: '600' }}>
       {children}
     </label>
   )
@@ -576,8 +576,8 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 
 const inputStyle = {
   width: '100%', padding: '12px 14px',
-  border: '1px solid #e0d9c0', borderRadius: '8px',
-  fontSize: '14px', color: '#1a1a1a', outline: 'none',
+  border: '1px solid var(--color-border)', borderRadius: '8px',
+  fontSize: '14px', color: 'var(--color-text-primary)', outline: 'none',
   backgroundColor: '#ffffff', boxSizing: 'border-box' as const,
   fontFamily: "'Figtree', sans-serif",
 }
@@ -613,7 +613,7 @@ function BasicInfoSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm:
 
       <div>
         <FieldLabel>Space Details</FieldLabel>
-        <div style={{ border: '1px solid #e0d9c0', borderRadius: '12px', padding: '0 20px' }}>
+        <div style={{ border: '1px solid var(--color-border)', borderRadius: '12px', padding: '0 20px' }}>
           <Stepper label="Bedrooms" value={form.bedrooms} onChange={v => setForm({ ...form, bedrooms: v })} min={1} max={20} />
           <Stepper label="Bathrooms" value={form.bathrooms} onChange={v => setForm({ ...form, bathrooms: v })} min={1} max={20} />
           <Stepper label="Max Guests" value={form.max_guests} onChange={v => setForm({ ...form, max_guests: v })} min={1} max={30} />
@@ -682,13 +682,13 @@ function LocationSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: 
       </div>
 
       {/* Map preview hint */}
-      <div style={{ backgroundColor: '#ede8d0', borderRadius: '12px', padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+      <div style={{ backgroundColor: 'var(--color-bg-soft)', borderRadius: '12px', padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
         <div style={{ fontSize: '24px' }}>📍</div>
         <div>
-          <p style={{ fontSize: '14px', fontWeight: '600', color: '#1a1a1a', marginBottom: '4px' }}>
+          <p style={{ fontSize: '14px', fontWeight: '600', color: 'var(--color-text-primary)', marginBottom: '4px' }}>
             {form.city && form.state ? `${form.city}, ${form.state}` : 'Enter city & state above'}
           </p>
-          <p style={{ fontSize: '12px', color: '#888' }}>Lat: {form.latitude.toFixed(4)} · Lng: {form.longitude.toFixed(4)}</p>
+          <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>Lat: {form.latitude.toFixed(4)} · Lng: {form.longitude.toFixed(4)}</p>
         </div>
       </div>
     </div>
@@ -744,18 +744,18 @@ function PhotosSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: (f
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
         style={{
-          border: '2px dashed #e0d9c0', borderRadius: '12px',
+          border: '2px dashed var(--color-border)', borderRadius: '12px',
           padding: '48px 24px', textAlign: 'center', cursor: 'pointer',
-          backgroundColor: '#fafaf8', transition: 'all 0.2s ease',
+          backgroundColor: 'var(--color-bg-card)', transition: 'all 0.2s ease',
         }}
-        onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = '#e1c391'; (e.currentTarget as HTMLDivElement).style.backgroundColor = '#fffdf5' }}
-        onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = '#e0d9c0'; (e.currentTarget as HTMLDivElement).style.backgroundColor = '#fafaf8' }}
+        onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--color-gold)'; (e.currentTarget as HTMLDivElement).style.backgroundColor = 'var(--color-bg-card)' }}
+        onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--color-border)'; (e.currentTarget as HTMLDivElement).style.backgroundColor = 'var(--color-bg-card)' }}
       >
         <div style={{ fontSize: '32px', marginBottom: '12px' }}>📸</div>
-        <p style={{ fontSize: '16px', fontWeight: '700', color: '#1a1a1a', marginBottom: '6px' }}>Drag & drop photos here</p>
-        <p style={{ fontSize: '13px', color: '#888', marginBottom: '16px' }}>or click to browse files</p>
+        <p style={{ fontSize: '16px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '6px' }}>Drag & drop photos here</p>
+        <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '16px' }}>or click to browse files</p>
         <div style={{
-          display: 'inline-block', backgroundColor: '#1a1a1a', color: '#ffffff',
+          display: 'inline-block', backgroundColor: 'var(--color-text-primary)', color: '#ffffff',
           padding: '10px 24px', borderRadius: '8px', fontSize: '13px', fontWeight: '700',
           letterSpacing: '1px', textTransform: 'uppercase',
         }}>
@@ -768,13 +768,13 @@ function PhotosSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: (f
       {form.images.length > 0 && (
         <div>
           <FieldLabel>Uploaded Photos ({form.images.length})</FieldLabel>
-          <p style={{ fontSize: '12px', color: '#888', marginBottom: '16px' }}>Click a photo to set it as primary cover image</p>
+          <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '16px' }}>Click a photo to set it as primary cover image</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px' }}>
             {form.images.map(img => (
               <div key={img.id} style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', aspectRatio: '4/3', cursor: 'pointer' }} onClick={() => setPrimary(img.id)}>
                 <Image src={img.image_url} alt="" fill sizes="(max-width: 768px) 100vw, 150px" style={{ objectFit: 'cover' }} />
                 {img.is_primary && (
-                  <div style={{ position: 'absolute', top: '8px', left: '8px', backgroundColor: '#e1c391', color: '#1a1a1a', fontSize: '10px', fontWeight: '800', padding: '3px 8px', borderRadius: '4px', letterSpacing: '0.5px' }}>
+                  <div style={{ position: 'absolute', top: '8px', left: '8px', backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', fontSize: '10px', fontWeight: '800', padding: '3px 8px', borderRadius: '4px', letterSpacing: '0.5px' }}>
                     COVER
                   </div>
                 )}
@@ -790,7 +790,7 @@ function PhotosSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: (f
                 >×</button>
                 <div style={{
                   position: 'absolute', inset: 0,
-                  border: img.is_primary ? '2px solid #e1c391' : '2px solid transparent',
+                  border: img.is_primary ? '2px solid var(--color-gold)' : '2px solid transparent',
                   borderRadius: '10px', transition: 'border-color 0.2s',
                 }} />
               </div>
@@ -812,7 +812,7 @@ function AmenitiesSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm:
 
   return (
     <div>
-      <p style={{ fontSize: '14px', color: '#555', marginBottom: '24px', lineHeight: '1.6' }}>
+      <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', marginBottom: '24px', lineHeight: '1.6' }}>
         Select all amenities available at your property. The more you add, the better guests can find your listing.
       </p>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
@@ -824,10 +824,10 @@ function AmenitiesSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm:
               onClick={() => toggle(amenity)}
               style={{
                 padding: '10px 16px',
-                border: `1.5px solid ${active ? '#1a1a1a' : '#e0d9c0'}`,
+                border: `1.5px solid ${active ? 'var(--color-text-primary)' : 'var(--color-border)'}`,
                 borderRadius: '100px',
-                backgroundColor: active ? '#1a1a1a' : '#ffffff',
-                color: active ? '#ffffff' : '#555',
+                backgroundColor: active ? 'var(--color-text-primary)' : '#ffffff',
+                color: active ? '#ffffff' : 'var(--color-text-secondary)',
                 fontSize: '13px', fontWeight: active ? '700' : '500',
                 cursor: 'pointer', transition: 'all 0.15s ease',
                 fontFamily: "'Figtree', sans-serif",
@@ -839,7 +839,7 @@ function AmenitiesSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm:
         })}
       </div>
       {form.amenities.length > 0 && (
-        <p style={{ fontSize: '13px', color: '#888', marginTop: '20px' }}>
+        <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '20px' }}>
           {form.amenities.length} amenit{form.amenities.length === 1 ? 'y' : 'ies'} selected
         </p>
       )}
@@ -852,14 +852,14 @@ function PricingSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: (
     <div>
       <FieldLabel>{label}</FieldLabel>
       <div style={{ position: 'relative' }}>
-        <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', color: '#888', fontWeight: '600' }}>₹</span>
+        <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', color: 'var(--color-text-muted)', fontWeight: '600' }}>₹</span>
         <input
           style={{ ...inputStyle, paddingLeft: '32px' }}
           type="number" min={0} value={value}
           onChange={e => setForm({ ...form, [key]: parseInt(e.target.value) || 0 })}
         />
       </div>
-      {hint && <p style={{ fontSize: '12px', color: '#888', marginTop: '6px' }}>{hint}</p>}
+      {hint && <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '6px' }}>{hint}</p>}
     </div>
   )
 
@@ -868,9 +868,9 @@ function PricingSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: (
       {priceInput('Nightly Rate', form.price_per_night, 'price_per_night', 'Base price per night before fees')}
       {priceInput('Cleaning Fee', form.cleaning_fee, 'cleaning_fee', 'One-time fee charged per booking')}
 
-      <div style={{ height: '1px', backgroundColor: '#f0ead8' }} />
+      <div style={{ height: '1px', backgroundColor: 'var(--color-border)' }} />
 
-      <div style={{ border: '1px solid #e0d9c0', borderRadius: '12px', padding: '0 20px' }}>
+      <div style={{ border: '1px solid var(--color-border)', borderRadius: '12px', padding: '0 20px' }}>
         <Toggle
           label="Allow Pets"
           description="Guests can bring pets to this property"
@@ -886,22 +886,22 @@ function PricingSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: (
       )}
 
       {/* Pricing summary card */}
-      <div style={{ backgroundColor: '#ede8d0', borderRadius: '12px', padding: '20px' }}>
-        <p style={{ fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', fontWeight: '600', marginBottom: '12px' }}>Pricing Preview</p>
+      <div style={{ backgroundColor: 'var(--color-bg-soft)', borderRadius: '12px', padding: '20px' }}>
+        <p style={{ fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '600', marginBottom: '12px' }}>Pricing Preview</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#555' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--color-text-secondary)' }}>
             <span>Base nightly rate</span><span>₹{form.price_per_night.toLocaleString('en-IN')}</span>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#555' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--color-text-secondary)' }}>
             <span>Cleaning fee</span><span>₹{form.cleaning_fee.toLocaleString('en-IN')}</span>
           </div>
           {form.pets_allowed && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: '#555' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--color-text-secondary)' }}>
               <span>Pet charge/pet/night</span><span>₹{form.pet_charge_per_night.toLocaleString('en-IN')}</span>
             </div>
           )}
-          <div style={{ height: '1px', backgroundColor: '#e0d9c0', margin: '4px 0' }} />
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '15px', fontWeight: '700', color: '#1a1a1a' }}>
+          <div style={{ height: '1px', backgroundColor: 'var(--color-border)', margin: '4px 0' }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '15px', fontWeight: '700', color: 'var(--color-text-primary)' }}>
             <span>2-night total (est.)</span>
             <span>₹{(form.price_per_night * 2 + form.cleaning_fee).toLocaleString('en-IN')}</span>
           </div>
@@ -916,15 +916,15 @@ function PoliciesSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: 
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div>
         <FieldLabel>Minimum Stay</FieldLabel>
-        <div style={{ border: '1px solid #e0d9c0', borderRadius: '12px', padding: '0 20px' }}>
+        <div style={{ border: '1px solid var(--color-border)', borderRadius: '12px', padding: '0 20px' }}>
           <Stepper label="Minimum Nights" value={form.min_nights} onChange={v => setForm({ ...form, min_nights: v })} min={1} max={30} />
         </div>
-        <p style={{ fontSize: '12px', color: '#888', marginTop: '8px' }}>Guests must book at least {form.min_nights} night{form.min_nights > 1 ? 's' : ''}</p>
+        <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '8px' }}>Guests must book at least {form.min_nights} night{form.min_nights > 1 ? 's' : ''}</p>
       </div>
 
       <div>
         <FieldLabel>Listing Status</FieldLabel>
-        <div style={{ border: '1px solid #e0d9c0', borderRadius: '12px', padding: '0 20px' }}>
+        <div style={{ border: '1px solid var(--color-border)', borderRadius: '12px', padding: '0 20px' }}>
           <Toggle
             label="Published"
             description={form.is_published ? 'Visible to guests on the site' : 'Hidden — guests cannot see this property'}
@@ -935,12 +935,12 @@ function PoliciesSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: 
       </div>
 
       {/* Cancellation notice */}
-      <div style={{ backgroundColor: '#fffdf5', border: '1px solid #e1c391', borderRadius: '12px', padding: '20px 24px' }}>
+      <div style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-gold)', borderRadius: '12px', padding: '20px 24px' }}>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
           <span style={{ fontSize: '18px', flexShrink: 0 }}>⚠</span>
           <div>
-            <p style={{ fontSize: '14px', fontWeight: '700', color: '#1a1a1a', marginBottom: '6px' }}>Non-Refundable Policy</p>
-            <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.6' }}>
+            <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '6px' }}>Non-Refundable Policy</p>
+            <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>
               All Earthy Stay bookings are 100% non-refundable. This policy is applied to all properties and cannot be changed per listing.
             </p>
           </div>
@@ -979,7 +979,7 @@ function HouseRulesSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm
       {/* Predefined chips */}
       <div>
         <FieldLabel>Common Rules</FieldLabel>
-        <p style={{ fontSize: '13px', color: '#888', marginBottom: '16px' }}>Toggle rules that apply to your property</p>
+        <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '16px' }}>Toggle rules that apply to your property</p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
           {PREDEFINED_RULES.map(rule => {
             const active = form.house_rules.includes(rule)
@@ -989,10 +989,10 @@ function HouseRulesSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm
                 onClick={() => togglePredefined(rule)}
                 style={{
                   padding: '9px 14px',
-                  border: `1.5px solid ${active ? '#1a1a1a' : '#e0d9c0'}`,
+                  border: `1.5px solid ${active ? 'var(--color-text-primary)' : 'var(--color-border)'}`,
                   borderRadius: '8px',
-                  backgroundColor: active ? '#1a1a1a' : '#ffffff',
-                  color: active ? '#ffffff' : '#555',
+                  backgroundColor: active ? 'var(--color-text-primary)' : '#ffffff',
+                  color: active ? '#ffffff' : 'var(--color-text-secondary)',
                   fontSize: '13px', fontWeight: active ? '600' : '400',
                   cursor: 'pointer', transition: 'all 0.15s ease',
                   fontFamily: "'Figtree', sans-serif",
@@ -1021,8 +1021,8 @@ function HouseRulesSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm
             onClick={addCustom}
             disabled={!customInput.trim()}
             style={{
-              padding: '12px 20px', backgroundColor: customInput.trim() ? '#1a1a1a' : '#e0d9c0',
-              color: customInput.trim() ? '#ffffff' : '#888',
+              padding: '12px 20px', backgroundColor: customInput.trim() ? 'var(--color-text-primary)' : 'var(--color-border)',
+              color: customInput.trim() ? '#ffffff' : 'var(--color-text-muted)',
               border: 'none', borderRadius: '8px', fontSize: '13px',
               fontWeight: '700', cursor: customInput.trim() ? 'pointer' : 'not-allowed',
               fontFamily: "'Figtree', sans-serif", whiteSpace: 'nowrap',
@@ -1039,12 +1039,12 @@ function HouseRulesSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm
           <FieldLabel>Active Rules ({form.house_rules.length})</FieldLabel>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {form.house_rules.map((rule, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', backgroundColor: '#fafaf8', border: '1px solid #f0ead8', borderRadius: '8px', gap: '12px' }}>
+              <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: '8px', gap: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
-                  <span style={{ color: '#e1c391', fontSize: '14px', flexShrink: 0 }}>○</span>
-                  <span style={{ fontSize: '14px', color: '#1a1a1a' }}>{rule}</span>
+                  <span style={{ color: 'var(--color-gold)', fontSize: '14px', flexShrink: 0 }}>○</span>
+                  <span style={{ fontSize: '14px', color: 'var(--color-text-primary)' }}>{rule}</span>
                   {isCustom(rule) && (
-                    <span style={{ fontSize: '10px', backgroundColor: '#ede8d0', color: '#888', padding: '2px 6px', borderRadius: '4px', fontWeight: '600', flexShrink: 0 }}>CUSTOM</span>
+                    <span style={{ fontSize: '10px', backgroundColor: 'var(--color-bg-soft)', color: 'var(--color-text-muted)', padding: '2px 6px', borderRadius: '4px', fontWeight: '600', flexShrink: 0 }}>CUSTOM</span>
                   )}
                 </div>
                 <button
@@ -1212,7 +1212,7 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
 
         {/* ── Top Header ── */}
         <div style={{
-          height: '64px', borderBottom: '1px solid #e0d9c0',
+          height: '64px', borderBottom: '1px solid var(--color-border)',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '0 24px', flexShrink: 0, backgroundColor: '#ffffff',
           position: 'relative',
@@ -1224,16 +1224,16 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
               style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               title="Close"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" strokeWidth="2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-primary)" strokeWidth="2">
                 <path d="M18 6L6 18M6 6l12 12" />
               </svg>
             </button>
-            <div style={{ width: '1px', height: '20px', backgroundColor: '#e0d9c0' }} />
+            <div style={{ width: '1px', height: '20px', backgroundColor: 'var(--color-border)' }} />
             <div>
-              <p style={{ fontSize: '16px', fontWeight: '800', color: '#1a1a1a', lineHeight: 1 }}>
+              <p style={{ fontSize: '16px', fontWeight: '800', color: 'var(--color-text-primary)', lineHeight: 1 }}>
                 {isEdit ? (form.name || property?.name) : 'Add New Property'}
               </p>
-              <p style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>
+              <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '2px' }}>
                 {isEdit ? 'Editing property' : 'New listing'}
               </p>
             </div>
@@ -1241,16 +1241,16 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
 
           {/* Center: overall progress bar */}
           <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-            <div style={{ width: '200px', height: '4px', backgroundColor: '#f0ead8', borderRadius: '2px' }}>
-              <div style={{ height: '100%', width: `${overallCompletion}%`, backgroundColor: '#e1c391', borderRadius: '2px', transition: 'width 0.3s ease' }} />
+            <div style={{ width: '200px', height: '4px', backgroundColor: 'var(--color-border)', borderRadius: '2px' }}>
+              <div style={{ height: '100%', width: `${overallCompletion}%`, backgroundColor: 'var(--color-gold)', borderRadius: '2px', transition: 'width 0.3s ease' }} />
             </div>
-            <p style={{ fontSize: '11px', color: '#888', letterSpacing: '0.5px' }}>{overallCompletion}% complete</p>
+            <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', letterSpacing: '0.5px' }}>{overallCompletion}% complete</p>
           </div>
 
           {/* Right: status + save */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             {saveStatus === 'saving' && (
-              <span style={{ fontSize: '13px', color: '#888' }}>Saving...</span>
+              <span style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>Saving...</span>
             )}
             {saveStatus === 'saved' && (
               <span style={{ fontSize: '13px', color: '#2E7D32', fontWeight: '600' }}>✓ Saved</span>
@@ -1259,8 +1259,8 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
               onClick={handleSave}
               disabled={saveStatus === 'saving'}
               style={{
-                backgroundColor: saveStatus === 'saving' ? '#d4b87a' : '#e1c391',
-                color: '#1a1a1a', border: 'none', padding: '10px 24px',
+                backgroundColor: saveStatus === 'saving' ? 'var(--color-gold)' : 'var(--color-gold)',
+                color: 'var(--color-text-primary)', border: 'none', padding: '10px 24px',
                 borderRadius: '8px', fontSize: '13px', fontWeight: '700',
                 letterSpacing: '1px', textTransform: 'uppercase',
                 cursor: saveStatus === 'saving' ? 'not-allowed' : 'pointer',
@@ -1277,8 +1277,8 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
 
           {/* ── Left Sidebar ── */}
           <div style={{
-            width: '260px', flexShrink: 0, borderRight: '1px solid #e0d9c0',
-            overflowY: 'auto', padding: '24px 0', backgroundColor: '#fafaf8',
+            width: '260px', flexShrink: 0, borderRight: '1px solid var(--color-border)',
+            overflowY: 'auto', padding: '24px 0', backgroundColor: 'var(--color-bg-card)',
           }}>
             {SECTIONS.map(section => {
               const completion = calcCompletion(form, section.id)
@@ -1291,15 +1291,15 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
                     width: '100%', padding: '14px 20px',
                     border: 'none', textAlign: 'left',
                     backgroundColor: isActive ? '#ffffff' : 'transparent',
-                    borderLeft: isActive ? '3px solid #1a1a1a' : '3px solid transparent',
+                    borderLeft: isActive ? '3px solid var(--color-text-primary)' : '3px solid transparent',
                     cursor: 'pointer', transition: 'all 0.15s ease',
                     fontFamily: "'Figtree', sans-serif",
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <span style={{ fontSize: '14px', color: isActive ? '#1a1a1a' : '#e1c391' }}>{section.icon}</span>
-                      <span style={{ fontSize: '14px', fontWeight: isActive ? '700' : '500', color: isActive ? '#1a1a1a' : '#555' }}>
+                      <span style={{ fontSize: '14px', color: isActive ? 'var(--color-text-primary)' : 'var(--color-gold)' }}>{section.icon}</span>
+                      <span style={{ fontSize: '14px', fontWeight: isActive ? '700' : '500', color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}>
                         {section.label}
                       </span>
                     </div>
@@ -1313,8 +1313,8 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
                   </div>
                   {/* Mini progress bar */}
                   {completion > 0 && completion < 100 && (
-                    <div style={{ marginTop: '6px', marginLeft: '24px', height: '2px', backgroundColor: '#f0ead8', borderRadius: '1px' }}>
-                      <div style={{ height: '100%', width: `${completion}%`, backgroundColor: '#e1c391', borderRadius: '1px', transition: 'width 0.3s ease' }} />
+                    <div style={{ marginTop: '6px', marginLeft: '24px', height: '2px', backgroundColor: 'var(--color-border)', borderRadius: '1px' }}>
+                      <div style={{ height: '100%', width: `${completion}%`, backgroundColor: 'var(--color-gold)', borderRadius: '1px', transition: 'width 0.3s ease' }} />
                     </div>
                   )}
                 </button>
@@ -1322,8 +1322,8 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
             })}
 
             {/* Sidebar footer tip */}
-            <div style={{ margin: '24px 16px 0', padding: '16px', backgroundColor: '#ede8d0', borderRadius: '10px' }}>
-              <p style={{ fontSize: '11px', color: '#888', lineHeight: '1.6', letterSpacing: '0.2px' }}>
+            <div style={{ margin: '24px 16px 0', padding: '16px', backgroundColor: 'var(--color-bg-soft)', borderRadius: '10px' }}>
+              <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', lineHeight: '1.6', letterSpacing: '0.2px' }}>
                 💡 Complete all sections for the best listing quality. Listings with full details get more bookings.
               </p>
             </div>
@@ -1336,12 +1336,12 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
               {/* Section header */}
               <div style={{ marginBottom: '36px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '28px', color: '#e1c391' }}>{SECTIONS[activeIdx].icon}</span>
-                  <h2 style={{ fontSize: '28px', fontWeight: '800', color: '#1a1a1a' }}>
+                  <span style={{ fontSize: '28px', color: 'var(--color-gold)' }}>{SECTIONS[activeIdx].icon}</span>
+                  <h2 style={{ fontSize: '28px', fontWeight: '800', color: 'var(--color-text-primary)' }}>
                     {SECTIONS[activeIdx].label}
                   </h2>
                 </div>
-                <div style={{ width: '40px', height: '2px', backgroundColor: '#e1c391', marginLeft: '40px' }} />
+                <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--color-gold)', marginLeft: '40px' }} />
               </div>
 
               {/* Section content */}
@@ -1354,15 +1354,15 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
               {activeSection === 'rules'     && <HouseRulesSection   form={form} setForm={setForm} />}
 
               {/* Prev / Next section navigation */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '48px', paddingTop: '24px', borderTop: '1px solid #f0ead8' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '48px', paddingTop: '24px', borderTop: '1px solid var(--color-border)' }}>
                 <button
                   onClick={() => setActiveSection(SECTIONS[Math.max(0, activeIdx - 1)].id)}
                   disabled={activeIdx === 0}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '8px',
-                    padding: '12px 20px', border: '1px solid #e0d9c0',
+                    padding: '12px 20px', border: '1px solid var(--color-border)',
                     borderRadius: '8px', backgroundColor: 'transparent',
-                    color: activeIdx === 0 ? '#ccc' : '#555',
+                    color: activeIdx === 0 ? '#ccc' : 'var(--color-text-secondary)',
                     fontSize: '13px', fontWeight: '600',
                     cursor: activeIdx === 0 ? 'not-allowed' : 'pointer',
                     fontFamily: "'Figtree', sans-serif",
@@ -1378,7 +1378,7 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
                     padding: '12px 20px',
                     border: 'none',
                     borderRadius: '8px',
-                    backgroundColor: activeIdx === SECTIONS.length - 1 ? '#f0ead8' : '#1a1a1a',
+                    backgroundColor: activeIdx === SECTIONS.length - 1 ? 'var(--color-border)' : 'var(--color-text-primary)',
                     color: activeIdx === SECTIONS.length - 1 ? '#ccc' : '#ffffff',
                     fontSize: '13px', fontWeight: '700',
                     cursor: activeIdx === SECTIONS.length - 1 ? 'not-allowed' : 'pointer',

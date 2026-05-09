@@ -58,13 +58,13 @@ export default function PropertiesClient() {
   return (
     <div className="page-shell" style={{ backgroundColor: '#ffffff' }}>
       <div style={{ backgroundColor: 'var(--color-navbar)', padding: '64px 24px', textAlign: 'center' }}>
-        <p style={{ color: '#e1c391', fontSize: '12px', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '12px', fontWeight: '600' }}>
+        <p style={{ color: 'var(--color-navbar-text)', fontSize: '12px', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '12px', fontWeight: '600' }}>
           Explore
         </p>
-        <h1 style={{ color: '#1a1a1a', fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: '800', marginBottom: '8px' }}>
+        <h1 style={{ color: 'var(--color-navbar-text)', fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: '800', marginBottom: '8px' }}>
           Our Properties
         </h1>
-        <p style={{ color: 'rgba(26,26,26,0.72)', fontSize: '15px' }}>
+        <p style={{ color: 'rgba(255,255,255,0.82)', fontSize: '15px' }}>
           {filtered.length} properties found
         </p>
       </div>
@@ -78,10 +78,10 @@ export default function PropertiesClient() {
               alignItems: 'center',
               gap: '8px',
               padding: '12px 20px',
-              border: '1px solid #e0d9c0',
+              border: '1px solid var(--color-border)',
               borderRadius: '8px',
               backgroundColor: '#ffffff',
-              color: '#1a1a1a',
+              color: 'var(--color-text-primary)',
               fontSize: '14px',
               fontWeight: '600',
               cursor: 'pointer',
@@ -93,24 +93,24 @@ export default function PropertiesClient() {
             </svg>
             Filters
           </button>
-          <p style={{ color: '#555', fontSize: '14px' }}>
+          <p style={{ color: 'var(--color-text-secondary)', fontSize: '14px' }}>
             <strong>{filtered.length}</strong> properties
           </p>
         </div>
 
         <div style={{ minWidth: 0 }}>
           <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '28px', gap: '12px' }}>
-            <label style={{ fontSize: '12px', color: '#888', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: '600' }}>Sort By</label>
+            <label style={{ fontSize: '12px', color: 'var(--color-text-muted)', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: '600' }}>Sort By</label>
             <select
               value={sortBy}
               onChange={e => setSortBy(e.target.value)}
               style={{
                 padding: '10px 16px',
-                border: '1px solid #e0d9c0',
+                border: '1px solid var(--color-border)',
                 borderRadius: '8px',
                 backgroundColor: '#ffffff',
                 fontSize: '14px',
-                color: '#1a1a1a',
+                color: 'var(--color-text-primary)',
                 outline: 'none',
                 cursor: 'pointer',
               }}
@@ -133,17 +133,17 @@ export default function PropertiesClient() {
               textAlign: 'center',
               padding: '80px 24px',
               backgroundColor: '#ffffff',
-              border: '1px solid #e0d9c0',
+              border: '1px solid var(--color-border)',
               borderRadius: '12px',
             }}>
-              <div style={{ fontSize: '48px', marginBottom: '16px', color: '#e1c391' }}>[ ]</div>
-              <h3 style={{ fontSize: '24px', fontWeight: '700', color: '#1a1a1a', marginBottom: '12px' }}>No properties found</h3>
-              <p style={{ color: '#888', fontSize: '14px', marginBottom: '24px' }}>Try adjusting your filters to find your perfect stay</p>
+              <div style={{ fontSize: '48px', marginBottom: '16px', color: 'var(--color-gold)' }}>[ ]</div>
+              <h3 style={{ fontSize: '24px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '12px' }}>No properties found</h3>
+              <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', marginBottom: '24px' }}>Try adjusting your filters to find your perfect stay</p>
               <button
                 onClick={resetFilters}
                 style={{
-                  backgroundColor: '#e1c391',
-                  color: '#1a1a1a',
+                  backgroundColor: 'var(--color-gold)',
+                  color: 'var(--color-text-primary)',
                   border: 'none',
                   padding: '14px 32px',
                   fontSize: '13px',
@@ -196,17 +196,17 @@ export default function PropertiesClient() {
               justifyContent: 'space-between',
               alignItems: 'center',
               padding: '24px',
-              borderBottom: '1px solid #e0d9c0',
+              borderBottom: '1px solid var(--color-border)',
               flexShrink: 0,
             }}>
-              <h2 style={{ fontSize: '24px', fontWeight: '800', color: '#1a1a1a' }}>Filters</h2>
+              <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--color-text-primary)' }}>Filters</h2>
               <button
                 onClick={() => setFiltersOpen(false)}
                 style={{
                   background: 'none',
                   border: 'none',
                   fontSize: '28px',
-                  color: '#1a1a1a',
+                  color: 'var(--color-text-primary)',
                   cursor: 'pointer',
                   padding: '0',
                   lineHeight: '1',
@@ -225,7 +225,7 @@ export default function PropertiesClient() {
               gap: '28px',
             }}>
               <div>
-                <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: '#888', display: 'block', marginBottom: '12px', fontWeight: '600' }}>Destination</label>
+                <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '12px', fontWeight: '600' }}>Destination</label>
                 <input
                   type="text"
                   placeholder="City or State..."
@@ -234,10 +234,10 @@ export default function PropertiesClient() {
                   style={{
                     width: '100%',
                     padding: '12px 16px',
-                    border: '1px solid #e0d9c0',
+                    border: '1px solid var(--color-border)',
                     borderRadius: '8px',
                     fontSize: '14px',
-                    color: '#1a1a1a',
+                    color: 'var(--color-text-primary)',
                     outline: 'none',
                     backgroundColor: '#ffffff',
                     boxSizing: 'border-box' as const,
@@ -245,21 +245,21 @@ export default function PropertiesClient() {
                 />
               </div>
 
-              <div style={{ height: '1px', backgroundColor: '#e0d9c0' }} />
+              <div style={{ height: '1px', backgroundColor: 'var(--color-border)' }} />
 
               <div>
-                <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: '#888', display: 'block', marginBottom: '12px', fontWeight: '600' }}>Price Per Night</label>
+                <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '12px', fontWeight: '600' }}>Price Per Night</label>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <span style={{ fontSize: '14px', color: '#1a1a1a', fontWeight: '600' }}>₹{minPrice.toLocaleString('en-IN')}</span>
-                  <span style={{ fontSize: '14px', color: '#1a1a1a', fontWeight: '600' }}>₹{maxPrice.toLocaleString('en-IN')}</span>
+                  <span style={{ fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: '600' }}>₹{minPrice.toLocaleString('en-IN')}</span>
+                  <span style={{ fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: '600' }}>₹{maxPrice.toLocaleString('en-IN')}</span>
                 </div>
-                <input type="range" min={0} max={20000} step={500} value={maxPrice} onChange={e => setMaxPrice(Number(e.target.value))} style={{ width: '100%', accentColor: '#e1c391' }} />
+                <input type="range" min={0} max={20000} step={500} value={maxPrice} onChange={e => setMaxPrice(Number(e.target.value))} style={{ width: '100%', accentColor: 'var(--color-gold)' }} />
               </div>
 
-              <div style={{ height: '1px', backgroundColor: '#e0d9c0' }} />
+              <div style={{ height: '1px', backgroundColor: 'var(--color-border)' }} />
 
               <div>
-                <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: '#888', display: 'block', marginBottom: '12px', fontWeight: '600' }}>Minimum Bedrooms</label>
+                <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '12px', fontWeight: '600' }}>Minimum Bedrooms</label>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   {[0, 1, 2, 3, 4, 5].map(num => (
                     <button
@@ -267,10 +267,10 @@ export default function PropertiesClient() {
                       onClick={() => setBedrooms(num)}
                       style={{
                         padding: '10px 14px',
-                        border: `1px solid ${bedrooms === num ? '#e1c391' : '#e0d9c0'}`,
+                        border: `1px solid ${bedrooms === num ? 'var(--color-gold)' : 'var(--color-border)'}`,
                         borderRadius: '8px',
-                        backgroundColor: bedrooms === num ? '#e1c391' : 'transparent',
-                        color: bedrooms === num ? '#1a1a1a' : '#555',
+                        backgroundColor: bedrooms === num ? 'var(--color-gold)' : 'transparent',
+                        color: bedrooms === num ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
                         fontSize: '13px',
                         cursor: 'pointer',
                         fontWeight: bedrooms === num ? '700' : '400',
@@ -283,10 +283,10 @@ export default function PropertiesClient() {
                 </div>
               </div>
 
-              <div style={{ height: '1px', backgroundColor: '#e0d9c0' }} />
+              <div style={{ height: '1px', backgroundColor: 'var(--color-border)' }} />
 
               <div>
-                <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: '#888', display: 'block', marginBottom: '12px', fontWeight: '600' }}>Bathroom Type</label>
+                <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '12px', fontWeight: '600' }}>Bathroom Type</label>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   {bathroomOptions.map(option => (
                     <button
@@ -294,10 +294,10 @@ export default function PropertiesClient() {
                       onClick={() => setBathroomType(option.value)}
                       style={{
                         padding: '10px 14px',
-                        border: `1px solid ${bathroomType === option.value ? '#e1c391' : '#e0d9c0'}`,
+                        border: `1px solid ${bathroomType === option.value ? 'var(--color-gold)' : 'var(--color-border)'}`,
                         borderRadius: '8px',
-                        backgroundColor: bathroomType === option.value ? '#e1c391' : 'transparent',
-                        color: bathroomType === option.value ? '#1a1a1a' : '#555',
+                        backgroundColor: bathroomType === option.value ? 'var(--color-gold)' : 'transparent',
+                        color: bathroomType === option.value ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
                         fontSize: '13px',
                         cursor: 'pointer',
                         fontWeight: bathroomType === option.value ? '700' : '400',
@@ -311,25 +311,25 @@ export default function PropertiesClient() {
                 </div>
               </div>
 
-              <div style={{ height: '1px', backgroundColor: '#e0d9c0' }} />
+              <div style={{ height: '1px', backgroundColor: 'var(--color-border)' }} />
 
               <div>
-                <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: '#888', display: 'block', marginBottom: '12px', fontWeight: '600' }}>Pet Friendly</label>
+                <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '12px', fontWeight: '600' }}>Pet Friendly</label>
                 <button
                   onClick={() => setPetsOnly(!petsOnly)}
                   style={{ display: 'flex', alignItems: 'center', gap: '12px', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                 >
-                  <div style={{ width: '44px', height: '24px', backgroundColor: petsOnly ? '#e1c391' : '#e0d9c0', borderRadius: '12px', position: 'relative', transition: 'background-color 0.3s ease' }}>
+                  <div style={{ width: '44px', height: '24px', backgroundColor: petsOnly ? 'var(--color-gold)' : 'var(--color-border)', borderRadius: '12px', position: 'relative', transition: 'background-color 0.3s ease' }}>
                     <div style={{ position: 'absolute', top: '3px', left: petsOnly ? '23px' : '3px', width: '18px', height: '18px', backgroundColor: '#ffffff', borderRadius: '50%', transition: 'left 0.3s ease' }} />
                   </div>
-                  <span style={{ fontSize: '14px', color: '#1a1a1a', fontWeight: '500' }}>Pets Allowed Only</span>
+                  <span style={{ fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: '500' }}>Pets Allowed Only</span>
                 </button>
               </div>
             </div>
 
             <div style={{
               padding: '24px',
-              borderTop: '1px solid #e0d9c0',
+              borderTop: '1px solid var(--color-border)',
               display: 'flex',
               gap: '12px',
               flexShrink: 0,
@@ -339,10 +339,10 @@ export default function PropertiesClient() {
                 style={{
                   flex: 1,
                   padding: '14px 20px',
-                  border: '1px solid #e0d9c0',
+                  border: '1px solid var(--color-border)',
                   borderRadius: '8px',
                   backgroundColor: '#ffffff',
-                  color: '#1a1a1a',
+                  color: 'var(--color-text-primary)',
                   fontSize: '14px',
                   fontWeight: '600',
                   cursor: 'pointer',
@@ -358,8 +358,8 @@ export default function PropertiesClient() {
                   padding: '14px 20px',
                   border: 'none',
                   borderRadius: '8px',
-                  backgroundColor: '#e1c391',
-                  color: '#1a1a1a',
+                  backgroundColor: 'var(--color-gold)',
+                  color: 'var(--color-text-primary)',
                   fontSize: '14px',
                   fontWeight: '700',
                   cursor: 'pointer',
@@ -377,3 +377,4 @@ export default function PropertiesClient() {
     </div>
   )
 }
+

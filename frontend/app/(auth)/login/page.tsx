@@ -39,10 +39,10 @@ export default function LoginPage() {
   const inputStyle = (field: string) => ({
     width: '100%',
     padding: '14px 16px',
-    border: `1px solid ${errors[field] ? '#E53E3E' : '#e0d9c0'}`,
+    border: `1px solid ${errors[field] ? '#E53E3E' : 'var(--color-border)'}`,
     borderRadius: '8px',
     fontSize: '14px',
-    color: '#1a1a1a',
+    color: 'var(--color-text-primary)',
     outline: 'none',
     backgroundColor: '#ffffff',
     boxSizing: 'border-box' as const,
@@ -52,29 +52,29 @@ export default function LoginPage() {
     fontSize: '11px',
     letterSpacing: '2px',
     textTransform: 'uppercase' as const,
-    color: '#888',
+    color: 'var(--color-text-muted)',
     display: 'block',
     marginBottom: '8px',
     fontWeight: '600' as const,
   }
 
   return (
-    <div className="auth-shell" style={{ backgroundColor: '#ede8d0' }}>
+    <div className="auth-shell" style={{ backgroundColor: 'var(--color-bg-soft)' }}>
       <div className="auth-card">
 
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
           <Link href="/" style={{ textDecoration: 'none' }}>
-            <h1 style={{ color: '#1a1a1a', fontSize: '28px', letterSpacing: '3px', marginBottom: '8px', fontWeight: '800' }}>
+            <h1 style={{ color: 'var(--color-text-primary)', fontSize: '28px', letterSpacing: '3px', marginBottom: '8px', fontWeight: '800' }}>
               EARTHY STAY
             </h1>
           </Link>
-          <p style={{ color: '#888', fontSize: '14px' }}>Welcome back</p>
+          <p style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Welcome back</p>
         </div>
 
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '12px', padding: 'clamp(24px, 4vw, 40px)' }}>
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: 'clamp(24px, 4vw, 40px)' }}>
 
-          <h2 style={{ fontSize: '24px', fontWeight: '800', color: '#1a1a1a', marginBottom: '8px' }}>Sign In</h2>
-          <div style={{ width: '40px', height: '2px', backgroundColor: '#e1c391', marginBottom: '28px' }} />
+          <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '8px' }}>Sign In</h2>
+          <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--color-gold)', marginBottom: '28px' }} />
 
           <div style={{ marginBottom: '20px' }}>
             <label style={labelStyle}>Email Address</label>
@@ -89,7 +89,7 @@ export default function LoginPage() {
           </div>
 
           <div style={{ textAlign: 'right', marginBottom: '28px' }}>
-            <Link href="/forgot-password" style={{ fontSize: '13px', color: '#e1c391', textDecoration: 'none', fontWeight: '600' }}>
+            <Link href="/forgot-password" style={{ fontSize: '13px', color: 'var(--color-gold)', textDecoration: 'none', fontWeight: '600' }}>
               Forgot Password?
             </Link>
           </div>
@@ -99,8 +99,8 @@ export default function LoginPage() {
             disabled={loading}
             style={{
               width: '100%',
-              backgroundColor: loading ? '#d4b87a' : '#e1c391',
-              color: '#1a1a1a',
+              backgroundColor: loading ? 'var(--color-gold)' : 'var(--color-gold)',
+              color: 'var(--color-text-primary)',
               border: 'none',
               padding: '16px',
               fontSize: '13px',
@@ -117,17 +117,17 @@ export default function LoginPage() {
           </button>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
-            <div style={{ flex: 1, height: '1px', backgroundColor: '#e0d9c0' }} />
-            <span style={{ fontSize: '12px', color: '#888' }}>OR</span>
-            <div style={{ flex: 1, height: '1px', backgroundColor: '#e0d9c0' }} />
+            <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--color-border)' }} />
+            <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>OR</span>
+            <div style={{ flex: 1, height: '1px', backgroundColor: 'var(--color-border)' }} />
           </div>
 
           <button
             style={{
               width: '100%',
               backgroundColor: 'transparent',
-              color: '#1a1a1a',
-              border: '1px solid #e0d9c0',
+              color: 'var(--color-text-primary)',
+              border: '1px solid var(--color-border)',
               borderRadius: '8px',
               padding: '14px',
               fontSize: '14px',
@@ -140,16 +140,16 @@ export default function LoginPage() {
               transition: 'border-color 0.2s ease',
               fontWeight: '600',
             }}
-            onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.borderColor = '#e1c391'}
-            onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.borderColor = '#e0d9c0'}
+            onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-gold)'}
+            onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--color-border)'}
           >
             <span style={{ fontSize: '16px', fontWeight: '800' }}>G</span>
             Continue with Google
           </button>
 
-          <p style={{ textAlign: 'center', fontSize: '14px', color: '#888' }}>
+          <p style={{ textAlign: 'center', fontSize: '14px', color: 'var(--color-text-muted)' }}>
             Don&apos;t have an account?{' '}
-            <Link href="/register" style={{ color: '#e1c391', textDecoration: 'none', fontWeight: '700' }}>
+            <Link href="/register" style={{ color: 'var(--color-gold)', textDecoration: 'none', fontWeight: '700' }}>
               Create Account
             </Link>
           </p>

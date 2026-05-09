@@ -43,7 +43,7 @@ export default function WhyChooseUs() {
         {/* Section Header */}
         <div style={{ textAlign: 'center', marginBottom: '72px' }}>
           <p style={{
-            color: '#e1c391',
+            color: 'var(--color-navbar-text)',
             fontSize: '12px',
             letterSpacing: '4px',
             textTransform: 'uppercase',
@@ -55,15 +55,15 @@ export default function WhyChooseUs() {
           <h2 style={{
             fontSize: 'clamp(32px, 4vw, 52px)',
             fontWeight: '800',
-            color: '#1a1a1a',
+            color: 'var(--color-navbar-text)',
             marginBottom: '16px',
             lineHeight: '1.2',
           }}>
             Why Choose Us
           </h2>
-          <div style={{ width: '60px', height: '2px', backgroundColor: '#e1c391', margin: '0 auto 24px' }} />
+          <div style={{ width: '60px', height: '2px', backgroundColor: 'var(--color-navbar-text)', margin: '0 auto 24px' }} />
           <p style={{
-            color: 'rgba(26,26,26,0.72)',
+            color: 'rgba(255,255,255,0.84)',
             fontSize: '16px',
             maxWidth: '500px',
             margin: '0 auto',
@@ -74,7 +74,7 @@ export default function WhyChooseUs() {
         </div>
 
         {/* Grid */}
-        <div className="responsive-feature-grid" style={{ backgroundColor: '#b8ab8d' }}>
+        <div className="responsive-feature-grid" style={{ backgroundColor: 'var(--color-border)' }}>
           {reasons.map((reason, index) => (
             <div
               key={index}
@@ -84,23 +84,23 @@ export default function WhyChooseUs() {
                 transition: 'background-color 0.3s ease',
                 cursor: 'default',
               }}
-              onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.backgroundColor = '#e7dcc1'}
+              onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.backgroundColor = 'rgba(255,255,255,0.08)'}
               onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.backgroundColor = 'var(--color-navbar)'}
             >
-              <div style={{ fontSize: '32px', color: '#e1c391', marginBottom: '20px', lineHeight: '1' }}>
+              <div style={{ fontSize: '32px', color: 'var(--color-navbar-text)', marginBottom: '20px', lineHeight: '1' }}>
                 {reason.symbol}
               </div>
-              <div style={{ width: '32px', height: '2px', backgroundColor: '#e1c391', marginBottom: '20px' }} />
+              <div style={{ width: '32px', height: '2px', backgroundColor: 'var(--color-navbar-text)', marginBottom: '20px' }} />
               <h3 style={{
                 fontSize: '22px',
                 fontWeight: '700',
-                color: '#1a1a1a',
+                color: 'var(--color-navbar-text)',
                 marginBottom: '16px',
                 lineHeight: '1.3',
               }}>
                 {reason.title}
               </h3>
-              <p style={{ color: 'rgba(26,26,26,0.72)', fontSize: '14px', lineHeight: '1.8' }}>
+              <p style={{ color: 'rgba(255,255,255,0.84)', fontSize: '14px', lineHeight: '1.8' }}>
                 {reason.description}
               </p>
             </div>
@@ -110,7 +110,7 @@ export default function WhyChooseUs() {
         {/* Bottom Banner */}
         <div className="why-cta-banner" style={{
           marginTop: '80px',
-          border: '1px solid #b8ab8d',
+          border: '1px solid var(--color-navbar-border)',
           borderRadius: '12px',
           padding: 'clamp(24px, 4vw, 48px)',
           display: 'flex',
@@ -120,18 +120,19 @@ export default function WhyChooseUs() {
           gap: '24px',
         }}>
           <div>
-            <h3 style={{ fontSize: '28px', fontWeight: '700', color: '#1a1a1a', marginBottom: '8px' }}>
+            <h3 style={{ fontSize: '28px', fontWeight: '700', color: 'var(--color-navbar-text)', marginBottom: '8px' }}>
               Ready for your next escape?
             </h3>
-            <p style={{ color: 'rgba(26,26,26,0.72)', fontSize: '14px' }}>
+            <p style={{ color: 'rgba(255,255,255,0.84)', fontSize: '18px' }}>
               Browse our collection of handpicked luxury properties across India
             </p>
           </div>
           <Link
             href="/properties"
             style={{
-              backgroundColor: '#e1c391',
-              color: '#1a1a1a',
+              backgroundColor: 'rgba(255,255,255,0.14)',
+              color: 'var(--color-navbar-text)',
+              border: '1px solid var(--color-navbar-border)',
               padding: '18px 48px',
               fontSize: '13px',
               letterSpacing: '2px',

@@ -21,7 +21,7 @@ export default function PropertyCard({ property }: Props) {
           transition: 'transform 0.3s ease, box-shadow 0.3s ease',
           borderRadius: '12px',
           overflow: 'hidden',
-          border: '1px solid #e0d9c0',
+          border: '1px solid var(--color-border)',
         }}
         onMouseEnter={e => {
           (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-4px)'
@@ -45,8 +45,8 @@ export default function PropertyCard({ property }: Props) {
           {/* Rating Badge */}
           <div style={{
             position: 'absolute', top: '14px', right: '14px',
-            backgroundColor: '#1a1a1a',
-            color: '#e1c391',
+            backgroundColor: 'var(--color-text-primary)',
+            color: 'var(--color-gold)',
             padding: '6px 12px',
             fontSize: '12px',
             fontWeight: '700',
@@ -58,7 +58,7 @@ export default function PropertyCard({ property }: Props) {
           {/* Location Badge */}
           <div style={{
             position: 'absolute', bottom: '14px', left: '14px',
-            backgroundColor: 'rgba(26,26,26,0.8)',
+            backgroundColor: 'rgba(43,32,23,0.82)',
             color: '#ffffff',
             padding: '6px 12px',
             fontSize: '11px',
@@ -76,7 +76,7 @@ export default function PropertyCard({ property }: Props) {
           <h3 style={{
             fontSize: '20px',
             fontWeight: '700',
-            color: '#1a1a1a',
+            color: 'var(--color-text-primary)',
             marginBottom: '10px',
             lineHeight: '1.3',
           }}>
@@ -92,7 +92,7 @@ export default function PropertyCard({ property }: Props) {
             ].map(detail => (
               <span key={detail.label} style={{
                 fontSize: '12px',
-                color: '#555555',
+                color: 'var(--color-text-secondary)',
                 letterSpacing: '0.3px',
                 fontWeight: '500',
               }}>
@@ -101,17 +101,17 @@ export default function PropertyCard({ property }: Props) {
             ))}
           </div>
 
-          <div style={{ height: '1px', backgroundColor: '#e0d9c0', marginBottom: '16px' }} />
+          <div style={{ height: '1px', backgroundColor: 'var(--color-border)', marginBottom: '16px' }} />
 
           {/* Price Row */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
-              <span style={{ fontSize: '22px', fontWeight: '700', color: '#1a1a1a' }}>
+              <span style={{ fontSize: '22px', fontWeight: '700', color: 'var(--color-text-primary)' }}>
                 ₹{property.price_per_night.toLocaleString('en-IN')}
               </span>
-              <span style={{ fontSize: '13px', color: '#888', marginLeft: '4px' }}>/ night</span>
+              <span style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginLeft: '4px' }}>/ night</span>
             </div>
-            <div style={{ fontSize: '12px', color: '#888' }}>
+            <div style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
               {property.review_count} reviews
             </div>
           </div>
@@ -120,8 +120,8 @@ export default function PropertyCard({ property }: Props) {
           <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
             {property.amenities.slice(0, 3).map(amenity => (
               <span key={amenity} style={{
-                backgroundColor: '#ede8d0',
-                color: '#555555',
+                backgroundColor: 'var(--color-bg-soft)',
+                color: 'var(--color-text-secondary)',
                 padding: '4px 10px',
                 fontSize: '11px',
                 letterSpacing: '0.3px',
@@ -133,8 +133,8 @@ export default function PropertyCard({ property }: Props) {
             ))}
             {property.amenities.length > 3 && (
               <span style={{
-                backgroundColor: '#ede8d0',
-                color: '#e1c391',
+                backgroundColor: 'var(--color-bg-soft)',
+                color: 'var(--color-gold)',
                 padding: '4px 10px',
                 fontSize: '11px',
                 borderRadius: '6px',

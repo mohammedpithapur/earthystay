@@ -5,23 +5,23 @@
 :root {
   /* Brand Colors */
   --color-white: #ffffff;
-  --color-beige: #ede8d0;
-  --color-gold: #e1c391;
-  --color-dark: #1a1a1a;
-  --color-navbar: #ede8d0;
-  --color-navbar-text: #1a1a1a;
-  --color-navbar-border: #d8c9a8;
+  --color-beige: #b7895f;
+  --color-gold: #ead0af;
+  --color-dark: #2b2017;
+  --color-navbar: #b7895f;
+  --color-navbar-text: #ffffff;
+  --color-navbar-border: rgba(255, 255, 255, 0.26);
 
   /* Text */
-  --color-text-primary: #1a1a1a;
-  --color-text-secondary: #555555;
-  --color-text-muted: #888888;
+  --color-text-primary: #000000;
+  --color-text-secondary: #000000;
+  --color-text-muted: #000000;
 
   /* Borders & Backgrounds */
-  --color-border: #e0d9c0;
-  --color-bg-page: #ffffff;
-  --color-bg-card: #ffffff;
-  --color-bg-soft: #ede8d0;
+  --color-border: #d9c2a8;
+  --color-bg-page: #f7efe6;
+  --color-bg-card: #fffaf4;
+  --color-bg-soft: #ead1b3;
 
   /* Status */
   --color-error: #E53E3E;
@@ -34,8 +34,8 @@
   --btn-radius: 8px;
   --page-padding: clamp(24px, 4vw, 48px);
 
-  --background: #ffffff;
-  --foreground: #1a1a1a;
+  --background: var(--color-bg-page);
+  --foreground: var(--color-text-primary);
 }
 
 * {
@@ -73,6 +73,11 @@ h1, h2, h3, h4, h5, h6 {
 
 input, select, textarea, button {
   font-family: 'Figtree', sans-serif;
+}
+
+.hero-search-input::placeholder {
+  color: #000000;
+  opacity: 1;
 }
 
 .page-shell {
@@ -157,7 +162,7 @@ input, select, textarea, button {
   font-size: 10px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: #888;
+  color: var(--color-text-muted);
   font-weight: 700;
   margin-bottom: 4px;
 }
@@ -232,8 +237,8 @@ input, select, textarea, button {
   }
 
   .dashboard-stat-card {
-    border-right: 1px solid #e0d9c0 !important;
-    border-bottom: 1px solid #e0d9c0;
+    border-right: 1px solid var(--color-border) !important;
+    border-bottom: 1px solid var(--color-border);
   }
 
   .dashboard-stat-card:nth-child(2n) {
@@ -297,7 +302,7 @@ input, select, textarea, button {
 
   .responsive-table tr {
     margin-bottom: 16px;
-    border: 1px solid #e0d9c0;
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     overflow: hidden;
     background: #ffffff;
@@ -323,7 +328,7 @@ input, select, textarea, button {
     font-size: 10px;
     letter-spacing: 1.2px;
     text-transform: uppercase;
-    color: #888;
+    color: var(--color-text-muted);
     font-weight: 700;
     flex-shrink: 0;
     min-width: 88px;
@@ -339,7 +344,7 @@ input, select, textarea, button {
 
   .booking-date-grid > div:first-child {
     border-right: none !important;
-    border-bottom: 1px solid #e0d9c0;
+    border-bottom: 1px solid var(--color-border);
   }
 
   .booking-date-grid > div {

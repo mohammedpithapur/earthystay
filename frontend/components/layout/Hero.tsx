@@ -23,7 +23,7 @@ export default function Hero() {
   const fieldStyle = {
     minWidth: 0,
     padding: '12px 16px',
-    borderRight: '1px solid #e0d9c0',
+    borderRight: 'none',
     display: 'flex',
     flexDirection: 'column' as const,
     gap: '4px',
@@ -32,7 +32,7 @@ export default function Hero() {
   const labelStyle = {
     fontSize: '10px',
     letterSpacing: '1.5px',
-    color: '#888',
+    color: 'var(--color-text-muted)',
     textTransform: 'uppercase' as const,
     fontWeight: '600' as const,
   }
@@ -41,7 +41,7 @@ export default function Hero() {
     border: 'none',
     outline: 'none',
     fontSize: '14px',
-    color: '#1a1a1a',
+    color: 'var(--color-text-primary)',
     backgroundColor: 'transparent',
     width: '100%',
     fontFamily: "'Figtree', sans-serif",
@@ -77,11 +77,12 @@ export default function Hero() {
       }}>
 
         <p style={{
-          color: '#e1c391',
-          fontSize: '12px',
+          color: 'var(--color-gold)',
+          fontSize: '18px',
           letterSpacing: '4px',
           textTransform: 'uppercase',
-          marginBottom: '16px',
+          marginTop: '80px',
+          marginBottom: '20px',
           fontWeight: '600',
         }}>
           Curated Luxury Stays
@@ -96,12 +97,12 @@ export default function Hero() {
           maxWidth: '820px',
         }}>
           Discover Your Perfect{' '}
-          <em style={{ color: '#e1c391', fontStyle: 'italic' }}>Earthy Escape</em>
+          <em style={{ color: 'var(--color-gold)', fontStyle: 'italic' }}>Earthy Escape</em>
         </h1>
 
         <p style={{
           color: 'rgba(255,255,255,0.85)',
-          fontSize: '17px',
+          fontSize: '24px',
           marginBottom: '48px',
           maxWidth: '500px',
           lineHeight: '1.7',
@@ -111,26 +112,28 @@ export default function Hero() {
         </p>
 
         {/* Mobile Search Hint */}
-        <p className="md:hidden" style={{
-          color: '#e1c391',
-          fontSize: '13px',
+        <p className="lg:hidden" style={{
+          color: 'var(--color-gold)',
+          fontSize: '12px',
           letterSpacing: '1px',
           textTransform: 'uppercase',
-          marginBottom: '32px',
+          marginBottom: '24px',
           fontWeight: '600',
         }}>
-          Tap the search icon in the navbar to find properties
+          Scroll down to search properties
         </p>
 
-        {/* Search Bar - Hidden on Mobile */}
-        <div className="hidden md:flex" style={{
+        {/* Search Bar - Responsive */}
+        <div style={{
           backgroundColor: 'rgba(255,255,255,0.98)',
           borderRadius: '12px',
-          padding: '8px',
-          gap: '2px',
+          padding: '12px',
+          gap: '8px',
           width: '100%',
           maxWidth: '900px',
           boxShadow: '0 24px 64px rgba(0,0,0,0.28)',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
         }}>
 
           <div style={fieldStyle}>
@@ -140,6 +143,7 @@ export default function Hero() {
               placeholder="Where are you going?"
               value={location}
               onChange={e => setLocation(e.target.value)}
+              className="hero-search-input"
               style={inputStyle}
             />
           </div>
@@ -150,6 +154,7 @@ export default function Hero() {
               type="date"
               value={checkIn}
               onChange={e => setCheckIn(e.target.value)}
+              className="hero-search-input"
               style={inputStyle}
             />
           </div>
@@ -160,15 +165,17 @@ export default function Hero() {
               type="date"
               value={checkOut}
               onChange={e => setCheckOut(e.target.value)}
+              className="hero-search-input"
               style={inputStyle}
             />
           </div>
 
-          <div style={{ ...fieldStyle, borderRight: '1px solid #e0d9c0' }}>
+          <div style={fieldStyle}>
             <label style={labelStyle}>Guests</label>
             <select
               value={guests}
               onChange={e => setGuests(e.target.value)}
+              className="hero-search-input"
               style={inputStyle}
             >
               {[1,2,3,4,5,6,7,8,9,10].map(n => (
@@ -177,11 +184,12 @@ export default function Hero() {
             </select>
           </div>
 
-          <div style={{ ...fieldStyle, borderRight: 'none' }}>
+          <div style={fieldStyle}>
             <label style={labelStyle}>Pets</label>
             <select
               value={pets}
               onChange={e => setPets(e.target.value)}
+              className="hero-search-input"
               style={inputStyle}
             >
               <option value="0">No Pets</option>
@@ -194,8 +202,8 @@ export default function Hero() {
           <button
             onClick={handleSearch}
             style={{
-              backgroundColor: '#e1c391',
-              color: '#1a1a1a',
+              backgroundColor: 'var(--color-gold)',
+              color: 'var(--color-text-primary)',
               border: 'none',
               padding: '14px 28px',
               fontSize: '13px',
@@ -208,6 +216,7 @@ export default function Hero() {
               margin: '4px',
               transition: 'opacity 0.2s ease',
               minHeight: '50px',
+              gridColumn: 'span 1',
             }}
             onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.opacity = '0.85'}
             onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.opacity = '1'}
@@ -225,7 +234,7 @@ export default function Hero() {
           ].map(stat => (
             <div key={stat.label} style={{ textAlign: 'center' }}>
               <div style={{
-                color: '#e1c391',
+                color: 'var(--color-gold)',
                 fontSize: '28px',
                 fontWeight: '700',
               }}>
@@ -244,17 +253,6 @@ export default function Hero() {
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Scroll Indicator */}
-      <div style={{
-        position: 'absolute', bottom: '32px', left: '50%', transform: 'translateX(-50%)',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', zIndex: 10,
-      }}>
-        <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' }}>
-          Scroll
-        </span>
-        <div style={{ width: '1px', height: '40px', backgroundColor: '#e1c391' }} />
       </div>
     </section>
   )

@@ -25,30 +25,30 @@ export default function ConfirmationPage() {
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
           <div style={{
             width: '80px', height: '80px',
-            backgroundColor: '#e1c391',
+            backgroundColor: 'var(--color-gold)',
             borderRadius: '50%',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             margin: '0 auto 24px',
             fontSize: '32px',
             fontWeight: '700',
-            color: '#1a1a1a',
+            color: 'var(--color-text-primary)',
           }}>
             &#10003;
           </div>
-          <h1 style={{ fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: '800', color: '#1a1a1a', marginBottom: '12px' }}>
+          <h1 style={{ fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '12px' }}>
             Booking Confirmed!
           </h1>
-          <p style={{ color: '#555', fontSize: '15px', lineHeight: '1.7' }}>
+          <p style={{ color: 'var(--color-text-secondary)', fontSize: '15px', lineHeight: '1.7' }}>
             Thank you, <strong>{name}</strong>! Your booking has been confirmed. A confirmation email has been sent to <strong>{email}</strong>.
           </p>
         </div>
 
         {/* Booking Details */}
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid #e0d9c0', borderRadius: '12px', padding: '32px', marginBottom: '24px' }}>
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '32px', marginBottom: '24px' }}>
 
           <div style={{ textAlign: 'center', padding: '16px', backgroundColor: 'var(--color-navbar)', borderRadius: '8px', marginBottom: '28px', border: '1px dashed var(--color-navbar-border)' }}>
-            <p style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: '#888', marginBottom: '8px', fontWeight: '600' }}>Booking Reference</p>
-            <p style={{ fontSize: '28px', color: '#1a1a1a', fontWeight: '800', letterSpacing: '4px' }}>
+            <p style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '600' }}>Booking Reference</p>
+            <p style={{ fontSize: '28px', color: 'var(--color-text-primary)', fontWeight: '800', letterSpacing: '4px' }}>
               {bookingRef}
             </p>
           </div>
@@ -61,10 +61,10 @@ export default function ConfirmationPage() {
               { label: 'Payment', value: 'Confirmed' },
             ].map(detail => (
               <div key={detail.label}>
-                <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: '#888', marginBottom: '6px', fontWeight: '600' }}>
+                <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '6px', fontWeight: '600' }}>
                   {detail.label}
                 </p>
-                <p style={{ fontSize: '15px', color: '#1a1a1a', fontWeight: '700' }}
+                <p style={{ fontSize: '15px', color: 'var(--color-text-primary)', fontWeight: '700' }}
                   dangerouslySetInnerHTML={{ __html: detail.value }}
                 />
               </div>
@@ -73,8 +73,8 @@ export default function ConfirmationPage() {
         </div>
 
         {/* Warning */}
-        <div style={{ backgroundColor: '#fffdf5', border: '1px solid #e1c391', borderRadius: '12px', padding: '16px 20px', marginBottom: '32px' }}>
-          <p style={{ fontSize: '13px', color: '#555', lineHeight: '1.6' }}>
+        <div style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-gold)', borderRadius: '12px', padding: '16px 20px', marginBottom: '32px' }}>
+          <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>
             <strong>Reminder:</strong> This booking is <strong>non-refundable</strong>. Please save your booking reference number for your records.
           </p>
         </div>
@@ -85,8 +85,8 @@ export default function ConfirmationPage() {
               href="/dashboard"
               style={{
               flex: '1 1 180px',
-              backgroundColor: '#e1c391',
-              color: '#1a1a1a',
+              backgroundColor: 'var(--color-gold)',
+              color: 'var(--color-text-primary)',
               padding: '16px',
               fontSize: '13px',
               letterSpacing: '1.5px',
@@ -104,8 +104,8 @@ export default function ConfirmationPage() {
             href="/properties"
             style={{
               flex: '1 1 180px',
-              border: '2px solid #e1c391',
-              color: '#1a1a1a',
+              border: '2px solid var(--color-gold)',
+              color: 'var(--color-text-primary)',
               padding: '16px',
               fontSize: '13px',
               letterSpacing: '1.5px',
