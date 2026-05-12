@@ -41,33 +41,33 @@ export default function WhyChooseUs() {
       <div className="content-shell">
 
         {/* Section Header */}
-        <div style={{ textAlign: 'center', marginBottom: '72px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
           <p style={{
             color: 'var(--color-navbar-text)',
-            fontSize: '12px',
-            letterSpacing: '4px',
+            fontSize: '11px',
+            letterSpacing: '3px',
             textTransform: 'uppercase',
-            marginBottom: '16px',
+            marginBottom: '12px',
             fontWeight: '600',
           }}>
             The Earthy Stay Difference
           </p>
           <h2 style={{
-            fontSize: 'clamp(32px, 4vw, 52px)',
+            fontSize: 'clamp(28px, 4vw, 48px)',
             fontWeight: '800',
             color: 'var(--color-navbar-text)',
-            marginBottom: '16px',
+            marginBottom: '12px',
             lineHeight: '1.2',
           }}>
             Why Choose Us
           </h2>
-          <div style={{ width: '60px', height: '2px', backgroundColor: 'var(--color-navbar-text)', margin: '0 auto 24px' }} />
+          <div style={{ width: '50px', height: '2px', backgroundColor: 'var(--color-navbar-text)', margin: '0 auto 16px' }} />
           <p style={{
             color: 'rgba(255,255,255,0.84)',
-            fontSize: '16px',
+            fontSize: '15px',
             maxWidth: '500px',
             margin: '0 auto',
-            lineHeight: '1.7',
+            lineHeight: '1.6',
           }}>
             We go beyond just a place to stay — we create memories that last a lifetime
           </p>
@@ -80,7 +80,7 @@ export default function WhyChooseUs() {
               key={index}
               style={{
                 backgroundColor: 'var(--color-navbar)',
-                padding: '48px 40px',
+              padding: '36px 32px',
                 transition: 'background-color 0.3s ease',
                 cursor: 'default',
               }}
@@ -109,32 +109,32 @@ export default function WhyChooseUs() {
 
         {/* Bottom Banner */}
         <div className="why-cta-banner" style={{
-          marginTop: '80px',
+          marginTop: '56px',
           border: '1px solid var(--color-navbar-border)',
           borderRadius: '12px',
-          padding: 'clamp(24px, 4vw, 48px)',
+          padding: 'clamp(20px, 3vw, 40px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
-          gap: '24px',
+          gap: '20px',
         }}>
           <div>
-            <h3 style={{ fontSize: '28px', fontWeight: '700', color: 'var(--color-navbar-text)', marginBottom: '8px' }}>
+            <h3 style={{ fontSize: '24px', fontWeight: '700', color: 'var(--color-navbar-text)', marginBottom: '6px' }}>
               Ready for your next escape?
             </h3>
-            <p style={{ color: 'rgba(255,255,255,0.84)', fontSize: '18px' }}>
+            <p style={{ color: 'rgba(255,255,255,0.84)', fontSize: '16px' }}>
               Browse our collection of handpicked luxury properties across India
             </p>
           </div>
           <Link
             href="/properties"
             style={{
-              backgroundColor: 'rgba(255,255,255,0.14)',
-              color: 'var(--color-navbar-text)',
-              border: '1px solid var(--color-navbar-border)',
-              padding: '18px 48px',
-              fontSize: '13px',
+              backgroundColor: 'var(--color-gold)',
+              color: 'var(--color-text-primary)',
+              border: 'none',
+              padding: '14px 42px',
+              fontSize: '12px',
               letterSpacing: '2px',
               fontWeight: '700',
               textTransform: 'uppercase',
@@ -144,10 +144,18 @@ export default function WhyChooseUs() {
               borderRadius: '8px',
               maxWidth: '100%',
               boxSizing: 'border-box',
-              transition: 'opacity 0.2s ease',
+              transition: 'all 0.2s ease',
             }}
-            onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.opacity = '0.85'}
-            onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.opacity = '1'}
+            onMouseEnter={e => {
+              const el = e.currentTarget as HTMLAnchorElement
+              el.style.opacity = '0.9'
+              el.style.transform = 'scale(1.03)'
+            }}
+            onMouseLeave={e => {
+              const el = e.currentTarget as HTMLAnchorElement
+              el.style.opacity = '1'
+              el.style.transform = 'scale(1)'
+            }}
           >
             Explore Properties
           </Link>

@@ -18,14 +18,17 @@ export default function PropertyCard({ property }: Props) {
         style={{
           backgroundColor: '#ffffff',
           cursor: 'pointer',
-          transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+          transition: 'all 0.2s ease',
           borderRadius: '12px',
           overflow: 'hidden',
           border: '1px solid var(--color-border)',
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
         }}
         onMouseEnter={e => {
-          (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-4px)'
-          ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 20px 48px rgba(0,0,0,0.10)'
+          (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-6px)'
+          ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 16px 48px rgba(0,0,0,0.12)'
         }}
         onMouseLeave={e => {
           (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'
@@ -33,13 +36,21 @@ export default function PropertyCard({ property }: Props) {
         }}
       >
         {/* Image */}
-        <div style={{ position: 'relative', overflow: 'hidden', height: '260px' }}>
+        <div style={{ position: 'relative', overflow: 'hidden', width: '100%', aspectRatio: '4/3' }}>
           <Image
             src={primaryImage}
             alt={property.name}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            style={{ objectFit: 'cover', transition: 'transform 0.5s ease' }}
+            style={{ objectFit: 'cover', transition: 'transform 0.4s ease' }}
+            onMouseEnter={e => {
+              const img = e.currentTarget as HTMLImageElement
+              img.style.transform = 'scale(1.08)'
+            }}
+            onMouseLeave={e => {
+              const img = e.currentTarget as HTMLImageElement
+              img.style.transform = 'scale(1)'
+            }}
           />
 
           {/* Rating Badge */}
@@ -71,29 +82,29 @@ export default function PropertyCard({ property }: Props) {
         </div>
 
         {/* Content */}
-        <div style={{ padding: '20px 24px 24px' }}>
+        <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', flex: 1 }}>
 
           <h3 style={{
-            fontSize: '20px',
+            fontSize: '18px',
             fontWeight: '700',
             color: 'var(--color-text-primary)',
-            marginBottom: '10px',
+            marginBottom: '8px',
             lineHeight: '1.3',
           }}>
             {property.name}
           </h3>
 
           {/* Details Row */}
-          <div style={{ display: 'flex', gap: '16px', marginBottom: '16px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '12px', marginBottom: '12px', flexWrap: 'wrap', fontSize: '13px' }}>
             {[
-              { label: `${property.bedrooms} Bedrooms` },
-              { label: `${property.bathrooms} Bathrooms` },
+              { label: `${property.bedrooms} Beds` },
+              { label: `${property.bathrooms} Baths` },
               { label: `${property.max_guests} Guests` },
             ].map(detail => (
               <span key={detail.label} style={{
                 fontSize: '12px',
                 color: 'var(--color-text-secondary)',
-                letterSpacing: '0.3px',
+                letterSpacing: '0.2px',
                 fontWeight: '500',
               }}>
                 {detail.label}
@@ -101,15 +112,15 @@ export default function PropertyCard({ property }: Props) {
             ))}
           </div>
 
-          <div style={{ height: '1px', backgroundColor: 'var(--color-border)', marginBottom: '16px' }} />
+          <div style={{ height: '1px', backgroundColor: 'var(--color-border)', marginBottom: '12px' }} />
 
           {/* Price Row */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
             <div>
-              <span style={{ fontSize: '22px', fontWeight: '700', color: 'var(--color-text-primary)' }}>
+              <span style={{ fontSize: '20px', fontWeight: '700', color: 'var(--color-text-primary)' }}>
                 ₹{property.price_per_night.toLocaleString('en-IN')}
               </span>
-              <span style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginLeft: '4px' }}>/ night</span>
+              <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginLeft: '4px' }}>/ night</span>
             </div>
             <div style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
               {property.review_count} reviews
@@ -117,15 +128,15 @@ export default function PropertyCard({ property }: Props) {
           </div>
 
           {/* Amenities */}
-          <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '6px', marginTop: 'auto', flexWrap: 'wrap' }}>
             {property.amenities.slice(0, 3).map(amenity => (
               <span key={amenity} style={{
                 backgroundColor: 'var(--color-bg-soft)',
                 color: 'var(--color-text-secondary)',
-                padding: '4px 10px',
-                fontSize: '11px',
-                letterSpacing: '0.3px',
-                borderRadius: '6px',
+                padding: '3px 8px',
+                fontSize: '10px',
+                letterSpacing: '0.2px',
+                borderRadius: '4px',
                 fontWeight: '500',
               }}>
                 {amenity}
@@ -135,12 +146,12 @@ export default function PropertyCard({ property }: Props) {
               <span style={{
                 backgroundColor: 'var(--color-bg-soft)',
                 color: 'var(--color-gold)',
-                padding: '4px 10px',
-                fontSize: '11px',
-                borderRadius: '6px',
+                padding: '3px 8px',
+                fontSize: '10px',
+                borderRadius: '4px',
                 fontWeight: '600',
               }}>
-                +{property.amenities.length - 3} more
+                +{property.amenities.length - 3}
               </span>
             )}
           </div>

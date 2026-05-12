@@ -11,7 +11,7 @@
 **Earthy Stay** — A luxury property-booking platform for India.
 - Guests browse, filter, and book curated properties.
 - Admin panel manages bookings, properties, and iCal sync.
-- Tech: Next.js 16 (App Router) + FastAPI backend.
+- Tech: Next.js 16 (App Router) + FastAPI backend + PostgreSQL + SQLAlchemy + JWT auth.
 
 ---
 
@@ -20,9 +20,39 @@
 ```
 /
 ├── backend/
-│   ├── main.py          # FastAPI app (CORS configured for localhost:3000)
-│   ├── .gitignore       # ignores: venv, __pycache__, .env
-│   └── (venv, .env)     # local only, not committed
+│   ├── requirements.txt
+│   ├── .gitignore              # ignores: venv, __pycache__, .env
+│   ├── .env                    # DATABASE_URL, JWT_SECRET
+│   └── app/
+│       ├── main.py             # FastAPI app entry, lifespan, CORS, router includes
+│       ├── config.py           # pydantic-settings (DB URL, JWT secret, CORS origins)
+│       ├── database.py         # async engine, sessionmaker, Base, get_db
+│       ├── dependencies.py     # get_db, get_current_user (JWT), get_admin (role check)
+│       ├── models/
+│       │   ├── user.py         # User: id, email, password_hash, full_name, phone, role
+│       │   ├── property.py     # Property + PropertyImage (JSONB for amenities/rules)
+│       │   ├── booking.py      # Booking: dates, pricing, status enum
+│       │   ├── review.py       # Review: rating 1-5, unique per booking
+│       │   └── ical.py         # ICalLink: import/export URLs per property
+│       ├── schemas/            # Pydantic request/response models
+│       │   ├── user.py         # RegisterIn, LoginIn, TokenOut, UserOut, DashboardOut
+│       │   ├── property.py     # PropertyCreate, PropertyUpdate, PropertyOut, PropertyImage*
+│       │   ├── booking.py      # BookingCreate, BookingOut, BookingStatusUpdate
+│       │   ├── review.py       # ReviewCreate, ReviewOut
+│       │   └── ical.py         # ICalLinkCreate, ICalLinkOut
+│       ├── routers/
+│       │   ├── auth.py         # POST /auth/register, /login, /forgot-password, GET /me
+│       │   ├── properties.py   # GET /properties (filters + pagination)
+│       │   ├── bookings.py     # POST /bookings, GET /mine, GET /:id, admin CRUD
+│       │   ├── users.py        # GET /dashboard, PATCH /profile, PATCH /password
+│       │   ├── admin.py        # Dashboard stats, property CRUD, image management
+│       │   └── ical.py         # iCal link CRUD per property
+│       ├── services/
+│       │   ├── auth.py         # hash_password, verify_password, create_token (JWT)
+│       │   ├── booking.py      # calculate_pricing (nights, base, pet, total)
+│       │   └── property.py     # get_property_filters, update_property_rating
+│       └── alembic/            # (future: DB migrations)
+│           └── versions/
 │
 └── frontend/
     ├── app/
@@ -91,7 +121,9 @@
 | Styling | CSS variables + Tailwind 4 (utility-only) | 4.2.4 |
 | Maps | Leaflet + react-leaflet | 1.9.4 / 5.0.0 |
 | Font | Figtree (Google Fonts, weights 300–800) | — |
-| Backend | FastAPI (Python) | latest |
+| Backend | FastAPI (Python) + SQLAlchemy 2.0 (async) | latest |
+| Database | PostgreSQL (via asyncpg) | 16+ |
+| Auth | JWT (python-jose) + bcrypt (passlib) | — |
 | Package manager | npm | — |
 | Node requirement | >=18.0.0 (>=20.9.0 for Next.js) | — |
 
@@ -276,24 +308,83 @@ const labelStyle = {
 
 ## 9. BACKEND
 
+Architecture: FastAPI + PostgreSQL + SQLAlchemy 2.0 (async) + JWT auth.
+All endpoints async. JSONB for list fields (amenities, house_rules, bathrooms_detail).
+
+### 9.1 Models (5 tables)
+
+| Table | Key Fields | Notes |
+|-------|-----------|-------|
+| `users` | id(UUID), email(unique), password_hash, full_name, phone, role(guest/admin) | Roles: guest default, admin for admin panel |
+| `properties` | id(UUID), owner_id(FK→users), name..price, location, JSONB fields, is_published, avg_rating, review_count | Denormalized rating from reviews |
+| `property_images` | id(UUID), property_id(FK→properties CASCADE), image_url, is_primary, display_order | One-to-many from properties |
+| `bookings` | id(UUID), property_id, guest_id, check_in/out, nights, pricing, status(enum), guest_name/email/phone | Status: pending→confirmed→completed or cancelled |
+| `reviews` | id(UUID), property_id, guest_id, booking_id, rating(1-5), comment | UniqueConstraint per booking |
+| `ical_links` | id(UUID), property_id, calendar_name, ical_url, direction(export/import), last_synced | Per-property calendar sync |
+
+### 9.2 API Endpoints
+
+| Method | Path | Auth | Notes |
+|--------|------|------|-------|
+| POST | `/auth/register` | No | Create user, return JWT |
+| POST | `/auth/login` | No | Verify credentials, return JWT |
+| GET | `/auth/me` | JWT | Current user from token |
+| POST | `/auth/forgot-password` | No | Stub — returns ok |
+| POST | `/auth/reset-password` | No | Stub — returns ok |
+| GET | `/properties` | No | Filter: city, state, min/max_price, guests, pets, amenities. Paginated. Published only. |
+| POST | `/bookings` | JWT | Create booking. Validates availability, calculates pricing server-side. |
+| GET | `/bookings/mine` | JWT | User's bookings. Filter by status. |
+| GET | `/bookings/{id}` | JWT | Single booking (owner or admin). |
+| GET | `/users/dashboard` | JWT | Aggregated: upcoming, past stays, total spent, profile. |
+| PATCH | `/users/profile` | JWT | Update name, phone. |
+| PATCH | `/users/password` | JWT | Change password (verify old). |
+| GET | `/admin/dashboard` | Admin | Stats: bookings, properties, revenue, pending. |
+| GET/POST | `/admin/properties` | Admin | List all (incl. unpublished) / Create. |
+| PATCH/DELETE | `/admin/properties/{id}` | Admin | Update (full 7-section edit) / Delete. |
+| POST | `/admin/properties/{id}/images` | Admin | Add image. |
+| PATCH/DELETE | `/admin/images/{id}` | Admin | Update (primary/reorder) / Delete. |
+| GET/PATCH | `/admin/bookings` | Admin | List all bookings (search, filter) / Update status. |
+| POST/GET/DELETE | `/ical/properties/{id}/links` | Admin | iCal link CRUD. |
+
+### 9.3 Key Design Decisions
+
+- **Pricing server-side** — `services/booking.py:calculate_pricing()`. Client sends dates+pets; server computes total. Prevents tampering.
+- **Availability check** — Overlap query on confirmed/pending bookings: `check_in < :checkout AND check_out > :checkin`.
+- **JWT payload** — `{sub: user.id, role: user.role, exp: ...}`. 24h expiry. No refresh tokens (v1).
+- **JSONB for lists** — amenities, house_rules, bathrooms_detail stored as JSONB. Direct match to frontend TS arrays.
+- **Denormalized ratings** — `avg_rating` and `review_count` on properties table. Updated via `update_property_rating()` on review create/delete.
+- **UUID PKs** — All tables use UUID primary keys. Compatible with frontend, better for multi-tenant.
+- **Async throughout** — All DB operations use `AsyncSession`. `async_sessionmaker` in database.py.
+
+### 9.4 Dependencies Pattern
+
 ```python
-# backend/main.py
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-
-app = FastAPI(title="Property Chain API")
-app.add_middleware(CORSMiddleware,
-  allow_origins=["http://localhost:3000"],
-  allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
-
-@app.get("/")
-def root():
-    return {"message": "Property Chain API is running"}
+# app/dependencies.py
+get_db()             → AsyncSession (yield)
+get_current_user()   → User (JWT from Authorization header, 401 if invalid)
+get_admin()          → User (asserts role==admin, 403 if not)
 ```
 
-- **Currently stub only.** No endpoints beyond `/`.
-- Frontend uses dummy data — no real API calls yet.
-- When adding endpoints: standard FastAPI patterns, Pydantic models.
+### 9.5 Config (pydantic-settings)
+
+```python
+DATABASE_URL="postgresql+asyncpg://postgres:postgres@localhost:5432/earthystay"
+JWT_SECRET="change-me-in-production"
+JWT_ALGORITHM="HS256"
+JWT_EXPIRE_MINUTES=1440  # 24h
+CORS_ORIGINS=["http://localhost:3000"]
+```
+All overridable via `.env` file.
+
+### 9.6 Frontend Migration Notes
+
+Frontend currently uses `dummyProperties` array (in-memory). To wire to real backend:
+1. Replace `lib/data/properties.ts` reads with `fetch('http://localhost:8000/properties?…')`
+2. Admin property editor POST/PATCH to `http://localhost:8000/admin/properties`
+3. Booking flow POST to `http://localhost:8000/bookings`
+4. Auth pages POST to `/auth/login` / `/auth/register`, store JWT in localStorage/cookie
+5. Dashboard data from `GET /users/dashboard`
+6. Admin dashboard from `GET /admin/dashboard` + admin bookings/properties endpoints
 
 ---
 
@@ -370,14 +461,47 @@ BK004: Desert Camp Jaisalmer, Anjali Kumar, Aug 5-8 2026, ₹29,700, pending
 
 ## 13. WHAT DOESN'T EXIST YET (future work)
 
-- Real authentication (currently mocked with setTimeout redirect)
-- Real payment integration (Razorpay mentioned but not wired)
-- Database / persistent storage (all in-memory)
-- Backend API endpoints beyond root
-- Real iCal sync
+- Real payment integration (Razorpay — planned, user has keys, not wired)
+- Real iCal sync logic (endpoints exist, sync engine pending)
+- Frontend wired to real backend (still uses dummyProperties, mock setTimeout)
 - Destinations page (`/destinations`) — linked but no page
 - Offers page (`/offers`) — linked but no page
 - Real email sending for forgot-password
+- Alembic migrations (using `Base.metadata.create_all` for now)
+
+### Current Session: 2026-05-10
+
+**Completed:**
+- Backend folder structure + 30 files (5 models, 6 routers, 3 services, schemas, config)
+- PostgreSQL 18.3 confirmed running on WSL (localhost:5432)
+- Python venv created, `requirements.txt` installed
+- Design decisions confirmed (see plan at `~/.claude/plans/woolly-puzzling-bumblebee.md`)
+
+**Confirmed Design Decisions:**
+| Decision | Choice |
+|----------|--------|
+| Data source | Properties in Excel → manual entry via admin panel |
+| User seeding | 1 admin (`admin@earthystay.com` / `admin123`), guests self-register |
+| Frontend migration | Gradual — properties first |
+| Payment gateway | Razorpay (user has API keys) |
+| iCal | Full sync (export .ics feed + import parser) |
+| Property model | Keep as designed — matches frontend fields |
+
+**Next session — TO DO in order:**
+1. Write DATABASE_URL to `backend/.env` (user provides the URL)
+2. Start backend: `cd backend && source venv/bin/activate && uvicorn app.main:app --reload`
+3. Verify `Base.metadata.create_all` creates all 6 tables on startup
+4. Create `backend/seed.py` — admin user seed script
+5. Add Razorpay (`app/services/payment.py` + payment endpoints on bookings router)
+6. Add iCal engine (`app/services/ical.py` + export/import logic)
+7. Update `requirements.txt` — add `razorpay`, `icalendar`
+8. Begin gradual frontend migration (Step 1: wire `lib/data/properties.ts` → `GET /properties`)
+
+**Next session prompt template:**
+```
+Context: Earthy Stay backend. Read CODEBASE.md section 9 (backend) and section 17 (current session).
+Task: Continue from where we left off — [step from TO DO list].
+```
 
 ---
 
@@ -468,4 +592,37 @@ import dynamic from 'next/dynamic'
 
 ---
 
-*Last updated: May 2026 — reflects current codebase state.*
+## 17. NEXT SESSION PICKUP (2026-05-10)
+
+### State
+- Backend: 30 files scaffolded, venv ready, deps installed
+- PostgreSQL 18.3 running on localhost:5432
+- `Base.metadata.create_all` active in `main.py` lifespan (tables auto-create)
+- Frontend: still on `dummyProperties`, no API calls yet
+- Plan file: `~/.claude/plans/woolly-puzzling-bumblebee.md`
+
+### Blocked on user
+- DATABASE_URL for `.env` (user provides connection string)
+
+### TODO (unblocked, in order)
+1. Write `.env` file with DATABASE_URL
+2. `uvicorn app.main:app --reload` → verify tables create + `GET /` 200
+3. `backend/seed.py` — admin seed (`admin@earthystay.com` / `admin123`)
+4. Razorpay: `app/services/payment.py` + payment endpoints in bookings router
+5. iCal engine: `app/services/ical.py` + export/import routes
+6. Gradual frontend migration: `lib/api.ts` → wire properties first
+
+### Decisions made (don't re-litigate)
+| What | Answer |
+|------|--------|
+| Data | Manual entry via admin panel |
+| Users | 1 admin seed, guests self-register |
+| Migrations | `create_all` for now, Alembic later |
+| Payment | Razorpay (user has keys, env vars) |
+| iCal | Full implementation |
+| Frontend | Gradual, properties-first |
+| Property model | As designed, matches frontend |
+
+---
+
+*Last updated: 2026-05-10 — Backend scaffolded. PostgreSQL 18.3 running. Venv ready. Waiting for DATABASE_URL to start app. See section 17 for next session TODO.*

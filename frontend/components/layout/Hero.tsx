@@ -48,7 +48,49 @@ export default function Hero() {
   }
 
   return (
-    <section style={{ position: 'relative', minHeight: 'clamp(620px, 100vh, 920px)', overflow: 'hidden' }}>
+    <section style={{ position: 'relative', minHeight: 'min(75vh, 800px)', overflow: 'hidden' }}>
+      <style>{`
+        .hero-search-container {
+          grid-template-columns: repeat(2, 1fr) !important;
+        }
+        
+        @media (max-width: 768px) {
+          .hero-destination {
+            grid-column: 1 / -1 !important;
+          }
+          .hero-checkin {
+            grid-column: 1 !important;
+          }
+          .hero-checkout {
+            grid-column: 2 !important;
+          }
+          .hero-guests {
+            grid-column: 1 !important;
+          }
+          .hero-pets {
+            grid-column: 2 !important;
+          }
+          .hero-search-btn {
+            grid-column: 1 / -1 !important;
+          }
+        }
+        
+        @media (min-width: 769px) {
+          .hero-search-container {
+            grid-template-columns: repeat(5, 1fr) !important;
+          }
+          .hero-destination,
+          .hero-checkin,
+          .hero-checkout,
+          .hero-guests,
+          .hero-pets {
+            grid-column: span 1 !important;
+          }
+          .hero-search-btn {
+            grid-column: span 1 !important;
+          }
+        }
+      `}</style>
 
       {/* Background Image */}
       <div style={{
@@ -78,11 +120,11 @@ export default function Hero() {
 
         <p style={{
           color: 'var(--color-gold)',
-          fontSize: '18px',
-          letterSpacing: '4px',
+          fontSize: '14px',
+          letterSpacing: '3px',
           textTransform: 'uppercase',
-          marginTop: '80px',
-          marginBottom: '20px',
+          marginTop: '0',
+          marginBottom: '12px',
           fontWeight: '600',
         }}>
           Curated Luxury Stays
@@ -90,34 +132,34 @@ export default function Hero() {
 
         <h1 style={{
           color: '#ffffff',
-          fontSize: 'clamp(36px, 6vw, 80px)',
+          fontSize: 'clamp(32px, 5vw, 72px)',
           fontWeight: '800',
           lineHeight: '1.1',
-          marginBottom: '24px',
-          maxWidth: '820px',
+          marginBottom: '16px',
+          maxWidth: '900px',
         }}>
           Discover Your Perfect{' '}
           <em style={{ color: 'var(--color-gold)', fontStyle: 'italic' }}>Earthy Escape</em>
         </h1>
 
-        <p style={{
+        {/* <p style={{
           color: 'rgba(255,255,255,0.85)',
-          fontSize: '24px',
-          marginBottom: '48px',
-          maxWidth: '500px',
-          lineHeight: '1.7',
+          fontSize: '18px',
+          marginBottom: '32px',
+          maxWidth: '550px',
+          lineHeight: '1.6',
           fontWeight: '400',
         }}>
           Handpicked luxury properties across India&apos;s most beautiful destinations
-        </p>
+        </p> */}
 
         {/* Mobile Search Hint */}
         <p className="lg:hidden" style={{
           color: 'var(--color-gold)',
-          fontSize: '12px',
+          fontSize: '11px',
           letterSpacing: '1px',
           textTransform: 'uppercase',
-          marginBottom: '24px',
+          marginBottom: '16px',
           fontWeight: '600',
         }}>
           Scroll down to search properties
@@ -133,10 +175,10 @@ export default function Hero() {
           maxWidth: '1000px',
           boxShadow: '0 24px 64px rgba(0,0,0,0.28)',
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-        }}>
+        }}
+        className="hero-search-container">
 
-          <div style={fieldStyle}>
+          <div style={fieldStyle} className="hero-destination">
             <label style={labelStyle}>Destination</label>
             <input
               type="text"
@@ -148,7 +190,7 @@ export default function Hero() {
             />
           </div>
 
-          <div style={fieldStyle}>
+          <div style={fieldStyle} className="hero-checkin">
             <label style={labelStyle}>Check In</label>
             <input
               type="date"
@@ -159,7 +201,7 @@ export default function Hero() {
             />
           </div>
 
-          <div style={fieldStyle}>
+          <div style={fieldStyle} className="hero-checkout">
             <label style={labelStyle}>Check Out</label>
             <input
               type="date"
@@ -170,7 +212,7 @@ export default function Hero() {
             />
           </div>
 
-          <div style={fieldStyle}>
+          <div style={fieldStyle} className="hero-guests">
             <label style={labelStyle}>Guests</label>
             <select
               value={guests}
@@ -184,7 +226,7 @@ export default function Hero() {
             </select>
           </div>
 
-          <div style={fieldStyle}>
+          <div style={fieldStyle} className="hero-pets">
             <label style={labelStyle}>Pets</label>
             <select
               value={pets}
@@ -205,21 +247,30 @@ export default function Hero() {
               backgroundColor: 'var(--color-gold)',
               color: 'var(--color-text-primary)',
               border: 'none',
-              padding: '14px 28px',
-              fontSize: '13px',
-              letterSpacing: '1.5px',
+              padding: '14px 24px',
+              fontSize: '12px',
+              letterSpacing: '1.2px',
               fontWeight: '700',
               textTransform: 'uppercase',
               cursor: 'pointer',
               borderRadius: '8px',
               whiteSpace: 'nowrap',
               margin: '4px',
-              transition: 'opacity 0.2s ease',
+              transition: 'all 0.2s ease',
               minHeight: '50px',
               gridColumn: 'span 1',
             }}
-            onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.opacity = '0.85'}
-            onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.opacity = '1'}
+            className="hero-search-btn"
+            onMouseEnter={e => {
+              const el = e.currentTarget as HTMLButtonElement
+              el.style.opacity = '0.9'
+              el.style.transform = 'scale(1.03)'
+            }}
+            onMouseLeave={e => {
+              const el = e.currentTarget as HTMLButtonElement
+              el.style.opacity = '1'
+              el.style.transform = 'scale(1)'
+            }}
           >
             Search
           </button>
@@ -228,8 +279,8 @@ export default function Hero() {
         {/* Stats */}
         <div className="hero-stats">
           {[
-            { number: '50+', label: 'Properties' },
-            { number: '20+', label: 'Destinations' },
+            { number: '5+', label: 'Properties' },
+            { number: '30+', label: 'Rooms' },
             { number: '4.9 stars', label: 'Average Rating' },
           ].map(stat => (
             <div key={stat.label} style={{ textAlign: 'center' }}>

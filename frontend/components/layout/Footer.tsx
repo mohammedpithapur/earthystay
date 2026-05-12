@@ -9,10 +9,10 @@ export default function Footer() {
       <div style={{
         maxWidth: '1200px',
         margin: '0 auto',
-        padding: '80px 24px 48px',
+        padding: '56px 24px 40px',
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-        gap: '48px',
+        gap: '40px',
       }}>
         <div>
           <h2 style={{
@@ -77,7 +77,7 @@ export default function Footer() {
           <h4 style={{ color: 'var(--color-navbar-text)', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '24px', fontWeight: '700' }}>
             Quick Links
           </h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {[
               { label: 'Our Properties', href: '/properties' },
               { label: 'Destinations', href: '/destinations' },
@@ -90,7 +90,7 @@ export default function Footer() {
                 href={link.href}
                 style={{
                   color: 'rgba(255,255,255,0.82)',
-                  fontSize: '14px',
+                  fontSize: '13px',
                   textDecoration: 'none',
                   display: 'flex',
                   alignItems: 'center',
@@ -100,7 +100,7 @@ export default function Footer() {
                 onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-navbar-text)'}
                 onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.82)'}
               >
-                <span style={{ color: 'var(--color-navbar-text)', fontSize: '10px' }}>→</span>
+                <span style={{ color: 'var(--color-navbar-text)', fontSize: '9px' }}>→</span>
                 {link.label}
               </a>
             ))}
@@ -111,7 +111,7 @@ export default function Footer() {
           <h4 style={{ color: 'var(--color-navbar-text)', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '24px', fontWeight: '700' }}>
             Destinations
           </h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {[
               { label: 'Goa', href: '/properties?location=Goa' },
               { label: 'Coorg', href: '/properties?location=Coorg' },
@@ -125,7 +125,7 @@ export default function Footer() {
                 href={link.href}
                 style={{
                   color: 'rgba(255,255,255,0.82)',
-                  fontSize: '14px',
+                  fontSize: '13px',
                   textDecoration: 'none',
                   display: 'flex',
                   alignItems: 'center',
@@ -135,7 +135,7 @@ export default function Footer() {
                 onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-navbar-text)'}
                 onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.82)'}
               >
-                <span style={{ color: 'var(--color-navbar-text)', fontSize: '10px' }}>→</span>
+                <span style={{ color: 'var(--color-navbar-text)', fontSize: '9px' }}>→</span>
                 {link.label}
               </a>
             ))}
@@ -146,15 +146,15 @@ export default function Footer() {
           <h4 style={{ color: 'var(--color-navbar-text)', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '24px', fontWeight: '700' }}>
             Contact Us
           </h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '32px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
             {[
               { symbol: '•', text: 'India' },
               { symbol: '•', text: 'hello@earthystay.com' },
               { symbol: '•', text: '+91 98765 43210' },
             ].map(item => (
-              <div key={item.text} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                <span style={{ color: 'var(--color-navbar-text)', fontSize: '18px', lineHeight: '1.2', flexShrink: 0 }}>{item.symbol}</span>
-                <span style={{ color: 'rgba(255,255,255,0.82)', fontSize: '14px', lineHeight: '1.5' }}>{item.text}</span>
+              <div key={item.text} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                <span style={{ color: 'var(--color-navbar-text)', fontSize: '14px', lineHeight: '1.2', flexShrink: 0 }}>{item.symbol}</span>
+                <span style={{ color: 'rgba(255,255,255,0.82)', fontSize: '13px', lineHeight: '1.4' }}>{item.text}</span>
               </div>
             ))}
           </div>
@@ -162,7 +162,7 @@ export default function Footer() {
           <h4 style={{ color: 'var(--color-navbar-text)', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '16px', fontWeight: '700' }}>
             Policies
           </h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {[
               { label: 'Privacy Policy', href: '/privacy' },
               { label: 'Terms & Conditions', href: '/terms' },
@@ -171,7 +171,7 @@ export default function Footer() {
               <a
                 key={link.href}
                 href={link.href}
-                style={{ color: 'rgba(255,255,255,0.82)', fontSize: '14px', textDecoration: 'none', transition: 'color 0.2s ease' }}
+                style={{ color: 'rgba(255,255,255,0.82)', fontSize: '13px', textDecoration: 'none', transition: 'color 0.2s ease' }}
                 onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-navbar-text)'}
                 onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.82)'}
               >
@@ -187,17 +187,17 @@ export default function Footer() {
       <div style={{
         maxWidth: '1200px',
         margin: '0 auto',
-        padding: '24px',
+        padding: '16px 24px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         flexWrap: 'wrap',
         gap: '12px',
       }}>
-        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px' }}>
+        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px' }}>
           &copy; {new Date().getFullYear()} Earthy Stay. All rights reserved.
         </p>
-        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px' }}>
+        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px' }}>
           Payments secured by <span style={{ color: 'var(--color-navbar-text)' }}>Razorpay</span>
         </p>
       </div>

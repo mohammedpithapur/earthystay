@@ -8,39 +8,39 @@ export default function FeaturedProperties() {
     <section className="section-shell" style={{ backgroundColor: '#ffffff' }}>
       <div className="content-shell">
 
-        <div style={{ textAlign: 'center', marginBottom: '64px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
           <p style={{
             color: 'var(--color-gold)',
-            fontSize: '12px',
-            letterSpacing: '4px',
+            fontSize: '11px',
+            letterSpacing: '3px',
             textTransform: 'uppercase',
-            marginBottom: '16px',
+            marginBottom: '12px',
             fontWeight: '600',
           }}>
             Handpicked For You
           </p>
           <h2 style={{
-            fontSize: 'clamp(32px, 4vw, 52px)',
+            fontSize: 'clamp(28px, 4vw, 48px)',
             fontWeight: '800',
             color: 'var(--color-text-primary)',
-            marginBottom: '16px',
+            marginBottom: '12px',
             lineHeight: '1.2',
           }}>
             Featured Properties
           </h2>
-          <div style={{ width: '60px', height: '2px', backgroundColor: 'var(--color-gold)', margin: '0 auto 24px' }} />
+          <div style={{ width: '50px', height: '2px', backgroundColor: 'var(--color-gold)', margin: '0 auto 16px' }} />
           <p style={{
             color: 'var(--color-text-secondary)',
-            fontSize: '16px',
+            fontSize: '15px',
             maxWidth: '500px',
             margin: '0 auto',
-            lineHeight: '1.7',
+            lineHeight: '1.6',
           }}>
             Each property is carefully selected to offer you an extraordinary experience
           </p>
         </div>
 
-        <div className="responsive-card-grid" style={{ marginBottom: '64px' }}>
+        <div className="responsive-card-grid" style={{ marginBottom: '48px' }}>
           {dummyProperties.map(property => (
             <PropertyCard key={property.id} property={property} />
           ))}
@@ -53,24 +53,26 @@ export default function FeaturedProperties() {
               display: 'inline-block',
               border: '2px solid var(--color-gold)',
               color: 'var(--color-gold)',
-              padding: '16px 48px',
-              fontSize: '13px',
+              padding: '14px 42px',
+              fontSize: '12px',
               letterSpacing: '2px',
               textTransform: 'uppercase',
               fontWeight: '700',
               textDecoration: 'none',
               borderRadius: '8px',
-              transition: 'all 0.3s ease',
+              transition: 'all 0.2s ease',
             }}
             onMouseEnter={e => {
               const el = e.currentTarget as HTMLAnchorElement
               el.style.backgroundColor = 'var(--color-gold)'
               el.style.color = 'var(--color-text-primary)'
+              el.style.transform = 'scale(1.03)'
             }}
             onMouseLeave={e => {
               const el = e.currentTarget as HTMLAnchorElement
               el.style.backgroundColor = 'transparent'
               el.style.color = 'var(--color-gold)'
+              el.style.transform = 'scale(1)'
             }}
           >
             View All Properties

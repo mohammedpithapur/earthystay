@@ -28,7 +28,7 @@
   --color-success: #2E7D32;
 
   /* Spacing */
-  --section-padding: 100px 24px;
+  --section-padding: 64px 24px;
   --card-radius: 12px;
   --input-radius: 8px;
   --btn-radius: 8px;
@@ -102,20 +102,20 @@ input, select, textarea, button {
 .responsive-card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 28px;
+  gap: 20px;
 }
 
 .responsive-grid-2col {
   display: grid;
   grid-template-columns: minmax(0, 280px) minmax(0, 1fr);
-  gap: 32px;
+  gap: 24px;
   align-items: start;
 }
 
 .responsive-grid-detail {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(320px, 380px);
-  gap: 40px;
+  gap: 32px;
   align-items: start;
 }
 
@@ -138,8 +138,8 @@ input, select, textarea, button {
 
 .hero-stats {
   display: flex;
-  gap: 56px;
-  margin-top: 52px;
+  gap: 40px;
+  margin-top: 32px;
   flex-wrap: wrap;
   justify-content: center;
 }

@@ -1,0 +1,10 @@
+fastapi==0.115.*
+uvicorn[standard]
+sqlalchemy==2.0.*
+asyncpg
+python-jose[cryptography]
+bcrypt
+pydantic[email]
+pydantic-settings
+alembic
+python-multipart

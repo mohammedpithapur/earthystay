@@ -73,20 +73,28 @@ export default function Navbar() {
           <Link
             href="/properties"
             style={{
-              backgroundColor: 'rgba(255,255,255,0.14)',
-              color: 'var(--color-navbar-text)',
-              border: '1px solid var(--color-navbar-border)',
-              padding: '10px 24px',
-              fontSize: '13px',
+              backgroundColor: 'var(--color-gold)',
+              color: 'var(--color-text-primary)',
+              border: 'none',
+              padding: '10px 20px',
+              fontSize: '12px',
               letterSpacing: '1px',
               fontWeight: '700',
               textDecoration: 'none',
               borderRadius: '8px',
               textTransform: 'uppercase' as const,
-              transition: 'opacity 0.2s ease',
+              transition: 'all 0.2s ease',
             }}
-            onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.opacity = '0.85'}
-            onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.opacity = '1'}
+            onMouseEnter={e => {
+              const el = e.currentTarget as HTMLAnchorElement
+              el.style.opacity = '0.9'
+              el.style.transform = 'scale(1.03)'
+            }}
+            onMouseLeave={e => {
+              const el = e.currentTarget as HTMLAnchorElement
+              el.style.opacity = '1'
+              el.style.transform = 'scale(1)'
+            }}
           >
             Book Now
           </Link>
@@ -95,9 +103,9 @@ export default function Navbar() {
         <div className="md:hidden flex items-center gap-3" style={{ marginLeft: 'auto', flexShrink: 0 }}>
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="p-2 flex flex-col gap-1.5"
+            className="p-3 flex flex-col gap-1.5"
             aria-label="Toggle navigation menu"
-            style={{ backgroundColor: 'transparent', border: 'none', cursor: 'pointer' }}
+            style={{ backgroundColor: 'transparent', border: 'none', cursor: 'pointer', width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
             <span style={{ backgroundColor: 'var(--color-navbar-text)', height: '2px', width: '24px', display: 'block', borderRadius: '2px' }} />
             <span style={{ backgroundColor: 'var(--color-navbar-text)', height: '2px', width: '24px', display: 'block', borderRadius: '2px' }} />
@@ -127,19 +135,28 @@ export default function Navbar() {
           <Link
             href="/properties"
             style={{
-              backgroundColor: 'rgba(255,255,255,0.14)',
-              color: 'var(--color-navbar-text)',
-              border: '1px solid var(--color-navbar-border)',
-              padding: '14px 24px',
-              fontSize: '13px',
+              backgroundColor: 'var(--color-gold)',
+              color: 'var(--color-text-primary)',
+              border: 'none',
+              padding: '12px 24px',
+              fontSize: '12px',
               letterSpacing: '1px',
               fontWeight: '700',
               textAlign: 'center' as const,
               textDecoration: 'none',
               borderRadius: '8px',
               textTransform: 'uppercase' as const,
+              transition: 'all 0.2s ease',
             }}
             onClick={() => setMenuOpen(false)}
+            onMouseEnter={e => {
+              const el = e.currentTarget as HTMLAnchorElement
+              el.style.opacity = '0.9'
+            }}
+            onMouseLeave={e => {
+              const el = e.currentTarget as HTMLAnchorElement
+              el.style.opacity = '1'
+            }}
           >
             Book Now
           </Link>
