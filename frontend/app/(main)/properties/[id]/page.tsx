@@ -22,6 +22,7 @@ export default function PropertyDetailPage() {
   const [guests, setGuests] = useState(1)
   const [pets, setPets] = useState(0)
   const [activeTab, setActiveTab] = useState('overview')
+  const [hoveredTags, setHoveredTags] = useState<Record<string, boolean>>({})
 
   if (!property) {
     return (
@@ -251,14 +252,20 @@ export default function PropertyDetailPage() {
                 {/* Highlight strip: key benefits */}
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
                   {['Cleanliness', 'Good Locations', 'Easy Check-In', 'Functional Kitchen', 'Aesthetic Rooms', 'Pets Welcome Everywhere'].map(item => (
-                    <span key={item} style={{
-                      border: '1px solid var(--color-border)',
-                      backgroundColor: '#ffffff',
-                      color: 'var(--color-text-primary)',
+                    <span key={item} 
+                      onMouseEnter={() => setHoveredTags(prev => ({ ...prev, [item]: true }))}
+                      onMouseLeave={() => setHoveredTags(prev => ({ ...prev, [item]: false }))}
+                      style={{
+                      border: hoveredTags[item] ? '1px solid var(--color-navbar)' : '1px solid var(--color-border)',
+                      backgroundColor: hoveredTags[item] ? 'var(--color-navbar)' : '#ffffff',
+                      color: hoveredTags[item] ? '#ffffff' : 'var(--color-text-primary)',
                       padding: '6px 10px',
                       fontSize: '12px',
                       borderRadius: '999px',
                       fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      transform: hoveredTags[item] ? 'scale(1.05)' : 'scale(1)',
                     }}>
                       {item}
                     </span>
@@ -340,9 +347,12 @@ export default function PropertyDetailPage() {
                 {/* Highlight strip before non-refundable notice */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '10px', margin: '12px 0 20px' }}>
                   {['Cleanliness', 'Good Locations', 'Ease Of Check-In', 'Functional Kitchen', 'Aesthetics Of The Room', 'Pets Welcome Everywhere'].map(item => (
-                    <span key={item} style={{
+                    <span key={item} 
+                      onMouseEnter={() => setHoveredTags(prev => ({ ...prev, [item]: true }))}
+                      onMouseLeave={() => setHoveredTags(prev => ({ ...prev, [item]: false }))}
+                      style={{
                       border: '1px solid var(--color-navbar-border)',
-                      backgroundColor: 'rgba(255,255,255,0.06)',
+                      backgroundColor: hoveredTags[item] ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.06)',
                       color: 'var(--color-navbar-text)',
                       padding: '8px 14px',
                       borderRadius: '999px',
@@ -350,6 +360,9 @@ export default function PropertyDetailPage() {
                       letterSpacing: '1px',
                       textTransform: 'uppercase',
                       fontWeight: 600,
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      transform: hoveredTags[item] ? 'translateY(-2px)' : 'translateY(0)',
                     }}>
                       {item}
                     </span>

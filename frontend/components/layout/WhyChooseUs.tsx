@@ -1,9 +1,12 @@
 "use client"
 
+import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 
 export default function WhyChooseUs() {
+  const [hoveredTags, setHoveredTags] = useState<Record<string, boolean>>({})
+
   const reasons = [
     {
       image: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=1200&q=80&auto=format&fit=crop',
@@ -97,16 +100,22 @@ export default function WhyChooseUs() {
           ].map(point => (
             <span
               key={point}
+              onMouseEnter={() => setHoveredTags(prev => ({ ...prev, [point]: true }))}
+              onMouseLeave={() => setHoveredTags(prev => ({ ...prev, [point]: false }))}
               style={{
-                border: '1px solid var(--color-navbar-border)',
-                backgroundColor: 'rgba(255,255,255,0.06)',
-                color: 'var(--color-navbar-text)',
+                border: hoveredTags[point] ? '1px solid var(--color-gold)' : '1px solid var(--color-navbar-border)',
+                backgroundColor: hoveredTags[point] ? 'var(--color-gold)' : 'rgba(255,255,255,0.06)',
+                color: hoveredTags[point] ? 'var(--color-text-primary)' : 'var(--color-navbar-text)',
                 padding: '8px 14px',
                 borderRadius: '999px',
                 fontSize: '11px',
                 letterSpacing: '1px',
                 textTransform: 'uppercase',
                 fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                transform: hoveredTags[point] ? 'translateY(-3px) scale(1.04)' : 'translateY(0) scale(1)',
+                boxShadow: hoveredTags[point] ? '0 10px 24px rgba(0, 0, 0, 0.18)' : 'none',
               }}
             >
               {point}
