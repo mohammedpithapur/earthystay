@@ -2,20 +2,11 @@
 import { useState } from 'react'
 import MapWrapper from '@/components/shared/MapWrapper'
 
-const faqs = [
-  { q: 'How do I make a booking?', a: 'Browse our properties, select your dates and guests, then proceed to checkout. Payment is processed securely via Razorpay.' },
-  { q: 'Are all bookings non-refundable?', a: 'Yes, all bookings on Earthy Stay are non-refundable. Please review your dates carefully before confirming payment.' },
-  { q: 'Can I bring my pets?', a: 'Many of our properties are pet-friendly. Look for the "Pets Welcome" badge on the property page. An additional nightly charge applies per pet.' },
-  { q: 'How do I get my booking confirmation?', a: 'A confirmation email with your booking reference and PDF voucher is sent to your email immediately after payment.' },
-  { q: 'Can I modify my booking dates?', a: 'Booking dates cannot be modified after payment due to our non-refundable policy. Please contact us before booking if you need flexibility.' },
-]
-
 export default function ContactPage() {
   const [form, setForm] = useState({ name: '', email: '', phone: '', subject: '', message: '' })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [openFaq, setOpenFaq] = useState<number | null>(null)
 
   const validate = () => {
     const newErrors: Record<string, string> = {}
@@ -72,10 +63,9 @@ export default function ContactPage() {
       <section style={{ padding: 'clamp(48px, 6vw, 72px) 24px', maxWidth: '1100px', margin: '0 auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '64px' }}>
           {[
-            { symbol: '•', title: 'Email Us', detail: 'hello@earthystay.com', sub: 'We reply within 24 hours', href: 'mailto:hello@earthystay.com' },
-            { symbol: '•', title: 'Call Us', detail: '+91 98765 43210', sub: 'Mon–Sat, 9am–7pm IST', href: 'tel:+919876543210' },
-            { symbol: '•', title: 'WhatsApp', detail: '+91 98765 43210', sub: 'Quick responses on WhatsApp', href: 'https://wa.me/919876543210' },
-            { symbol: '•', title: 'Location', detail: 'India', sub: 'Serving properties pan-India', href: '#map' },
+            { symbol: '•', title: 'Email Us', detail: 'staysearthy@gmail.com', sub: 'We reply within 24 hours', href: 'mailto:staysearthy@gmail.com' },
+            { symbol: '•', title: 'WhatsApp', detail: 'Chat with us on WhatsApp', sub: 'Quick responses on WhatsApp', href: 'https://wa.me/919874827631' },
+            { symbol: '•', title: 'Location', detail: 'Kolkata', sub: 'Based in Kolkata', href: '#map' },
           ].map((item, i) => (
             <a key={i} href={item.href} style={{ textDecoration: 'none' }}>
               <div style={{
@@ -124,7 +114,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <label style={labelStyle}>Phone (Optional)</label>
-                    <input type="tel" placeholder="+91 98765 43210" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} style={inputStyle('phone')} />
+                    <input type="tel" placeholder="+91 9874827631" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} style={inputStyle('phone')} />
                   </div>
                 </div>
 
@@ -203,71 +193,20 @@ export default function ContactPage() {
             </h2>
             <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--color-gold)', marginBottom: '28px' }} />
             <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', marginBottom: '20px', lineHeight: '1.7' }}>
-              We operate across India with handpicked properties in Goa, Coorg, Jaipur, Munnar, Jaisalmer and Rishikesh — with more destinations added regularly.
+              We operate across Kolkata with handpicked properties in the city — with more properties added regularly.
             </p>
             <div id="map" style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--color-border)' }}>
               <MapWrapper
-                latitude={20.5937}
-                longitude={78.9629}
-                propertyName="Earthy Stay — India"
-                address="Serving luxury properties across India"
+                latitude={22.5726}
+                longitude={88.3639}
+                propertyName="Earthy Stays — Kolkata"
+                address="Serving luxury properties across Kolkata"
               />
             </div>
           </div>
         </div>
       </section>
 
-      {/* FAQ */}
-      <section style={{ backgroundColor: 'var(--color-bg-soft)', padding: 'clamp(64px, 8vw, 100px) 24px' }}>
-        <div style={{ maxWidth: '760px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-            <p style={{ color: 'var(--color-gold)', fontSize: '12px', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '12px', fontWeight: '600' }}>
-              Quick Answers
-            </p>
-            <h2 style={{ fontSize: 'clamp(26px, 4vw, 40px)', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '16px' }}>
-              Frequently Asked Questions
-            </h2>
-            <div style={{ width: '60px', height: '2px', backgroundColor: 'var(--color-gold)', margin: '0 auto' }} />
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {faqs.map((faq, i) => (
-              <div
-                key={i}
-                style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', overflow: 'hidden' }}
-              >
-                <button
-                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  style={{
-                    width: '100%', padding: '20px 24px',
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                    background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
-                    fontFamily: 'inherit'
-                  }}
-                >
-                  <span style={{ fontSize: '15px', fontWeight: '700', color: 'var(--color-text-primary)', lineHeight: '1.4', paddingRight: '16px' }}>
-                    {faq.q}
-                  </span>
-                  <span style={{
-                    fontSize: '20px', color: 'var(--color-gold)', flexShrink: 0, fontWeight: '700',
-                    transition: 'transform 0.2s ease',
-                    transform: openFaq === i ? 'rotate(45deg)' : 'rotate(0deg)'
-                  }}>
-                    +
-                  </span>
-                </button>
-                {openFaq === i && (
-                  <div style={{ padding: '0 24px 20px', borderTop: '1px solid var(--color-border)' }}>
-                    <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', lineHeight: '1.8', paddingTop: '16px' }}>
-                      {faq.a}
-                    </p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
     </div>
   )
 }

@@ -248,12 +248,29 @@ export default function PropertyDetailPage() {
                 </div>
               </div>
 
-              <div style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-gold)', borderRadius: '12px', padding: '20px 24px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-                <div>
-                  <h4 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '6px' }}>Important: Non-Refundable Booking</h4>
-                  <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>All bookings are non-refundable. Once payment is confirmed, cancellations will not be eligible for a refund. Please review your dates carefully before booking.</p>
+                {/* Highlight strip: key benefits */}
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                  {['Cleanliness', 'Good Locations', 'Easy Check-In', 'Functional Kitchen', 'Aesthetic Rooms', 'Pets Welcome Everywhere'].map(item => (
+                    <span key={item} style={{
+                      border: '1px solid var(--color-border)',
+                      backgroundColor: '#ffffff',
+                      color: 'var(--color-text-primary)',
+                      padding: '6px 10px',
+                      fontSize: '12px',
+                      borderRadius: '999px',
+                      fontWeight: 600,
+                    }}>
+                      {item}
+                    </span>
+                  ))}
                 </div>
-              </div>
+
+                <div style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-gold)', borderRadius: '12px', padding: '20px 24px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '6px' }}>Important: Non-Refundable Booking</h4>
+                    <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>All bookings are non-refundable. Once payment is confirmed, cancellations will not be eligible for a refund. Please review your dates carefully before booking.</p>
+                  </div>
+                </div>
             </div>
           )}
 
@@ -320,12 +337,31 @@ export default function PropertyDetailPage() {
                 </div>
               </div>
 
-              <div style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-gold)', borderRadius: '12px', padding: '20px 24px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
-                <div>
-                  <h4 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '6px' }}>Important: Non-Refundable Booking Policy</h4>
-                  <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>All bookings are non-refundable once payment is confirmed.</p>
+                {/* Highlight strip before non-refundable notice */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '10px', margin: '12px 0 20px' }}>
+                  {['Cleanliness', 'Good Locations', 'Ease Of Check-In', 'Functional Kitchen', 'Aesthetics Of The Room', 'Pets Welcome Everywhere'].map(item => (
+                    <span key={item} style={{
+                      border: '1px solid var(--color-navbar-border)',
+                      backgroundColor: 'rgba(255,255,255,0.06)',
+                      color: 'var(--color-navbar-text)',
+                      padding: '8px 14px',
+                      borderRadius: '999px',
+                      fontSize: '11px',
+                      letterSpacing: '1px',
+                      textTransform: 'uppercase',
+                      fontWeight: 600,
+                    }}>
+                      {item}
+                    </span>
+                  ))}
                 </div>
-              </div>
+
+                <div style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-gold)', borderRadius: '12px', padding: '20px 24px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                  <div>
+                    <h4 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '6px' }}>Important: Non-Refundable Booking Policy</h4>
+                    <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>All bookings are non-refundable once payment is confirmed.</p>
+                  </div>
+                </div>
             </div>
           )}
 
@@ -427,21 +463,21 @@ export default function PropertyDetailPage() {
               </div>
             </div>
             <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--color-border)' }}>
-              <label style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Guests</label>
-              <select value={guests} onChange={e => setGuests(Number(e.target.value))} style={{ border: 'none', outline: 'none', fontSize: '13px', color: 'var(--color-text-primary)', width: '100%', backgroundColor: 'transparent' }}>
-                {Array.from({ length: property.max_guests }, (_, i) => i + 1).map(n => (
-                  <option key={n} value={n}>{n} Guest{n > 1 ? 's' : ''}</option>
-                ))}
-              </select>
+              <label style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '8px', fontWeight: '600' }}>Guests</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+                <button onClick={() => setGuests(Math.max(1, guests - 1))} style={{ border: '1px solid var(--color-border)', backgroundColor: '#ffffff', width: '36px', height: '36px', fontSize: '16px', cursor: 'pointer', borderRadius: '4px', fontWeight: '700' }}>−</button>
+                <span style={{ minWidth: '45px', textAlign: 'center', fontSize: '16px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{guests}</span>
+                <button onClick={() => setGuests(Math.min(property.max_guests, guests + 1))} style={{ border: '1px solid var(--color-border)', backgroundColor: '#ffffff', width: '36px', height: '36px', fontSize: '16px', cursor: 'pointer', borderRadius: '4px', fontWeight: '700' }}>+</button>
+              </div>
             </div>
             {property.pets_allowed && (
               <div style={{ padding: '12px 16px' }}>
-                <label style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Pets (+&#8377;{property.pet_charge_per_night}/pet/night)</label>
-                <select value={pets} onChange={e => setPets(Number(e.target.value))} style={{ border: 'none', outline: 'none', fontSize: '13px', color: 'var(--color-text-primary)', width: '100%', backgroundColor: 'transparent' }}>
-                  {[0, 1, 2, 3, 4].map(n => (
-                    <option key={n} value={n}>{n === 0 ? 'No Pets' : `${n} Pet${n > 1 ? 's' : ''}`}</option>
-                  ))}
-                </select>
+                <label style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '8px', fontWeight: '600' }}>Pets (+&#8377;{property.pet_charge_per_night}/pet/night)</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+                  <button onClick={() => setPets(Math.max(0, pets - 1))} style={{ border: '1px solid var(--color-border)', backgroundColor: '#ffffff', width: '36px', height: '36px', fontSize: '16px', cursor: 'pointer', borderRadius: '4px', fontWeight: '700' }}>−</button>
+                  <span style={{ minWidth: '45px', textAlign: 'center', fontSize: '16px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{pets}</span>
+                  <button onClick={() => setPets(Math.min(4, pets + 1))} style={{ border: '1px solid var(--color-border)', backgroundColor: '#ffffff', width: '36px', height: '36px', fontSize: '16px', cursor: 'pointer', borderRadius: '4px', fontWeight: '700' }}>+</button>
+                </div>
               </div>
             )}
           </div>

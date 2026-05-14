@@ -1,6 +1,6 @@
-/// <reference types="react" />
 "use client"
 import React from 'react'
+import Image from 'next/image'
 // Avoid importing next/link to prevent module/type resolution issues in some setups
 
 export default function Footer() {
@@ -22,7 +22,7 @@ export default function Footer() {
             marginBottom: '16px',
             fontWeight: '800',
           }}>
-            EARTHY STAY
+            EARTHY STAYS
           </h2>
           <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--color-navbar-text)', marginBottom: '20px' }} />
           <p style={{
@@ -67,7 +67,7 @@ export default function Footer() {
                   ;(e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.82)'
                 }}
               >
-                <img src={social.text} alt={social.label} style={{ width: '24px', height: '24px' }} />
+                <Image src={social.text} alt={social.label} width={24} height={24} style={{ objectFit: 'contain' }} />
               </a>
             ))}
           </div>
@@ -149,8 +149,8 @@ export default function Footer() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
             {[
               { symbol: '•', text: 'India' },
-              { symbol: '•', text: 'hello@earthystay.com' },
-              { symbol: '•', text: '+91 98765 43210' },
+              { symbol: '•', text: 'staysearthy@gmail.com' },
+              { symbol: '•', text: 'WhatsApp us +91 9874827631' },
             ].map(item => (
               <div key={item.text} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
                 <span style={{ color: 'var(--color-navbar-text)', fontSize: '14px', lineHeight: '1.2', flexShrink: 0 }}>{item.symbol}</span>
@@ -166,6 +166,7 @@ export default function Footer() {
             {[
               { label: 'Privacy Policy', href: '/privacy' },
               { label: 'Terms & Conditions', href: '/terms' },
+              { label: 'FAQ', href: '/faq' },
               { label: 'Cancellation Policy', href: '/cancellation' },
             ].map(link => (
               <a
@@ -195,7 +196,7 @@ export default function Footer() {
         gap: '12px',
       }}>
         <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px' }}>
-          &copy; {new Date().getFullYear()} Earthy Stay. All rights reserved.
+          &copy; {new Date().getFullYear()} Earthy Stays. All rights reserved.
         </p>
         <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px' }}>
           Payments secured by <span style={{ color: 'var(--color-navbar-text)' }}>Razorpay</span>

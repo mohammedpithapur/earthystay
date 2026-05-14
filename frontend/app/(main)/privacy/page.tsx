@@ -94,21 +94,11 @@ const sections = [
       },
       {
         subtitle: 'Deletion',
-        text: 'You may request deletion of your personal data, subject to our legal obligations to retain certain information. To request deletion, please contact us at privacy@earthystay.com.',
+        text: 'You may request deletion of your personal data, subject to our legal obligations to retain certain information. To request deletion, please contact us at staysearthy@gmail.com.',
       },
       {
         subtitle: 'Opt-Out',
         text: 'You may opt out of receiving promotional communications from us by following the unsubscribe instructions in any email we send, or by contacting us directly. Note that transactional emails related to your bookings cannot be opted out of.',
-      },
-    ],
-  },
-  {
-    id: 'third-party',
-    title: '7. Third-Party Links',
-    content: [
-      {
-        subtitle: 'External Websites',
-        text: 'Our website may contain links to third-party websites. We are not responsible for the privacy practices of these sites and encourage you to review their privacy policies before providing any personal information.',
       },
     ],
   },
@@ -128,7 +118,7 @@ const sections = [
     content: [
       {
         subtitle: 'Privacy Enquiries',
-        text: 'If you have any questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact our privacy team at privacy@earthystay.com or write to us at our registered address in India.',
+        text: 'If you have any questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact our privacy team at staysearthy@gmail.com or write to us at our registered address in India.',
       },
     ],
   },
@@ -152,7 +142,7 @@ export default function PrivacyPage() {
             We are committed to protecting your personal information and your right to privacy. This policy explains how we collect, use, and safeguard your data.
           </p>
           <p style={{ color: 'var(--color-text-muted)', fontSize: '13px', marginTop: '24px' }}>
-            Effective Date: 1st January 2025 &nbsp;·&nbsp; Last Updated: 1st January 2025
+            Effective Date: 1st January 2026 &nbsp;·&nbsp; Last Updated: 1st January 2026
           </p>
         </div>
       </div>
@@ -219,7 +209,7 @@ export default function PrivacyPage() {
             </div>
             <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
               <a
-                href="mailto:privacy@earthystay.com"
+                href="mailto:staysearthy@gmail.com"
                 style={{ backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', padding: '12px 24px', fontSize: '13px', letterSpacing: '1px', fontWeight: '700', textTransform: 'uppercase', textDecoration: 'none', borderRadius: '8px', display: 'inline-block' }}
               >
                 Email Us

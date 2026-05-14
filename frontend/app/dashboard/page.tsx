@@ -22,7 +22,7 @@ export default function DashboardPage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState('bookings')
   const [activeBooking, setActiveBooking] = useState<string | null>(null)
-  const [profileForm, setProfileForm] = useState({ full_name: 'Mohammed Pithapur', email: 'mohammed@example.com', phone: '+91 98765 43210' })
+  const [profileForm, setProfileForm] = useState({ full_name: 'Mohammed Pithapur', email: 'mohammed@example.com', phone: '+91 9874827631' })
   const [profileSaved, setProfileSaved] = useState(false)
 
   const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -340,7 +340,7 @@ export default function DashboardPage() {
               {[
                 { label: 'Full Name', field: 'full_name', type: 'text', placeholder: 'Mohammed Pithapur' },
                 { label: 'Email Address', field: 'email', type: 'email', placeholder: 'you@example.com' },
-                { label: 'Phone Number', field: 'phone', type: 'tel', placeholder: '+91 98765 43210' },
+                { label: 'Phone Number', field: 'phone', type: 'tel', placeholder: '+91 9874827631' },
               ].map(item => (
                 <div key={item.field} style={{ marginBottom: '20px' }}>
                   <label style={labelStyle}>{item.label}</label>

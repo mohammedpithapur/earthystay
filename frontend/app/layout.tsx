@@ -4,7 +4,7 @@ import Footer from '@/components/layout/Footer'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Earthy Stay | Luxury Property Stays',
+  title: 'Earthy Stays | Luxury Property Stays',
   description: 'Discover and book unique luxury properties across India',
 }
 

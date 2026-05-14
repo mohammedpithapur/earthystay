@@ -8,11 +8,11 @@ const sections = [
     content: [
       {
         subtitle: 'Agreement to Terms',
-        text: 'By accessing or using the Earthy Stay website and services, you confirm that you are at least 18 years of age, have read and understood these Terms & Conditions, and agree to be bound by them. If you do not agree to these terms, please do not use our services.',
+        text: 'By accessing or using the Earthy Stays website and services, you confirm that you are at least 18 years of age, have read and understood these Terms & Conditions, and agree to be bound by them. If you do not agree to these terms, please do not use our services.',
       },
       {
         subtitle: 'Modifications',
-        text: 'Earthy Stay reserves the right to modify these terms at any time. We will notify users of significant changes via email or a prominent notice on our website. Your continued use of our services after any modification constitutes acceptance of the updated terms.',
+        text: 'Earthy Stays reserves the right to modify these terms at any time. We will notify users of significant changes via email or a prominent notice on our website. Your continued use of our services after any modification constitutes acceptance of the updated terms.',
       },
     ],
   },
@@ -22,11 +22,11 @@ const sections = [
     content: [
       {
         subtitle: 'Booking Process',
-        text: 'All bookings made through Earthy Stay are subject to availability and confirmation. A booking is only confirmed once you receive a written confirmation email with a booking reference number. We reserve the right to decline or cancel bookings at our discretion.',
+        text: 'All bookings made through Earthy Stays are subject to availability and confirmation. A booking is confirmed once you receive a confirmation email and your voucher is available from the website.',
       },
       {
         subtitle: 'Accurate Information',
-        text: 'You are responsible for ensuring all information provided during booking is accurate, including guest count, dates, and contact details. Any discrepancies may result in additional charges or cancellation of your booking.',
+        text: 'You are responsible for ensuring all information provided during booking is accurate, including dates and contact details. Any discrepancies may result in additional charges or cancellation of your booking.',
       },
       {
         subtitle: 'Minimum Stay Requirements',
@@ -48,11 +48,7 @@ const sections = [
       },
       {
         subtitle: 'Full Payment',
-        text: 'Full payment is required at the time of booking to confirm your reservation. We do not offer instalment plans or partial payments unless explicitly stated for a specific property or offer.',
-      },
-      {
-        subtitle: 'Price Accuracy',
-        text: 'While we strive to ensure all pricing on our platform is accurate, errors may occasionally occur. In the event of a pricing error, we will notify you and give you the option to proceed at the correct price or cancel your booking for a full refund.',
+        text: 'Full payment is required at booking. Instalment plans and partial payments are not available.',
       },
     ],
   },
@@ -62,11 +58,11 @@ const sections = [
     content: [
       {
         subtitle: 'Non-Refundable Bookings',
-        text: 'All bookings made through Earthy Stay are strictly non-refundable. Once a booking is confirmed and payment is processed, the full amount is charged and cannot be refunded under any circumstances, including but not limited to personal emergencies, illness, travel disruptions, or change of plans.',
+        text: 'All bookings made through Earthy Stays are strictly non-refundable. Once a booking is confirmed and payment is processed, the full amount is charged and cannot be refunded under any circumstances, including but not limited to personal emergencies, illness, travel disruptions, or change of plans.',
       },
       {
         subtitle: 'No Modifications',
-        text: 'Confirmed bookings cannot be modified, including changes to dates, guest counts, or property. If you wish to make changes, your current booking must be cancelled (without refund) and a new booking made, subject to availability.',
+        text: 'Confirmed bookings cannot be modified, including changes to dates. If you wish to make changes, your current booking must be cancelled (without refund) and a new booking made, subject to availability.',
       },
       {
         subtitle: 'Property Unavailability',
@@ -115,12 +111,8 @@ const sections = [
     title: '7. Limitation of Liability',
     content: [
       {
-        subtitle: 'Platform Role',
-        text: 'Earthy Stay acts as an intermediary platform connecting guests with property owners. We are not responsible for the condition, safety, or accuracy of property descriptions beyond our verification process. We strongly recommend reviewing all property information carefully before booking.',
-      },
-      {
         subtitle: 'Limitation',
-        text: 'To the maximum extent permitted by applicable law, Earthy Stay shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of our platform or services. Our total liability shall not exceed the amount paid for the specific booking in question.',
+        text: 'To the maximum extent permitted by applicable law, Earthy Stays shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of our platform or services. Our total liability shall not exceed the amount paid for the specific booking in question.',
       },
       {
         subtitle: 'Force Majeure',
@@ -134,11 +126,11 @@ const sections = [
     content: [
       {
         subtitle: 'Our Content',
-        text: 'All content on the Earthy Stay platform, including text, images, logos, and software, is the property of Earthy Stay or its licensors and is protected by applicable intellectual property laws. You may not reproduce, distribute, or create derivative works without our express written permission.',
+        text: 'All content on the Earthy Stays platform, including text, images, logos, and software, is the property of Earthy Stays or its licensors and is protected by applicable intellectual property laws. You may not reproduce, distribute, or create derivative works without our express written permission.',
       },
       {
         subtitle: 'User Content',
-        text: 'By submitting reviews, photos, or other content to our platform, you grant Earthy Stay a non-exclusive, royalty-free licence to use, reproduce, and display such content in connection with our services.',
+        text: 'By submitting reviews, photos, or other content to our platform, you grant Earthy Stays a non-exclusive, royalty-free licence to use, reproduce, and display such content in connection with our services.',
       },
     ],
   },
@@ -162,7 +154,7 @@ const sections = [
     content: [
       {
         subtitle: 'Reach Us',
-        text: 'For any questions, concerns, or notices regarding these Terms & Conditions, please contact us at legal@earthystay.com or through our Contact page. We aim to respond to all enquiries within 3 business days.',
+        text: 'For any questions, concerns, or notices regarding these Terms & Conditions, please contact us at staysearthy@gmail.com or through our Contact page. We aim to respond to all enquiries within 3 business days.',
       },
     ],
   },
@@ -183,10 +175,10 @@ export default function TermsPage() {
           </h1>
           <div style={{ width: '60px', height: '2px', backgroundColor: 'var(--color-gold)', margin: '0 auto 24px' }} />
           <p style={{ color: 'var(--color-text-primary)', fontSize: '15px', maxWidth: '560px', margin: '0 auto', lineHeight: '1.7' }}>
-            Please read these terms carefully before using our platform. By booking with Earthy Stay, you agree to be bound by the following terms and conditions.
+            Please read these terms carefully before using our platform. By booking with Earthy Stays, you agree to be bound by the following terms and conditions.
           </p>
           <p style={{ color: 'var(--color-text-muted)', fontSize: '13px', marginTop: '24px' }}>
-            Effective Date: 1st January 2025 &nbsp;·&nbsp; Last Updated: 1st January 2025
+            Effective Date: 1st January 2026 &nbsp;·&nbsp; Last Updated: 1st January 2026
           </p>
         </div>
       </div>
@@ -195,7 +187,7 @@ export default function TermsPage() {
       <div style={{ backgroundColor: 'var(--color-bg-card)', borderBottom: '1px solid var(--color-gold)' }}>
         <div className="content-shell" style={{ padding: '20px 24px' }}>
           <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.7', textAlign: 'center' }}>
-            <strong>Important:</strong> All bookings made through Earthy Stay are <strong>strictly non-refundable</strong>. Please review our cancellation policy in Section 4 before making a reservation.
+            <strong>Important:</strong> All bookings made through Earthy Stays are <strong>strictly non-refundable</strong>. Please review our cancellation policy in Section 4 before making a reservation.
           </p>
         </div>
       </div>
@@ -264,7 +256,7 @@ export default function TermsPage() {
           </div>
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
             <a
-              href="mailto:legal@earthystay.com"
+              href="mailto:staysearthy@gmail.com"
               style={{ backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', padding: '12px 24px', fontSize: '13px', letterSpacing: '1px', fontWeight: '700', textTransform: 'uppercase', textDecoration: 'none', borderRadius: '8px', display: 'inline-block' }}
             >
               Email Legal Team

@@ -16,7 +16,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="Earthy Stay API", lifespan=lifespan)
+app = FastAPI(title="Earthy Stays API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -36,5 +36,5 @@ app.include_router(ical.router)
 
 @app.get("/")
 async def root():
-    return {"message": "Earthy Stay API is running"}
+    return {"message": "Earthy Stays API is running"}
 

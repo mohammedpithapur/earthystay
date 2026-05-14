@@ -9,6 +9,7 @@ export default function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
 
   useEffect(() => {
     return () => {
@@ -65,7 +66,7 @@ export default function LoginPage() {
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
           <Link href="/" style={{ textDecoration: 'none' }}>
             <h1 style={{ color: 'var(--color-text-primary)', fontSize: '28px', letterSpacing: '3px', marginBottom: '8px', fontWeight: '800' }}>
-              EARTHY STAY
+              Earthy Stays
             </h1>
           </Link>
           <p style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Welcome back</p>
@@ -84,7 +85,35 @@ export default function LoginPage() {
 
           <div style={{ marginBottom: '12px' }}>
             <label style={labelStyle}>Password</label>
-            <input type="password" placeholder="••••••••" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} style={inputStyle('password')} />
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={form.password}
+                onChange={e => setForm({ ...form, password: e.target.value })}
+                style={{ ...inputStyle('password'), paddingRight: '88px' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(prev => !prev)}
+                style={{
+                  position: 'absolute',
+                  right: '8px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  border: 'none',
+                  backgroundColor: 'transparent',
+                  color: 'var(--color-gold)',
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  letterSpacing: '1px',
+                  cursor: 'pointer',
+                  padding: '8px 10px',
+                }}
+              >
+                {showPassword ? 'Hide' : 'Show'}
+              </button>
+            </div>
             {errors.password && <p style={{ color: '#E53E3E', fontSize: '12px', marginTop: '4px' }}>{errors.password}</p>}
           </div>
 

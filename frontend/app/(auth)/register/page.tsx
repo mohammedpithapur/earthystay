@@ -9,6 +9,8 @@ export default function RegisterPage() {
   const [form, setForm] = useState({ full_name: '', email: '', phone: '', password: '', confirm_password: '' })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   useEffect(() => {
     return () => {
@@ -70,7 +72,7 @@ export default function RegisterPage() {
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
           <Link href="/" style={{ textDecoration: 'none' }}>
             <h1 style={{ color: 'var(--color-text-primary)', fontSize: '28px', letterSpacing: '3px', marginBottom: '8px', fontWeight: '800' }}>
-              EARTHY STAY
+              Earthy Stays
             </h1>
           </Link>
           <p style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Create your account</p>
@@ -84,11 +86,9 @@ export default function RegisterPage() {
           {[
             { label: 'Full Name', field: 'full_name', type: 'text', placeholder: 'Full Name' },
             { label: 'Email Address', field: 'email', type: 'email', placeholder: 'you@example.com' },
-            { label: 'Phone Number', field: 'phone', type: 'tel', placeholder: '+91 98765 43210' },
-            { label: 'Password', field: 'password', type: 'password', placeholder: '••••••••' },
-            { label: 'Confirm Password', field: 'confirm_password', type: 'password', placeholder: '••••••••' },
-          ].map((item, i) => (
-            <div key={item.field} style={{ marginBottom: i < 4 ? '20px' : '28px' }}>
+            { label: 'Phone Number', field: 'phone', type: 'tel', placeholder: '+91 9874827631' },
+          ].map((item) => (
+            <div key={item.field} style={{ marginBottom: '20px' }}>
               <label style={labelStyle}>{item.label}</label>
               <input
                 type={item.type}
@@ -100,6 +100,74 @@ export default function RegisterPage() {
               {errors[item.field] && <p style={{ color: '#E53E3E', fontSize: '12px', marginTop: '4px' }}>{errors[item.field]}</p>}
             </div>
           ))}
+
+          <div style={{ marginBottom: '20px' }}>
+            <label style={labelStyle}>Password</label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={form.password}
+                onChange={e => setForm({ ...form, password: e.target.value })}
+                style={{ ...inputStyle('password'), paddingRight: '88px' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(prev => !prev)}
+                style={{
+                  position: 'absolute',
+                  right: '8px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  border: 'none',
+                  backgroundColor: 'transparent',
+                  color: 'var(--color-gold)',
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  letterSpacing: '1px',
+                  cursor: 'pointer',
+                  padding: '8px 10px',
+                }}
+              >
+                {showPassword ? 'Hide' : 'Show'}
+              </button>
+            </div>
+            {errors.password && <p style={{ color: '#E53E3E', fontSize: '12px', marginTop: '4px' }}>{errors.password}</p>}
+          </div>
+
+          <div style={{ marginBottom: '28px' }}>
+            <label style={labelStyle}>Confirm Password</label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={form.confirm_password}
+                onChange={e => setForm({ ...form, confirm_password: e.target.value })}
+                style={{ ...inputStyle('confirm_password'), paddingRight: '88px' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(prev => !prev)}
+                style={{
+                  position: 'absolute',
+                  right: '8px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  border: 'none',
+                  backgroundColor: 'transparent',
+                  color: 'var(--color-gold)',
+                  fontSize: '12px',
+                  fontWeight: '700',
+                  letterSpacing: '1px',
+                  cursor: 'pointer',
+                  padding: '8px 10px',
+                }}
+              >
+                {showConfirmPassword ? 'Hide' : 'Show'}
+              </button>
+            </div>
+            {errors.confirm_password && <p style={{ color: '#E53E3E', fontSize: '12px', marginTop: '4px' }}>{errors.confirm_password}</p>}
+          </div>
 
           <button
             onClick={handleSubmit}

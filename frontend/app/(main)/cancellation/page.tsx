@@ -16,7 +16,7 @@ const faqs = [
   },
   {
     q: 'What happens in case of a natural disaster or emergency?',
-    a: 'While we empathise with difficult circumstances, our non-refundable policy applies in all cases. We strongly recommend purchasing comprehensive travel insurance that covers trip cancellations.',
+    a: 'While we empathise with difficult circumstances, our non-refundable policy applies in all cases.',
   },
   {
     q: 'Can I transfer my booking to someone else?',
@@ -46,11 +46,6 @@ const steps = [
   },
   {
     number: '04',
-    title: 'Consider Travel Insurance',
-    description: 'We strongly recommend purchasing comprehensive travel insurance to cover unexpected circumstances such as medical emergencies, travel disruptions, or natural disasters.',
-  },
-  {
-    number: '05',
     title: 'Complete Payment',
     description: 'Once you are fully satisfied with your booking details, complete your payment. Your booking is confirmed only upon receipt of full payment and a confirmation email.',
   },
@@ -132,20 +127,6 @@ export default function CancellationPage() {
                 iconColor: '#2E7D32',
                 title: 'Property Unavailability',
                 description: 'If we are unable to provide the booked property due to circumstances on our end, we will arrange an equivalent alternative or issue a full refund.',
-              },
-              {
-                icon: '✓',
-                iconBg: '#E8F5E9',
-                iconColor: '#2E7D32',
-                title: 'Significant Misrepresentation',
-                description: 'If the property is significantly different from what was described on our platform, please contact us immediately. Cases of material misrepresentation will be reviewed.',
-              },
-              {
-                icon: '!',
-                iconBg: '#FFF8E7',
-                iconColor: '#F57F17',
-                title: 'We Recommend Insurance',
-                description: 'Given our non-refundable policy, we strongly advise all guests to purchase travel insurance that includes trip cancellation coverage before making a booking.',
               },
             ].map((item, i) => (
               <div key={i} style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '28px' }}>

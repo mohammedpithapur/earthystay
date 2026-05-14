@@ -29,7 +29,7 @@ export default function Navbar() {
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <Image
               src="/Untitled_design-removebg-preview.png"
-              alt="EARTHY STAY"
+              alt="EARTHY STAYS"
               width={45}
               height={45}
               priority
@@ -46,8 +46,10 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-8">
           {[
             { label: 'Our Properties', href: '/properties' },
-            { label: 'Destinations', href: '/destinations' },
-            { label: 'Offers', href: '/offers' },
+            { label: 'Corporate', href: '/corporate' },
+            { label: 'Wedding', href: '/wedding' },
+            { label: 'Contact Us', href: '/contact' },
+            
           ].map(link => (
             <Link
               key={link.href}
@@ -118,7 +120,8 @@ export default function Navbar() {
         <div className="md:hidden flex flex-col w-full" style={{ backgroundColor: 'var(--color-navbar)', borderTop: '1px solid var(--color-navbar-border)', padding: '16px 24px', gap: '16px', maxWidth: '1400px', margin: '0 auto' }}>
           {[
             { label: 'Our Properties', href: '/properties' },
-            { label: 'Destinations', href: '/destinations' },
+            { label: 'Corporate', href: '/corporate' },
+            { label: 'Wedding', href: '/wedding' },
             { label: 'Offers', href: '/offers' },
             { label: 'Contact Us', href: '/contact' },
             { label: 'Login', href: '/login' },

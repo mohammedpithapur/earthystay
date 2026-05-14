@@ -77,7 +77,7 @@ export default function Hero() {
         
         @media (min-width: 769px) {
           .hero-search-container {
-            grid-template-columns: repeat(5, 1fr) !important;
+            grid-template-columns: repeat(6, 1fr) !important;
           }
           .hero-destination,
           .hero-checkin,
@@ -123,8 +123,8 @@ export default function Hero() {
           fontSize: '14px',
           letterSpacing: '3px',
           textTransform: 'uppercase',
-          marginTop: '0',
-          marginBottom: '12px',
+          marginTop: '18px',
+          marginBottom: '24px',
           fontWeight: '600',
         }}>
           Curated Luxury Stays
@@ -142,7 +142,7 @@ export default function Hero() {
           <em style={{ color: 'var(--color-gold)', fontStyle: 'italic' }}>Earthy Escape</em>
         </h1>
 
-        {/* <p style={{
+        <p style={{
           color: 'rgba(255,255,255,0.85)',
           fontSize: '18px',
           marginBottom: '32px',
@@ -151,7 +151,7 @@ export default function Hero() {
           fontWeight: '400',
         }}>
           Handpicked luxury properties across India&apos;s most beautiful destinations
-        </p> */}
+        </p>
 
         {/* Mobile Search Hint */}
         <p className="lg:hidden" style={{
@@ -167,16 +167,22 @@ export default function Hero() {
 
         {/* Search Bar - Responsive */}
         <div style={{
-          backgroundColor: 'rgba(255,255,255,0.98)',
-          borderRadius: '12px',
-          padding: '12px',
-          gap: '8px',
           width: '100%',
           maxWidth: '1000px',
-          boxShadow: '0 24px 64px rgba(0,0,0,0.28)',
-          display: 'grid',
-        }}
-        className="hero-search-container">
+          display: 'flex',
+          justifyContent: 'flex-end',
+        }}>
+          <div style={{
+            backgroundColor: 'rgba(255,255,255,0.98)',
+            borderRadius: '12px',
+            padding: '8px',
+            gap: '8px',
+            width: 'min(100%, 920px)',
+            boxShadow: '0 24px 64px rgba(0,0,0,0.28)',
+            display: 'grid',
+            marginLeft: 'auto',
+          }}
+          className="hero-search-container">
 
           <div style={fieldStyle} className="hero-destination">
             <label style={labelStyle}>Destination</label>
@@ -214,31 +220,20 @@ export default function Hero() {
 
           <div style={fieldStyle} className="hero-guests">
             <label style={labelStyle}>Guests</label>
-            <select
-              value={guests}
-              onChange={e => setGuests(e.target.value)}
-              className="hero-search-input"
-              style={inputStyle}
-            >
-              {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                <option key={n} value={n}>{n} Guest{n > 1 ? 's' : ''}</option>
-              ))}
-            </select>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+              <button onClick={() => setGuests(Math.max(1, Number(guests) - 1).toString())} style={{ border: '1px solid var(--color-border)', backgroundColor: '#ffffff', width: '32px', height: '32px', fontSize: '16px', cursor: 'pointer', borderRadius: '4px', fontWeight: '700' }}>−</button>
+              <span style={{ minWidth: '40px', textAlign: 'center', fontSize: '14px', fontWeight: '600', color: 'var(--color-text-primary)' }}>{guests}</span>
+              <button onClick={() => setGuests(Math.min(10, Number(guests) + 1).toString())} style={{ border: '1px solid var(--color-border)', backgroundColor: '#ffffff', width: '32px', height: '32px', fontSize: '16px', cursor: 'pointer', borderRadius: '4px', fontWeight: '700' }}>+</button>
+            </div>
           </div>
 
           <div style={fieldStyle} className="hero-pets">
             <label style={labelStyle}>Pets</label>
-            <select
-              value={pets}
-              onChange={e => setPets(e.target.value)}
-              className="hero-search-input"
-              style={inputStyle}
-            >
-              <option value="0">No Pets</option>
-              {[1,2,3,4].map(n => (
-                <option key={n} value={n}>{n} Pet{n > 1 ? 's' : ''}</option>
-              ))}
-            </select>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+              <button onClick={() => setPets(Math.max(0, Number(pets) - 1).toString())} style={{ border: '1px solid var(--color-border)', backgroundColor: '#ffffff', width: '32px', height: '32px', fontSize: '16px', cursor: 'pointer', borderRadius: '4px', fontWeight: '700' }}>−</button>
+              <span style={{ minWidth: '40px', textAlign: 'center', fontSize: '14px', fontWeight: '600', color: 'var(--color-text-primary)' }}>{pets}</span>
+              <button onClick={() => setPets(Math.min(4, Number(pets) + 1).toString())} style={{ border: '1px solid var(--color-border)', backgroundColor: '#ffffff', width: '32px', height: '32px', fontSize: '16px', cursor: 'pointer', borderRadius: '4px', fontWeight: '700' }}>+</button>
+            </div>
           </div>
 
           <button
@@ -274,14 +269,14 @@ export default function Hero() {
           >
             Search
           </button>
+          </div>
         </div>
-
         {/* Stats */}
-        <div className="hero-stats">
+        <div className="hero-stats" style={{ marginTop: '28px', paddingBottom: '48px' }}>
           {[
             { number: '5+', label: 'Properties' },
             { number: '30+', label: 'Rooms' },
-            { number: '4.9 stars', label: 'Average Rating' },
+            { number: '4.9', label: 'Average Rating' },
           ].map(stat => (
             <div key={stat.label} style={{ textAlign: 'center' }}>
               <div style={{
@@ -291,16 +286,7 @@ export default function Hero() {
               }}>
                 {stat.number}
               </div>
-              <div style={{
-                color: 'rgba(255,255,255,0.7)',
-                fontSize: '12px',
-                letterSpacing: '2px',
-                textTransform: 'uppercase',
-                marginTop: '4px',
-                fontWeight: '500',
-              }}>
-                {stat.label}
-              </div>
+              <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.85)', marginTop: '6px', whiteSpace: 'nowrap' }}>{stat.label}</div>
             </div>
           ))}
         </div>

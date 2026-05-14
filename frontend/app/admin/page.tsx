@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { dummyProperties } from '@/lib/data/properties'
 
 const dummyBookings = [
-  { id: "BK001", booking_ref: "ES-ABC123", property_id: "1", guest_name: "Mohammed Pithapur", guest_email: "mohammed@example.com", guest_phone: "+91 98765 43210", check_in: "2026-06-15", check_out: "2026-06-18", guests: 4, num_pets: 1, nights: 3, total_price: 28000, status: "confirmed", payment_status: "paid", created_at: "2026-05-01" },
+  { id: "BK001", booking_ref: "ES-ABC123", property_id: "1", guest_name: "Mohammed Pithapur", guest_email: "mohammed@example.com", guest_phone: "+91 9874827631", check_in: "2026-06-15", check_out: "2026-06-18", guests: 4, num_pets: 1, nights: 3, total_price: 28000, status: "confirmed", payment_status: "paid", created_at: "2026-05-01" },
   { id: "BK002", booking_ref: "ES-DEF456", property_id: "3", guest_name: "Priya Sharma", guest_email: "priya@example.com", guest_phone: "+91 98765 11111", check_in: "2026-07-20", check_out: "2026-07-22", guests: 2, num_pets: 0, nights: 2, total_price: 25500, status: "confirmed", payment_status: "paid", created_at: "2026-05-03" },
   { id: "BK003", booking_ref: "ES-GHI789", property_id: "2", guest_name: "Rahul Mehta", guest_email: "rahul@example.com", guest_phone: "+91 98765 22222", check_in: "2026-03-10", check_out: "2026-03-13", guests: 3, num_pets: 0, nights: 3, total_price: 20300, status: "completed", payment_status: "paid", created_at: "2026-02-15" },
   { id: "BK004", booking_ref: "ES-JKL012", property_id: "5", guest_name: "Anjali Kumar", guest_email: "anjali@example.com", guest_phone: "+91 98765 33333", check_in: "2026-08-05", check_out: "2026-08-08", guests: 6, num_pets: 0, nights: 3, total_price: 29700, status: "pending", payment_status: "pending", created_at: "2026-05-05" },
@@ -148,7 +148,7 @@ export default function AdminPage() {
           <div>
             <p style={{ color: 'var(--color-gold)', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '8px', fontWeight: '600' }}>Admin Panel</p>
             <h1 style={{ color: 'var(--color-text-primary)', fontSize: 'clamp(22px, 3vw, 32px)', fontWeight: '800' }}>
-              Earthy Stay Dashboard
+              Earthy Stays Dashboard
             </h1>
           </div>
           <div style={{ display: 'flex', gap: '12px' }}>

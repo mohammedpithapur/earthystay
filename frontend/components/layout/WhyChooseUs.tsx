@@ -1,36 +1,43 @@
 "use client"
 
+import Image from 'next/image'
 import Link from 'next/link'
 
 export default function WhyChooseUs() {
   const reasons = [
     {
-      symbol: '✦',
+      image: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=1200&q=80&auto=format&fit=crop',
+      alt: 'Luxury bedroom interior',
       title: 'Handpicked Properties',
       description: 'Every property is personally verified and curated to meet our luxury standards. No surprises — only exceptional stays.'
     },
     {
-      symbol: '◈',
+      image: 'https://images.unsplash.com/photo-1551632436-cbf8dd35adfa?w=1200&q=80&auto=format&fit=crop',
+      alt: 'Modern booking workspace',
       title: 'Instant Booking',
       description: "Book your stay in minutes with our seamless booking system. Real-time availability so you always know what's free."
     },
     {
-      symbol: '◉',
+      image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&q=80&auto=format&fit=crop',
+      alt: 'Premium villa exterior',
       title: 'Best Price Guarantee',
       description: 'Book directly with us and get the best possible rate. No hidden fees — what you see is exactly what you pay.'
     },
     {
-      symbol: '◎',
+      image: 'https://images.unsplash.com/photo-1556740738-b6a63e27c4df?w=1200&q=80&auto=format&fit=crop',
+      alt: 'Secure digital payment experience',
       title: 'Secure Payments',
       description: 'All payments are processed securely through Razorpay. Your financial information is always protected.'
     },
     {
-      symbol: '◆',
+      image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=1200&q=80&auto=format&fit=crop',
+      alt: 'Pet friendly stay with dog',
       title: 'Pet Friendly Options',
       description: 'Travelling with your furry friends? We have a curated selection of pet-friendly properties just for you.'
     },
     {
-      symbol: '◇',
+      image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&q=80&auto=format&fit=crop',
+      alt: 'Support team assisting guests',
       title: '24/7 Support',
       description: "Our team is always available to assist you before, during, and after your stay. We've got you covered."
     },
@@ -50,7 +57,7 @@ export default function WhyChooseUs() {
             marginBottom: '12px',
             fontWeight: '600',
           }}>
-            The Earthy Stay Difference
+            The Earthy Stays Difference
           </p>
           <h2 style={{
             fontSize: 'clamp(28px, 4vw, 48px)',
@@ -73,6 +80,40 @@ export default function WhyChooseUs() {
           </p>
         </div>
 
+        <div style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          gap: '10px',
+          marginBottom: '28px',
+        }}>
+          {[
+            'Cleanliness',
+            'Good Locations',
+            'Ease Of Check-In',
+            'Functional Kitchen',
+            'Aesthetics Of The Room',
+            'Pets Welcome Everywhere',
+          ].map(point => (
+            <span
+              key={point}
+              style={{
+                border: '1px solid var(--color-navbar-border)',
+                backgroundColor: 'rgba(255,255,255,0.06)',
+                color: 'var(--color-navbar-text)',
+                padding: '8px 14px',
+                borderRadius: '999px',
+                fontSize: '11px',
+                letterSpacing: '1px',
+                textTransform: 'uppercase',
+                fontWeight: '600',
+              }}
+            >
+              {point}
+            </span>
+          ))}
+        </div>
+
         {/* Grid */}
         <div className="responsive-feature-grid" style={{ backgroundColor: 'var(--color-border)' }}>
           {reasons.map((reason, index) => (
@@ -80,15 +121,29 @@ export default function WhyChooseUs() {
               key={index}
               style={{
                 backgroundColor: 'var(--color-navbar)',
-              padding: '36px 32px',
+                padding: '36px 32px',
                 transition: 'background-color 0.3s ease',
                 cursor: 'default',
               }}
               onMouseEnter={e => (e.currentTarget as HTMLDivElement).style.backgroundColor = 'rgba(255,255,255,0.08)'}
               onMouseLeave={e => (e.currentTarget as HTMLDivElement).style.backgroundColor = 'var(--color-navbar)'}
             >
-              <div style={{ fontSize: '32px', color: 'var(--color-navbar-text)', marginBottom: '20px', lineHeight: '1' }}>
-                {reason.symbol}
+              <div style={{
+                width: '100%',
+                aspectRatio: '16 / 10',
+                borderRadius: '16px',
+                overflow: 'hidden',
+                marginBottom: '20px',
+                backgroundColor: 'rgba(255,255,255,0.12)',
+                position: 'relative',
+              }}>
+                <Image
+                  src={reason.image}
+                  alt={reason.alt}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                  style={{ objectFit: 'cover' }}
+                />
               </div>
               <div style={{ width: '32px', height: '2px', backgroundColor: 'var(--color-navbar-text)', marginBottom: '20px' }} />
               <h3 style={{

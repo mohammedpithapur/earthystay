@@ -129,7 +129,7 @@ export default function BookingPage() {
               </div>
               <div>
                 <label style={labelStyle}>Phone Number</label>
-                <input type="tel" placeholder="+91 98765 43210" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} style={inputStyle('phone')} />
+                <input type="tel" placeholder="+91 9874827631" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} style={inputStyle('phone')} />
                 {errors.phone && <p style={{ color: '#E53E3E', fontSize: '12px', marginTop: '4px' }}>{errors.phone}</p>}
               </div>
               <div style={{ gridColumn: '1 / -1' }}>

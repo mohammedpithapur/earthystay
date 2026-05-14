@@ -8,7 +8,7 @@ from app.services.auth import hash_password
 async def seed():
     async with async_session() as db:
         admin = User(
-            email="admin@earthystay.com",
+            email="staysearthy@gmail.com",
             password_hash=hash_password("admin123"),
             full_name="Admin",
             phone=None,
@@ -16,7 +16,7 @@ async def seed():
         )
         db.add(admin)
         await db.commit()
-        print("Admin user seeded: admin@earthystay.com / admin123")
+        print("Admin user seeded: staysearthy@gmail.com / admin123")
 
 
 if __name__ == "__main__":

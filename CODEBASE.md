@@ -1,4 +1,4 @@
-# CODEBASE.md — Earthy Stay Project Reference
+# CODEBASE.md — Earthy Stays Project Reference
 
 > **Read this entire file before writing a single line of code.**
 > Optimised for token-efficient LLM sessions (NVIDIA NIM / DeepSeek free tier).
@@ -8,7 +8,7 @@
 
 ## 1. PROJECT OVERVIEW
 
-**Earthy Stay** — A luxury property-booking platform for India.
+**Earthy Stays** — A luxury property-booking platform for India.
 - Guests browse, filter, and book curated properties.
 - Admin panel manages bookings, properties, and iCal sync.
 - Tech: Next.js 16 (App Router) + FastAPI backend + PostgreSQL + SQLAlchemy + JWT auth.
@@ -481,7 +481,7 @@ BK004: Desert Camp Jaisalmer, Anjali Kumar, Aug 5-8 2026, ₹29,700, pending
 | Decision | Choice |
 |----------|--------|
 | Data source | Properties in Excel → manual entry via admin panel |
-| User seeding | 1 admin (`admin@earthystay.com` / `admin123`), guests self-register |
+| User seeding | 1 admin (`staysearthy@gmail.com` / `admin123`), guests self-register |
 | Frontend migration | Gradual — properties first |
 | Payment gateway | Razorpay (user has API keys) |
 | iCal | Full sync (export .ics feed + import parser) |
@@ -499,7 +499,7 @@ BK004: Desert Camp Jaisalmer, Anjali Kumar, Aug 5-8 2026, ₹29,700, pending
 
 **Next session prompt template:**
 ```
-Context: Earthy Stay backend. Read CODEBASE.md section 9 (backend) and section 17 (current session).
+Context: Earthy Stays backend. Read CODEBASE.md section 9 (backend) and section 17 (current session).
 Task: Continue from where we left off — [step from TO DO list].
 ```
 
@@ -559,7 +559,7 @@ To stay within free tier token limits:
 
 ### Prompt Template
 ```
-Context: Earthy Stay Next.js 16 + FastAPI project. Read CODEBASE.md for all conventions.
+Context: Earthy Stays Next.js 16 + FastAPI project. Read CODEBASE.md for all conventions.
 Task: [specific task]
 File to modify/create: [path]
 Constraints: Follow existing inline-style patterns, use CSS vars, TypeScript strict.
@@ -607,7 +607,7 @@ import dynamic from 'next/dynamic'
 ### TODO (unblocked, in order)
 1. Write `.env` file with DATABASE_URL
 2. `uvicorn app.main:app --reload` → verify tables create + `GET /` 200
-3. `backend/seed.py` — admin seed (`admin@earthystay.com` / `admin123`)
+3. `backend/seed.py` — admin seed (`staysearthy@gmail.com` / `admin123`)
 4. Razorpay: `app/services/payment.py` + payment endpoints in bookings router
 5. iCal engine: `app/services/ical.py` + export/import routes
 6. Gradual frontend migration: `lib/api.ts` → wire properties first

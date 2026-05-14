@@ -4,12 +4,47 @@ import { useSearchParams } from 'next/navigation'
 import { dummyProperties } from '@/lib/data/properties'
 import PropertyCard from '@/components/property/PropertyCard'
 
-const bathroomOptions = [
-  { value: 'all', label: 'Any Type' },
-  { value: 'ensuite', label: 'Private Ensuite' },
-  { value: 'detached_private', label: 'Detached Private' },
+const roomTypeOptions = [
+  { value: 'all', label: 'Any Room Type' },
   { value: 'shared', label: 'Shared' },
+  { value: 'private', label: 'Private' },
 ]
+
+const propertyTypeOptions = [
+  { value: 'all', label: 'Any Type' },
+  { value: 'rooms', label: 'Rooms' },
+  { value: 'entire_house', label: 'Entire House' },
+]
+
+const bathroomTypeOptions = [
+  { value: 'all', label: 'Any Type' },
+  { value: 'ensuite', label: 'Ensuite' },
+  { value: 'shared', label: 'Shared' },
+  { value: 'detached_private', label: 'Detached Private' },
+]
+
+const formatPrice = (value: number) => {
+  if (value >= 1000000) {
+    const lakhs = value / 100000
+    return `₹${Number.isInteger(lakhs) ? lakhs.toFixed(0) : lakhs.toFixed(1)} Lakhs`
+  }
+
+  return `₹${value.toLocaleString('en-IN')}`
+}
+
+const getRoomType = (property: typeof dummyProperties[number]) => (
+  property.bathrooms_detail.some(bathroom => bathroom.type === 'shared') ? 'shared' : 'private'
+)
+
+const getPropertyType = (property: typeof dummyProperties[number]) => {
+  const name = property.name.toLowerCase()
+
+  if (name.includes('villa') || name.includes('haveli') || name.includes('house')) {
+    return 'entire_house'
+  }
+
+  return 'rooms'
+}
 
 export default function PropertiesClient() {
   const searchParams = useSearchParams()
@@ -18,10 +53,12 @@ export default function PropertiesClient() {
   const initialPets = searchParams.get('pets') || '0'
 
   const [location, setLocation] = useState(initialLocation)
-  const [maxPrice, setMaxPrice] = useState(20000)
-  const [minPrice, setMinPrice] = useState(0)
-  const [bedrooms, setBedrooms] = useState(0)
+  const [maxPrice, setMaxPrice] = useState(1000000)
+  const [minPrice, setMinPrice] = useState(1000)
+  const [minBedrooms, setMinBedrooms] = useState(1)
   const [petsOnly, setPetsOnly] = useState(initialPets !== '0')
+  const [roomType, setRoomType] = useState('all')
+  const [propertyType, setPropertyType] = useState('all')
   const [bathroomType, setBathroomType] = useState('all')
   const [sortBy, setSortBy] = useState('rating')
   const [filtersOpen, setFiltersOpen] = useState(false)
@@ -35,22 +72,26 @@ export default function PropertiesClient() {
       )
     }
     result = result.filter(p => p.price_per_night >= minPrice && p.price_per_night <= maxPrice)
-    if (bedrooms > 0) result = result.filter(p => p.bedrooms >= bedrooms)
+    if (minBedrooms > 1) result = result.filter(p => p.bedrooms >= minBedrooms)
     if (petsOnly) result = result.filter(p => p.pets_allowed)
+    if (roomType !== 'all') result = result.filter(p => getRoomType(p) === roomType)
+    if (propertyType !== 'all') result = result.filter(p => getPropertyType(p) === propertyType)
     if (bathroomType !== 'all') result = result.filter(p => p.bathrooms_detail.some(b => b.type === bathroomType))
     if (sortBy === 'rating') result.sort((a, b) => b.avg_rating - a.avg_rating)
     else if (sortBy === 'price_low') result.sort((a, b) => a.price_per_night - b.price_per_night)
     else if (sortBy === 'price_high') result.sort((a, b) => b.price_per_night - a.price_per_night)
     else if (sortBy === 'reviews') result.sort((a, b) => b.review_count - a.review_count)
     return result
-  }, [location, minPrice, maxPrice, bedrooms, petsOnly, bathroomType, sortBy])
+  }, [location, minPrice, maxPrice, minBedrooms, petsOnly, roomType, propertyType, bathroomType, sortBy])
 
   const resetFilters = () => {
     setLocation('')
-    setMinPrice(0)
-    setMaxPrice(20000)
-    setBedrooms(0)
+    setMinPrice(1000)
+    setMaxPrice(1000000)
+    setMinBedrooms(1)
     setPetsOnly(false)
+    setRoomType('all')
+    setPropertyType('all')
     setBathroomType('all')
     setSortBy('rating')
   }
@@ -250,34 +291,130 @@ export default function PropertiesClient() {
               <div>
                 <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '12px', fontWeight: '600' }}>Price Per Night</label>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <span style={{ fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: '600' }}>₹{minPrice.toLocaleString('en-IN')}</span>
-                  <span style={{ fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: '600' }}>₹{maxPrice.toLocaleString('en-IN')}</span>
+                  <span style={{ fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: '600' }}>{formatPrice(minPrice)}</span>
+                  <span style={{ fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: '600' }}>{formatPrice(maxPrice)}</span>
                 </div>
-                <input type="range" min={0} max={20000} step={500} value={maxPrice} onChange={e => setMaxPrice(Number(e.target.value))} style={{ width: '100%', accentColor: 'var(--color-gold)' }} />
+                <input type="range" min={0} max={1000000} step={5000} value={maxPrice} onChange={e => setMaxPrice(Number(e.target.value))} style={{ width: '100%', accentColor: 'var(--color-gold)' }} />
               </div>
 
               <div style={{ height: '1px', backgroundColor: 'var(--color-border)' }} />
 
               <div>
                 <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '12px', fontWeight: '600' }}>Minimum Bedrooms</label>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {[0, 1, 2, 3, 4, 5].map(num => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <button
+                    onClick={() => setMinBedrooms(Math.max(1, minBedrooms - 1))}
+                    style={{
+                      padding: '10px 14px',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: '8px',
+                      backgroundColor: '#ffffff',
+                      color: 'var(--color-text-primary)',
+                      fontSize: '18px',
+                      cursor: 'pointer',
+                      fontWeight: '600',
+                      transition: 'all 0.2s ease',
+                      minWidth: '44px',
+                      textAlign: 'center',
+                    }}
+                  >
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    value={minBedrooms}
+                    onChange={e => {
+                      const val = parseInt(e.target.value) || 1
+                      if (val >= 1 && val <= 100) setMinBedrooms(val)
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: '10px 12px',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      color: 'var(--color-text-primary)',
+                      outline: 'none',
+                      backgroundColor: '#ffffff',
+                      boxSizing: 'border-box',
+                      textAlign: 'center',
+                      fontWeight: '600',
+                    }}
+                  />
+                  <button
+                    onClick={() => setMinBedrooms(Math.min(100, minBedrooms + 1))}
+                    style={{
+                      padding: '10px 14px',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: '8px',
+                      backgroundColor: '#ffffff',
+                      color: 'var(--color-text-primary)',
+                      fontSize: '18px',
+                      cursor: 'pointer',
+                      fontWeight: '600',
+                      transition: 'all 0.2s ease',
+                      minWidth: '44px',
+                      textAlign: 'center',
+                    }}
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ height: '1px', backgroundColor: 'var(--color-border)' }} />
+
+              <div>
+                <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '12px', fontWeight: '600' }}>Room Type</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {roomTypeOptions.map(option => (
                     <button
-                      key={num}
-                      onClick={() => setBedrooms(num)}
+                      key={option.value}
+                      onClick={() => setRoomType(option.value)}
                       style={{
                         padding: '10px 14px',
-                        border: `1px solid ${bedrooms === num ? 'var(--color-gold)' : 'var(--color-border)'}`,
+                        border: `1px solid ${roomType === option.value ? 'var(--color-gold)' : 'var(--color-border)'}`,
                         borderRadius: '8px',
-                        backgroundColor: bedrooms === num ? 'var(--color-gold)' : 'transparent',
-                        color: bedrooms === num ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+                        backgroundColor: roomType === option.value ? 'var(--color-gold)' : 'transparent',
+                        color: roomType === option.value ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
                         fontSize: '13px',
                         cursor: 'pointer',
-                        fontWeight: bedrooms === num ? '700' : '400',
+                        fontWeight: roomType === option.value ? '700' : '400',
+                        textAlign: 'left' as const,
                         transition: 'all 0.2s ease',
                       }}
                     >
-                      {num === 0 ? 'Any' : `${num}+`}
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ height: '1px', backgroundColor: 'var(--color-border)' }} />
+
+              <div>
+                <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '12px', fontWeight: '600' }}>Property Type</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {propertyTypeOptions.map(option => (
+                    <button
+                      key={option.value}
+                      onClick={() => setPropertyType(option.value)}
+                      style={{
+                        padding: '10px 14px',
+                        border: `1px solid ${propertyType === option.value ? 'var(--color-gold)' : 'var(--color-border)'}`,
+                        borderRadius: '8px',
+                        backgroundColor: propertyType === option.value ? 'var(--color-gold)' : 'transparent',
+                        color: propertyType === option.value ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+                        fontSize: '13px',
+                        cursor: 'pointer',
+                        fontWeight: propertyType === option.value ? '700' : '400',
+                        textAlign: 'left' as const,
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      {option.label}
                     </button>
                   ))}
                 </div>
@@ -288,7 +425,7 @@ export default function PropertiesClient() {
               <div>
                 <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '12px', fontWeight: '600' }}>Bathroom Type</label>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {bathroomOptions.map(option => (
+                  {bathroomTypeOptions.map(option => (
                     <button
                       key={option.value}
                       onClick={() => setBathroomType(option.value)}

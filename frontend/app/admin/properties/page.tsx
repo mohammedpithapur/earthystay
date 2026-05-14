@@ -638,11 +638,11 @@ function BasicInfoSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm:
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
         <div>
           <FieldLabel>Contact Phone</FieldLabel>
-          <input style={inputStyle} value={form.contact_phone} placeholder="+91 98765 43210" onChange={e => setForm({ ...form, contact_phone: e.target.value })} />
+          <input style={inputStyle} value={form.contact_phone} placeholder="+91 9874827631" onChange={e => setForm({ ...form, contact_phone: e.target.value })} />
         </div>
         <div>
           <FieldLabel>Contact Email</FieldLabel>
-          <input style={inputStyle} value={form.contact_email} placeholder="property@earthystay.com" onChange={e => setForm({ ...form, contact_email: e.target.value })} />
+          <input style={inputStyle} value={form.contact_email} placeholder="staysearthy@gmail.com" onChange={e => setForm({ ...form, contact_email: e.target.value })} />
         </div>
       </div>
     </div>
@@ -941,7 +941,7 @@ function PoliciesSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: 
           <div>
             <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '6px' }}>Non-Refundable Policy</p>
             <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>
-              All Earthy Stay bookings are 100% non-refundable. This policy is applied to all properties and cannot be changed per listing.
+              All Earthy Stays bookings are 100% non-refundable. This policy is applied to all properties and cannot be changed per listing.
             </p>
           </div>
         </div>
@@ -1098,10 +1098,14 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
   const [form, setForm] = useState<typeof EMPTY_FORM>(() => createFormFromProperty(property))
 
   useEffect(() => {
-    setForm(createFormFromProperty(property))
-    setActiveSection('basic')
-    setSaveStatus('idle')
-  }, [property?.id])
+    // schedule updates asynchronously to avoid cascading synchronous state updates
+    const t = setTimeout(() => {
+      setForm(createFormFromProperty(property))
+      setActiveSection('basic')
+      setSaveStatus('idle')
+    })
+    return () => clearTimeout(t)
+  }, [property])
 
   // Trap scroll on body
   useEffect(() => {
