@@ -4,8 +4,13 @@ import Footer from '@/components/layout/Footer'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Earthy Stays | Luxury Property Stays',
-  description: 'Discover and book unique luxury properties across India',
+  title: 'Earthy Stays | Earthy Property Stays',
+  description: 'Discover and book unique earthy properties across India',
+  icons: {
+    icon: '/Untitled_design-removebg-preview.png',
+    shortcut: '/Untitled_design-removebg-preview.png',
+    apple: '/Untitled_design-removebg-preview.png',
+  },
 }
 
 export default function RootLayout({

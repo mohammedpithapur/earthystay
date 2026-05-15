@@ -1,6 +1,7 @@
 "use client"
 import React from 'react'
 import Image from 'next/image'
+import Copy from '@/lib/copy'
 // Avoid importing next/link to prevent module/type resolution issues in some setups
 
 export default function Footer() {
@@ -11,8 +12,9 @@ export default function Footer() {
         margin: '0 auto',
         padding: '56px 24px 40px',
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-        gap: '40px',
+        gridTemplateColumns: 'minmax(220px, 1fr) minmax(180px, 0.8fr) minmax(220px, 1fr)',
+        gap: '24px',
+        alignItems: 'start',
       }}>
         <div>
           <h2 style={{
@@ -31,7 +33,7 @@ export default function Footer() {
             lineHeight: '1.8',
             marginBottom: '28px',
           }}>
-            Curated luxury properties across India&apos;s most breathtaking destinations. Your perfect escape awaits.
+            {Copy.footerDescription}
           </p>
 
           <div style={{ display: 'flex', gap: '12px' }}>
@@ -80,45 +82,8 @@ export default function Footer() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {[
               { label: 'Our Properties', href: '/properties' },
-              { label: 'Destinations', href: '/destinations' },
-              { label: 'Special Offers', href: '/offers' },
               { label: 'About Us', href: '/about' },
               { label: 'Contact Us', href: '/contact' },
-            ].map(link => (
-              <a
-                key={link.href}
-                href={link.href}
-                style={{
-                  color: 'rgba(255,255,255,0.82)',
-                  fontSize: '13px',
-                  textDecoration: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  transition: 'color 0.2s ease',
-                }}
-                onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-navbar-text)'}
-                onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.82)'}
-              >
-                <span style={{ color: 'var(--color-navbar-text)', fontSize: '9px' }}>→</span>
-                {link.label}
-              </a>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <h4 style={{ color: 'var(--color-navbar-text)', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '24px', fontWeight: '700' }}>
-            Destinations
-          </h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {[
-              { label: 'Goa', href: '/properties?location=Goa' },
-              { label: 'Coorg', href: '/properties?location=Coorg' },
-              { label: 'Jaipur', href: '/properties?location=Jaipur' },
-              { label: 'Munnar', href: '/properties?location=Munnar' },
-              { label: 'Rishikesh', href: '/properties?location=Rishikesh' },
-              { label: 'Jaisalmer', href: '/properties?location=Jaisalmer' },
             ].map(link => (
               <a
                 key={link.href}

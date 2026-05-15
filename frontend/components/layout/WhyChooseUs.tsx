@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
+import Copy from '@/lib/copy'
 
 export default function WhyChooseUs() {
   const [hoveredTags, setHoveredTags] = useState<Record<string, boolean>>({})
@@ -10,9 +11,9 @@ export default function WhyChooseUs() {
   const reasons = [
     {
       image: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=1200&q=80&auto=format&fit=crop',
-      alt: 'Luxury bedroom interior',
+      alt: 'Earthy bedroom interior',
       title: 'Handpicked Properties',
-      description: 'Every property is personally verified and curated to meet our luxury standards. No surprises — only exceptional stays.'
+      description: Copy.whyDescription
     },
     {
       image: 'https://images.unsplash.com/photo-1551632436-cbf8dd35adfa?w=1200&q=80&auto=format&fit=crop',
@@ -188,7 +189,7 @@ export default function WhyChooseUs() {
               Ready for your next escape?
             </h3>
             <p style={{ color: 'rgba(255,255,255,0.84)', fontSize: '16px' }}>
-              Browse our collection of handpicked luxury properties across India
+              Browse our collection of handpicked earthy properties across India
             </p>
           </div>
           <Link

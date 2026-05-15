@@ -34,7 +34,7 @@ const sections = [
       },
       {
         subtitle: 'Guest Limits',
-        text: 'The number of guests staying at a property must not exceed the maximum occupancy stated in the property listing. Exceeding this limit may result in immediate termination of your stay without refund.',
+        text: 'The number of guests staying at a property must not exceed the maximum occupancy stated in the property listing. Any extra guest beyond the stated limit must be paid for directly at the property.',
       },
     ],
   },

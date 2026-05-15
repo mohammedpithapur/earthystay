@@ -200,7 +200,7 @@ export default function ContactPage() {
                 latitude={22.5726}
                 longitude={88.3639}
                 propertyName="Earthy Stays — Kolkata"
-                address="Serving luxury properties across Kolkata"
+                address="Serving earthy properties across Kolkata"
               />
             </div>
           </div>

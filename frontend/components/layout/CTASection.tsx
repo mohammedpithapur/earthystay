@@ -1,6 +1,7 @@
-'use client'
+"use client"
 
 import Link from 'next/link'
+import Copy from '@/lib/copy'
 
 export default function CTASection() {
   return (
@@ -15,7 +16,6 @@ export default function CTASection() {
       }}>
         <p style={{
           color: 'var(--color-gold)',
-          fontSize: '11px',
           letterSpacing: '3px',
           textTransform: 'uppercase',
           marginBottom: '12px',
@@ -23,7 +23,6 @@ export default function CTASection() {
         }}>
           Limited Time Offer
         </p>
-        
         <h2 style={{
           fontSize: 'clamp(24px, 4vw, 42px)',
           fontWeight: '800',
@@ -31,18 +30,18 @@ export default function CTASection() {
           marginBottom: '12px',
           lineHeight: '1.2',
         }}>
-          Book Your Luxury Escape Today
+          {Copy.ctaHeading}
         </h2>
-        
+
         <p style={{
           color: 'rgba(255,255,255,0.85)',
           fontSize: '16px',
           marginBottom: '28px',
           lineHeight: '1.6',
         }}>
-          Get exclusive rates on selected properties. Instant confirmation. Best price guarantee.
+          {Copy.ctaSubtitle}
         </p>
-        
+
         <Link
           href="/properties"
           style={{

@@ -1,21 +1,55 @@
 import Link from 'next/link'
+import Copy from '@/lib/copy'
 
 const values = [
   { symbol: '✦', title: 'Curated Excellence', description: 'Every property we list is personally verified. We visit, we stay, we approve. No shortcuts, no compromises.' },
-  { symbol: '◈', title: 'Earthy Luxury', description: 'We believe luxury and nature are not opposites. Our properties blend comfort with the raw beauty of India.' },
+  { symbol: '◈', title: 'Earthy Stays', description: 'We believe earthy and nature are not opposites. Our properties blend comfort with the raw beauty of India.' },
   { symbol: '◉', title: 'Honest Pricing', description: 'What you see is what you pay. No hidden charges, no last-minute surprises. Just transparent, fair pricing.' },
   { symbol: '◆', title: 'Guest First', description: 'Every decision we make starts with one question — is this better for our guests? That will never change.' },
 ]
 
 const team = [
-  { name: 'Priya Sharma', role: 'Founder & CEO', initial: 'P', description: 'Former hospitality executive with 12 years at luxury hotel chains across India.' },
-  { name: 'Rahul Mehta', role: 'Head of Curation', initial: 'R', description: 'Travels 200+ days a year personally vetting each property before it goes live.' },
-  { name: 'Anjali Kumar', role: 'Guest Experience', initial: 'A', description: 'Ensures every guest interaction — before, during and after — exceeds expectations.' },
+  {
+    name: 'Megha Gupta',
+    role: 'Founder',
+    initial: 'M',
+    description: 'Megha Gupta holds a Master’s in International Relations, International Business, and International Law, bringing a global perspective to the brand. She spent 12 years in art school and was awarded the Chitra Visharad, shaping her eye for design and detail. Inspired by her travels and unique Airbnb stays, she created Earthy Stays as thoughtfully designed homes that reflect global cultures, artistic influences, heritage charm, and warm comfort.',
+  },
+  {
+    name: 'Ajay Gupta',
+    role: 'Operations',
+    initial: 'A',
+    description: 'Ajay Gupta heads operations at Earthy Stays, bringing over 40 years of industrial experience in manufacturing. His background builds strong systems, discipline, and efficiency across day-to-day operations. From maintenance coordination to operational planning and execution, he ensures every property is managed with consistency and reliability.',
+  },
+  {
+    name: 'Sunita Gupta',
+    role: 'Design & Cleaning Management',
+    initial: 'S',
+    description: 'Sunita Gupta looks after design aesthetics, decor detailing, and cleaning management across Earthy Stays. She ensures every property feels warm, well-styled, and thoughtfully arranged for guests. Her attention to detail keeps each home fresh, welcoming, and comfortable.',
+  },
+  {
+    name: 'Laasya Nalluri',
+    role: 'Marketing & Creative Strategy',
+    initial: 'L',
+    description: 'Laasya Nalluri leads marketing and brand communication, shaping Earthy Stays’ digital presence through social strategy, content direction, and positioning. Her approach blends analytics with creative execution to grow visibility, storytelling, and brand engagement.',
+  },
+  {
+    name: 'Mohammed',
+    role: 'Tech Head',
+    initial: 'M',
+    description: 'Mohammed leads the digital experience at Earthy Stays with a focus on clarity, speed, and ease of use. He built the website to reflect the brand’s warmth and heritage-inspired identity, helping guests explore properties and connect with Earthy Stays seamlessly online.',
+  },
+  {
+    name: 'Naveen Kumar BR',
+    role: 'Business Advisory & Taxation',
+    initial: 'N',
+    description: 'Naveen Kumar BR provides strategic guidance on financial planning, business structuring, and tax matters. His expertise ensures strong oversight, compliance, and long-term stability for Earthy Stays’ growth.',
+  },
 ]
 
 const stats = [
-  { number: '50+', label: 'Curated Properties' },
-  { number: '20+', label: 'Destinations' },
+  { number: '5+', label: 'Properties' },
+  { number: '30+', label: 'Rooms' },
   { number: '4.9', label: 'Average Rating' },
   { number: '2,000+', label: 'Happy Guests' },
 ]
@@ -34,11 +68,11 @@ export default function AboutPage() {
           Our Story
         </p>
         <h1 style={{ fontSize: 'clamp(32px, 5vw, 64px)', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '24px', lineHeight: '1.15', maxWidth: '800px', margin: '0 auto 24px' }}>
-          We believe every stay should feel like a discovery
+          About Earthy Stays
         </h1>
         <div style={{ width: '60px', height: '2px', backgroundColor: 'var(--color-gold)', margin: '0 auto 24px' }} />
-        <p style={{ fontSize: '16px', color: 'var(--color-text-secondary)', maxWidth: '580px', margin: '0 auto', lineHeight: '1.8' }}>
-          Earthy Stay was born from a simple frustration — it was impossible to find truly special properties in India without endless scrolling and disappointment.
+        <p style={{ fontSize: '16px', color: 'var(--color-text-secondary)', maxWidth: '620px', margin: '0 auto', lineHeight: '1.8' }}>
+          Earthy Stays offers warm, heritage-inspired homes designed for comfort, calm, and effortless city living. Perfect for corporate travellers, families, wedding guests, and anyone looking for a stay that feels personal, elegant, and memorable.
         </p>
       </div>
 
@@ -47,16 +81,16 @@ export default function AboutPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '48px', alignItems: 'center' }}>
           <div>
             <p style={{ fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--color-gold)', fontWeight: '600', marginBottom: '16px' }}>
-              How It Started
+              About Earthy Stays
             </p>
             <h2 style={{ fontSize: 'clamp(26px, 3vw, 38px)', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '24px', lineHeight: '1.2' }}>
-              A weekend trip that changed everything
+              Heritage-inspired stays with calm and character
             </h2>
             <p style={{ fontSize: '15px', color: 'var(--color-text-secondary)', lineHeight: '1.9', marginBottom: '20px' }}>
-              In 2022, our founder Priya booked what was described as a &ldquo;luxury villa&rdquo; in Coorg. What she found was a poorly maintained house with no real connection to the stunning landscape around it. The experience was frustrating — not because the area wasn&rsquo;t beautiful, but because the booking platform had no real standards.
+              Earthy Stays brings together the warmth of earthy living with the charm of heritage-inspired spaces. Thoughtfully designed with comfort, calm, and character, our stays offer a homely experience with a touch of quiet luxury.
             </p>
             <p style={{ fontSize: '15px', color: 'var(--color-text-secondary)', lineHeight: '1.9' }}>
-              That weekend, she decided to build something different. A platform where every single property had been personally experienced, where luxury meant something real, and where guests could book with genuine confidence.
+              Located across well-connected neighbourhoods in Kolkata, our properties are ideal for corporate travellers, families, wedding guests, and guests visiting the city for celebrations, work, or leisure. Whether it is a short visit or an extended stay, each space is designed to feel warm, personal, and memorable.
             </p>
           </div>
 
@@ -123,7 +157,7 @@ export default function AboutPage() {
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           <div style={{ textAlign: 'center', marginBottom: '64px' }}>
             <p style={{ color: 'var(--color-gold)', fontSize: '12px', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '16px', fontWeight: '600' }}>
-              The People Behind It
+              About the Team
             </p>
             <h2 style={{ fontSize: 'clamp(28px, 4vw, 44px)', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '16px' }}>
               Meet the Team
@@ -152,6 +186,18 @@ export default function AboutPage() {
               </div>
             ))}
           </div>
+
+          <div style={{ marginTop: '48px', backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '28px 24px', textAlign: 'center' }}>
+            <p style={{ color: 'var(--color-gold)', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', fontWeight: '700', marginBottom: '12px' }}>
+              Special Mention
+            </p>
+            <h3 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '12px' }}>
+              Uday, Gajendra, Bappa & Moumuni
+            </h3>
+            <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', lineHeight: '1.8' }}>
+              A heartfelt mention to Uday, Gajendra, Bappa, and Moumuni for the wonderful work they do in keeping our properties clean, fresh, and guest-ready. Their dedication, attention to detail, and consistent effort play a big role in creating the warm and comfortable experience that Earthy Stays is known for. From maintaining spotless spaces to ensuring every corner feels cared for, their contribution helps make each stay pleasant, welcoming, and worry-free for our guests. Their hard work behind the scenes is truly valued and deeply appreciated.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -161,7 +207,7 @@ export default function AboutPage() {
           Ready to find your escape?
         </h2>
         <p style={{ fontSize: '15px', color: 'var(--color-text-secondary)', marginBottom: '32px', maxWidth: '480px', margin: '0 auto 32px', lineHeight: '1.7' }}>
-          Browse our handpicked collection of luxury properties across India&aposs most beautiful destinations.
+          {Copy.aboutCTA}
         </p>
         <Link
           href="/properties"

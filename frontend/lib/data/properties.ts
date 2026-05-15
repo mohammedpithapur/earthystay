@@ -170,7 +170,7 @@ export const dummyProperties: Property[] = [
   {
     id: "5",
     name: "Desert Camp Jaisalmer",
-    description: "Sleep under a blanket of stars in our luxury desert camp. Experience the magic of the Thar Desert with all modern comforts.",
+    description: "Sleep under a blanket of stars in our earthy desert camp. Experience the magic of the Thar Desert with all modern comforts.",
     address: "Sam Sand Dunes Road, Jaisalmer, Rajasthan - 345001",
     contact_phone: "+91 9874827631",
     contact_email: "staysearthy@gmail.com",

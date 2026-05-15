@@ -1,6 +1,7 @@
-'use client'
+"use client"
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Copy from '@/lib/copy'
 
 export default function Hero() {
   const router = useRouter()
@@ -127,7 +128,7 @@ export default function Hero() {
           marginBottom: '24px',
           fontWeight: '600',
         }}>
-          Curated Luxury Stays
+          {Copy.curatedLabel}
         </p>
 
         <h1 style={{
@@ -150,7 +151,7 @@ export default function Hero() {
           lineHeight: '1.6',
           fontWeight: '400',
         }}>
-          Handpicked luxury properties across India&apos;s most beautiful destinations
+          {Copy.heroDescription}
         </p>
 
         {/* Mobile Search Hint */}
@@ -271,24 +272,24 @@ export default function Hero() {
           </button>
           </div>
         </div>
-        {/* Stats */}
-        <div className="hero-stats" style={{ marginTop: '28px', paddingBottom: '48px' }}>
-          {[
-            { number: '5+', label: 'Properties' },
-            { number: '30+', label: 'Rooms' },
-            { number: '4.9', label: 'Average Rating' },
-          ].map(stat => (
-            <div key={stat.label} style={{ textAlign: 'center' }}>
-              <div style={{
-                color: 'var(--color-gold)',
-                fontSize: '28px',
-                fontWeight: '700',
-              }}>
-                {stat.number}
-              </div>
-              <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.85)', marginTop: '6px', whiteSpace: 'nowrap' }}>{stat.label}</div>
+        {/* Stats: top row with two stats, avg rating on its own row below */}
+        <div className="hero-stats" style={{ marginTop: '28px', paddingBottom: '48px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '18px' }}>
+          <div style={{ display: 'flex', gap: '56px', justifyContent: 'center', alignItems: 'center' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ color: 'var(--color-gold)', fontSize: '28px', fontWeight: '700' }}>5+</div>
+              <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.85)', marginTop: '6px', whiteSpace: 'nowrap' }}>Properties</div>
             </div>
-          ))}
+
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ color: 'var(--color-gold)', fontSize: '28px', fontWeight: '700' }}>30+</div>
+              <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.85)', marginTop: '6px', whiteSpace: 'nowrap' }}>Rooms</div>
+            </div>
+          </div>
+
+          <div style={{ textAlign: 'center', marginTop: '6px' }}>
+            <div style={{ color: 'var(--color-gold)', fontSize: '28px', fontWeight: '700' }}>4.9</div>
+            <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.85)', marginTop: '6px', whiteSpace: 'nowrap' }}>Average Rating</div>
+          </div>
         </div>
       </div>
     </section>

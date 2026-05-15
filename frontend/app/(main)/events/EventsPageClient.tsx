@@ -119,7 +119,7 @@ export default function EventsPageClient() {
               >
                 <option value="">Select Hotel</option>
                 <option value="heritage">Heritage Resort</option>
-                <option value="luxury">Luxury Palace</option>
+                <option value="earthy">Earthy Palace</option>
                 <option value="modern">Modern Retreat</option>
               </select>
               {errors.hotel && <p style={{ color: '#E53E3E', fontSize: '12px', marginTop: '4px' }}>{errors.hotel}</p>}

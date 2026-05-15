@@ -122,9 +122,7 @@ export default function PropertyCard({ property }: Props) {
               </span>
               <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginLeft: '4px' }}>/ night</span>
             </div>
-            <div style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
-              {property.review_count} reviews
-            </div>
+            {/* reviews count removed per request */}
           </div>
 
           {/* Amenities */}

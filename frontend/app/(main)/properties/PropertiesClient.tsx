@@ -106,7 +106,7 @@ export default function PropertiesClient() {
           Our Properties
         </h1>
         <p style={{ color: 'rgba(255,255,255,0.82)', fontSize: '15px' }}>
-          {filtered.length} properties found
+          Escape to thoughtfully curated stays inspired by nature, comfort, and local experiences.
         </p>
       </div>
 
@@ -459,7 +459,7 @@ export default function PropertiesClient() {
                   <div style={{ width: '44px', height: '24px', backgroundColor: petsOnly ? 'var(--color-gold)' : 'var(--color-border)', borderRadius: '12px', position: 'relative', transition: 'background-color 0.3s ease' }}>
                     <div style={{ position: 'absolute', top: '3px', left: petsOnly ? '23px' : '3px', width: '18px', height: '18px', backgroundColor: '#ffffff', borderRadius: '50%', transition: 'left 0.3s ease' }} />
                   </div>
-                  <span style={{ fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: '500' }}>Pets Allowed Only</span>
+                  <span style={{ fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: '500' }}>Pets Allowed</span>
                 </button>
               </div>
             </div>

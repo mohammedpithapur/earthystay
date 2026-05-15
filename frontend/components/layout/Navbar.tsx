@@ -26,7 +26,7 @@ export default function Navbar() {
           onMouseEnter={() => setLogoHover(true)}
           onMouseLeave={() => setLogoHover(false)}
         >
-          <div style={{ display: 'flex', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Image
               src="/Untitled_design-removebg-preview.png"
               alt="EARTHY STAYS"
@@ -38,8 +38,12 @@ export default function Navbar() {
                 transform: logoHover ? 'scale(1.05)' : 'scale(1)',
                 transition: 'transform 150ms ease',
                 display: 'block',
+                filter: 'brightness(0) invert(1) drop-shadow(0 2px 6px rgba(12, 15, 13, 0.22))',
               }}
             />
+            <span className="md:hidden" style={{ color: 'var(--color-navbar-text)', fontSize: '14px', letterSpacing: '2px', fontWeight: '700' }}>
+              EARTHY STAYS
+            </span>
           </div>
         </Link>
 
@@ -104,6 +108,41 @@ export default function Navbar() {
 
         <div className="md:hidden flex items-center gap-3" style={{ marginLeft: 'auto', flexShrink: 0 }}>
           <button
+            type="button"
+            style={{
+              background: 'transparent',
+              border: '1px solid var(--color-navbar-border)',
+              color: 'var(--color-navbar-text)',
+              fontSize: '12px',
+              letterSpacing: '1px',
+              textTransform: 'uppercase' as const,
+              fontWeight: '700' as const,
+              padding: '8px 14px',
+              borderRadius: '999px',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={e => {
+              const el = e.currentTarget as HTMLButtonElement
+              el.style.backgroundColor = 'var(--color-gold)'
+              el.style.color = 'var(--color-text-primary)'
+              el.style.borderColor = 'var(--color-gold)'
+              el.style.transform = 'translateY(-1px)'
+            }}
+            onMouseLeave={e => {
+              const el = e.currentTarget as HTMLButtonElement
+              el.style.backgroundColor = 'transparent'
+              el.style.color = 'var(--color-navbar-text)'
+              el.style.borderColor = 'var(--color-navbar-border)'
+              el.style.transform = 'translateY(0)'
+            }}
+            onClick={() => {
+              window.location.href = '/login'
+            }}
+          >
+            Login
+          </button>
+          <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="p-3 flex flex-col gap-1.5"
             aria-label="Toggle navigation menu"
@@ -124,7 +163,6 @@ export default function Navbar() {
             { label: 'Wedding', href: '/wedding' },
             { label: 'Offers', href: '/offers' },
             { label: 'Contact Us', href: '/contact' },
-            { label: 'Login', href: '/login' },
           ].map(link => (
             <Link
               key={link.href}
