@@ -45,7 +45,7 @@ export default function ResetPasswordPage() {
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
           <Link href="/" style={{ textDecoration: 'none' }}>
             <h1 style={{ color: 'var(--color-text-primary)', fontSize: '28px', letterSpacing: '3px', marginBottom: '8px', fontWeight: '800' }}>
-              EARTHY STAY
+              EARTHY STAYS
             </h1>
           </Link>
           <p style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Create a new password</p>

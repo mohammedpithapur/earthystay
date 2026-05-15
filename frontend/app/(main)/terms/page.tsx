@@ -116,7 +116,7 @@ const sections = [
       },
       {
         subtitle: 'Force Majeure',
-        text: 'Earthy Stay shall not be liable for any failure to perform obligations where such failure is caused by circumstances beyond our reasonable control, including natural disasters, government actions, pandemics, or other force majeure events.',
+        text: 'Earthy Stays shall not be liable for any failure to perform obligations where such failure is caused by circumstances beyond our reasonable control, including natural disasters, government actions, pandemics, or other force majeure events.',
       },
     ],
   },
