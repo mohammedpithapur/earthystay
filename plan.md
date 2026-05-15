@@ -28,7 +28,7 @@ This is handled at booking creation time with a "linked listings" table. Clean, 
 
 These are broken right now and will cause silent failures.
 
-**1.1 Fix the double `.scalars()` bug in `/bookings/mine` and `/bookings/admin/all`**
+**1.1 Fix the double `.scalars()` bug in `/bookings/mine` and `/bookings/admin/all`** ✅ count query should use the base (unpaginated) query
 
 ```python
 # Current broken code in bookings.py:
@@ -36,9 +36,10 @@ result = await db.execute(query)
 return {"items": result.scalars().all(), "total": len(result.scalars().all())}
 # Second call returns [] always
 
-# Fix — fetch items first, count separately:
-count_result = await db.scalar(select(func.count()).select_from(query.subquery()))
-result = await db.execute(query)
+  # Fix — fetch items first, count separately:
+  # Use a base query (without limit/offset) for the count to avoid undercounting
+  count_result = await db.scalar(select(func.count()).select_from(base_query.subquery()))
+  result = await db.execute(paged_query)
 items = result.scalars().all()
 return {"items": items, "total": count_result, "page": page, "limit": limit}
 ```
@@ -75,11 +76,32 @@ Returns a list of blocked date ranges for a property. Frontend booking calendar 
 
 ---
 
+## Phase 1.6 — Availability UX (1–2 hours)
+
+Stop users from selecting booked dates on the property page.
+
+**1.6.1 Fetch availability**
+- On property detail page, call `GET /properties/{property_id}/availability`.
+- Store blocked ranges in UI state.
+
+**1.6.2 Replace native date inputs**
+- The current `input type="date"` cannot disable arbitrary ranges.
+- Swap to a date picker that supports disabled ranges (e.g., `react-day-picker` or `react-datepicker`).
+
+**1.6.3 Disable blocked ranges**
+- Convert each `{check_in, check_out}` to a disabled range and pass to the date picker.
+- Prevent selecting a check-out date that overlaps any blocked range.
+
+**1.6.4 Validate on submit**
+- Keep a final check in `handleBook()` to block if selected range overlaps (safety net).
+
+---
+
 ## Phase 2 — Room Grouping / Multi-Listing (3–4 hours)
 
 This is the core new feature.
 
-**2.1 New model: `PropertyGroup`**
+**2.1 New model: `PropertyGroup`** ✅ add constraints: unique (group_id, property_id), and only one whole-property per group
 
 Create `backend/app/models/property_group.py`:
 
@@ -96,6 +118,10 @@ class PropertyGroupMember(Base):
     group_id: UUID     # FK → property_groups.id
     property_id: UUID  # FK → properties.id
     is_whole_property: bool  # True only for the "Whole Property" listing
+
+  Enforce:
+  - Unique `(group_id, property_id)`
+  - Only one `is_whole_property=True` per group
 ```
 
 Add `group_member` relationship back to `Property` model.
@@ -109,7 +135,7 @@ DELETE /admin/groups/{group_id}/members/{id}  → remove a listing from group
 GET    /admin/groups                          → list all groups with their members
 ```
 
-**2.3 Booking creation — cascade blocking logic**
+**2.3 Booking creation — cascade blocking logic** ✅ ensure shadow blocks are excluded from revenue and guest-visible views
 
 In `services/booking.py`, after a booking is created, run `apply_group_blocking(booking, db)`:
 
@@ -237,7 +263,7 @@ RAZORPAY_KEY_ID=rzp_test_...
 RAZORPAY_KEY_SECRET=...
 ```
 
-**5.2 Payment flow — 3 steps**
+**5.2 Payment flow — 3 steps** ✅ align email timing with admin confirmation
 
 The booking flow changes to:
 
@@ -254,11 +280,15 @@ Step 2: Guest completes payment on Razorpay
   → Razorpay calls your webhook: POST /payments/webhook
   → verify signature using HMAC-SHA256
   → update booking status to "pending" (awaiting admin confirm)
-  → send booking confirmation email
+  → send "payment received" email (confirmation email comes after admin confirm)
+  → set `payment_status = "paid"` (money captured but not yet settled)
   → trigger shadow blocking for room groups
 
 Step 3: Admin confirms → status = "confirmed"
   → send confirmation email
+
+Step 4: Payout settles to admin bank
+  → admin marks `payment_status = "settled"` for revenue/profit reporting
 ```
 
 **5.3 New model additions**
@@ -268,6 +298,7 @@ Add to `Booking`:
 razorpay_order_id: str | None
 razorpay_payment_id: str | None
 payment_status: str  # unpaid | paid | refunded
+payment_status: str  # unpaid | paid | settled | refunded
 ```
 
 Add `payment_pending` to `BookingStatus` enum.
@@ -280,6 +311,7 @@ POST /payments/webhook           → Razorpay webhook (no auth, verify signature
 POST /payments/verify            → frontend calls after payment to double-check
 GET  /admin/payments             → list all payments with status
 POST /admin/payments/{id}/refund → trigger Razorpay refund
+PATCH /admin/payments/{id}/settle → mark payout received (sets payment_status = settled)
 ```
 
 **5.5 Refund logic**
@@ -310,7 +342,7 @@ Returns 12 months of data:
 ]
 ```
 
-SQL: `GROUP BY EXTRACT(MONTH FROM created_at)` on bookings where `payment_status = paid` and `status != cancelled`.
+SQL: `GROUP BY EXTRACT(MONTH FROM created_at)` on bookings where `payment_status = settled` and `status != cancelled`.
 
 **6.2 Per-listing revenue breakdown**
 
@@ -344,7 +376,7 @@ Returns each booking as a transaction line:
     "check_out": "2025-01-18",
     "nights": 3,
     "amount": 19500,
-    "payment_status": "paid"
+    "payment_status": "settled"
   }
 ]
 ```
@@ -374,7 +406,7 @@ Extend `GET /admin/dashboard` to also return:
 
 Right now iCal just stores URLs. Make it actually work.
 
-**7.1 Install**
+**7.1 Install** ✅ apply the same shadow-block filtering rules as Phase 2
 
 ```
 icalendar

@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 from uuid import UUID
 from datetime import datetime, date
 
@@ -9,6 +9,16 @@ class BookingCreate(BaseModel):
     check_out: date
     guests: int
     pets: int = 0
+
+    @model_validator(mode="after")
+    def validate_booking(self):
+        if self.check_out <= self.check_in:
+            raise ValueError("check_out must be after check_in")
+        if self.guests < 1:
+            raise ValueError("at least 1 guest required")
+        if self.pets < 0:
+            raise ValueError("pets cannot be negative")
+        return self
 
 
 class BookingOut(BaseModel):

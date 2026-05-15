@@ -2,7 +2,7 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, or_
+from sqlalchemy import select, or_, func
 
 from app.database import get_db
 from app.dependencies import get_current_user, get_admin
@@ -70,12 +70,20 @@ async def my_bookings(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    query = select(Booking).where(Booking.guest_id == user.id)
+    base_query = select(Booking).where(Booking.guest_id == user.id)
     if status:
-        query = query.where(Booking.status == status)
-    query = query.order_by(Booking.created_at.desc()).offset((page - 1) * limit).limit(limit)
-    result = await db.execute(query)
-    return {"items": result.scalars().all(), "total": len(result.scalars().all()), "page": page, "limit": limit}
+        base_query = base_query.where(Booking.status == status)
+
+    total = await db.scalar(select(func.count()).select_from(base_query.subquery()))
+
+    paged_query = (
+        base_query.order_by(Booking.created_at.desc())
+        .offset((page - 1) * limit)
+        .limit(limit)
+    )
+    result = await db.execute(paged_query)
+    items = result.scalars().all()
+    return {"items": items, "total": total, "page": page, "limit": limit}
 
 
 @router.get("/{booking_id}", response_model=BookingOut)
@@ -103,16 +111,24 @@ async def admin_list_bookings(
     admin: User = Depends(get_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    query = select(Booking)
+    base_query = select(Booking)
     if search:
-        query = query.where(
+        base_query = base_query.where(
             or_(Booking.guest_name.ilike(f"%{search}%"), Booking.guest_email.ilike(f"%{search}%"))
         )
     if status:
-        query = query.where(Booking.status == status)
-    query = query.order_by(Booking.created_at.desc()).offset((page - 1) * limit).limit(limit)
-    result = await db.execute(query)
-    return {"items": result.scalars().all(), "total": len(result.scalars().all()), "page": page, "limit": limit}
+        base_query = base_query.where(Booking.status == status)
+
+    total = await db.scalar(select(func.count()).select_from(base_query.subquery()))
+
+    paged_query = (
+        base_query.order_by(Booking.created_at.desc())
+        .offset((page - 1) * limit)
+        .limit(limit)
+    )
+    result = await db.execute(paged_query)
+    items = result.scalars().all()
+    return {"items": items, "total": total, "page": page, "limit": limit}
 
 
 @router.patch("/admin/{booking_id}", response_model=BookingOut)

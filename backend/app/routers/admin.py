@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
+from sqlalchemy.orm import selectinload
 
 from app.database import get_db
 from app.dependencies import get_admin
@@ -39,7 +40,11 @@ async def list_properties(
     admin: User = Depends(get_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(Property).order_by(Property.created_at.desc()))
+    result = await db.execute(
+        select(Property)
+        .options(selectinload(Property.images))
+        .order_by(Property.created_at.desc())
+    )
     return result.scalars().all()
 
 

@@ -1,7 +1,11 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from app.database import get_db
+from app.models.booking import Booking, BookingStatus
+from app.models.property import Property
 from app.schemas.property import PropertyListOut, PropertyOut
 from app.services.property import get_property_filters
 
@@ -27,3 +31,42 @@ async def list_properties(
         guests=guests, pets_allowed=pets_allowed, amenities=amenity_list,
         page=page, limit=limit,
     )
+
+
+@router.get("/{property_id}", response_model=PropertyOut)
+async def get_property(
+    property_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Property)
+        .options(selectinload(Property.images))
+        .where(Property.id == property_id, Property.is_published == True)
+    )
+    property = result.scalar_one_or_none()
+    if not property:
+        raise HTTPException(status_code=404, detail="Property not found")
+    return property
+
+
+@router.get("/{property_id}/availability")
+async def get_property_availability(
+    property_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(Property.id).where(Property.id == property_id, Property.is_published == True)
+    )
+    if not result.scalar_one_or_none():
+        raise HTTPException(status_code=404, detail="Property not found")
+
+    result = await db.execute(
+        select(Booking.check_in, Booking.check_out).where(
+            Booking.property_id == property_id,
+            Booking.status.in_([BookingStatus.confirmed, BookingStatus.pending]),
+        )
+    )
+    return [
+        {"check_in": check_in, "check_out": check_out}
+        for check_in, check_out in result.all()
+    ]
