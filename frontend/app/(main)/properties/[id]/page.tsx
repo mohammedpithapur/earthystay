@@ -637,7 +637,6 @@ export default function PropertyDetailPage() {
                   onSelect={handleRangeSelect}
                   disabled={[{ before: today }, ...(range?.from ? [{ before: range.from }] : []), ...disabledRanges]}
                   fromDate={today}
-                  excludeDisabled
                   numberOfMonths={1}
                 />
               </div>
