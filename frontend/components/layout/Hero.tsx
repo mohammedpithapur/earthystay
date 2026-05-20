@@ -1,5 +1,5 @@
 "use client"
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Copy from '@/lib/copy'
 
@@ -10,6 +10,17 @@ export default function Hero() {
   const [checkOut, setCheckOut] = useState('')
   const [guests, setGuests] = useState('1')
   const [pets, setPets] = useState('0')
+
+  const [todayValue, setTodayValue] = useState('')
+
+  useEffect(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const year = today.getFullYear()
+    const month = String(today.getMonth() + 1).padStart(2, '0')
+    const day = String(today.getDate()).padStart(2, '0')
+    setTodayValue(`${year}-${month}-${day}`)
+  }, [])
 
   const handleSearch = () => {
     const params = new URLSearchParams()
@@ -47,6 +58,7 @@ export default function Hero() {
     width: '100%',
     fontFamily: "'Figtree', sans-serif",
   }
+
 
   return (
     <section style={{ position: 'relative', minHeight: 'min(75vh, 800px)', overflow: 'hidden' }}>
@@ -202,7 +214,14 @@ export default function Hero() {
             <input
               type="date"
               value={checkIn}
-              onChange={e => setCheckIn(e.target.value)}
+              min={todayValue || undefined}
+              onChange={e => {
+                const nextValue = e.target.value
+                setCheckIn(nextValue)
+                if (checkOut && nextValue && checkOut < nextValue) {
+                  setCheckOut('')
+                }
+              }}
               className="hero-search-input"
               style={inputStyle}
             />
@@ -213,6 +232,7 @@ export default function Hero() {
             <input
               type="date"
               value={checkOut}
+              min={checkIn || todayValue || undefined}
               onChange={e => setCheckOut(e.target.value)}
               className="hero-search-input"
               style={inputStyle}

@@ -7,12 +7,23 @@ from app.database import get_db
 from app.dependencies import get_admin
 from app.models.user import User
 from app.models.property import Property
+from app.models.property_group import PropertyGroup, PropertyGroupMember
 from app.models.booking import Booking, BookingStatus
 from app.models.review import Review
 from app.schemas.property import PropertyCreate, PropertyUpdate, PropertyOut, PropertyImageCreate, PropertyImageUpdate, PropertyImageOut
+from app.schemas.property_group import PropertyGroupCreate, PropertyGroupMemberCreate, PropertyGroupMemberUpdate, PropertyGroupOut
 from app.models.property import PropertyImage
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+
+
+async def fetch_group(db: AsyncSession, group_id: str) -> PropertyGroup | None:
+    result = await db.execute(
+        select(PropertyGroup)
+        .options(selectinload(PropertyGroup.members).selectinload(PropertyGroupMember.property))
+        .where(PropertyGroup.id == group_id)
+    )
+    return result.scalar_one_or_none()
 
 
 # ── Dashboard ──
@@ -140,3 +151,115 @@ async def delete_image(
     await db.delete(image)
     await db.commit()
     return {"message": "Image deleted"}
+
+
+# ── Property Groups ──
+
+@router.get("/groups", response_model=list[PropertyGroupOut])
+async def list_groups(
+    admin: User = Depends(get_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(PropertyGroup)
+        .options(selectinload(PropertyGroup.members).selectinload(PropertyGroupMember.property))
+        .order_by(PropertyGroup.created_at.desc())
+    )
+    return result.scalars().all()
+
+
+@router.post("/groups", response_model=PropertyGroupOut)
+async def create_group(
+    data: PropertyGroupCreate,
+    admin: User = Depends(get_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    group = PropertyGroup(name=data.name)
+    db.add(group)
+    await db.commit()
+    await db.refresh(group)
+    return await fetch_group(db, str(group.id))
+
+
+@router.post("/groups/{group_id}/members", response_model=PropertyGroupOut)
+async def add_group_member(
+    group_id: str,
+    data: PropertyGroupMemberCreate,
+    admin: User = Depends(get_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    group = await db.get(PropertyGroup, group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+
+    property = await db.get(Property, data.property_id)
+    if not property:
+        raise HTTPException(status_code=404, detail="Property not found")
+
+    existing = await db.execute(
+        select(PropertyGroupMember)
+        .where(PropertyGroupMember.group_id == group_id, PropertyGroupMember.property_id == data.property_id)
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail="Property already in this group")
+
+    if data.is_whole_property:
+        whole = await db.execute(
+            select(PropertyGroupMember)
+            .where(PropertyGroupMember.group_id == group_id, PropertyGroupMember.is_whole_property == True)
+        )
+        if whole.scalar_one_or_none():
+            raise HTTPException(status_code=409, detail="Group already has a whole-property listing")
+
+    member = PropertyGroupMember(
+        group_id=group_id,
+        property_id=data.property_id,
+        is_whole_property=data.is_whole_property,
+    )
+    db.add(member)
+    await db.commit()
+    return await fetch_group(db, group_id)
+
+
+@router.delete("/groups/{group_id}/members/{member_id}", response_model=PropertyGroupOut)
+async def remove_group_member(
+    group_id: str,
+    member_id: str,
+    admin: User = Depends(get_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    member = await db.get(PropertyGroupMember, member_id)
+    if not member or str(member.group_id) != group_id:
+        raise HTTPException(status_code=404, detail="Group member not found")
+
+    await db.delete(member)
+    await db.commit()
+    return await fetch_group(db, group_id)
+
+
+@router.patch("/groups/{group_id}/members/{member_id}", response_model=PropertyGroupOut)
+async def update_group_member(
+    group_id: str,
+    member_id: str,
+    data: PropertyGroupMemberUpdate,
+    admin: User = Depends(get_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    member = await db.get(PropertyGroupMember, member_id)
+    if not member or str(member.group_id) != group_id:
+        raise HTTPException(status_code=404, detail="Group member not found")
+
+    if data.is_whole_property:
+        whole = await db.execute(
+            select(PropertyGroupMember)
+            .where(PropertyGroupMember.group_id == group_id, PropertyGroupMember.is_whole_property == True)
+        )
+        existing = whole.scalar_one_or_none()
+        if existing and existing.id != member.id:
+            raise HTTPException(status_code=409, detail="Group already has a whole-property listing")
+
+    for key, val in data.model_dump(exclude_unset=True).items():
+        setattr(member, key, val)
+
+    await db.commit()
+    return await fetch_group(db, group_id)

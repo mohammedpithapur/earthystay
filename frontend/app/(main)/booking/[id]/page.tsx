@@ -1,15 +1,18 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
-import { dummyProperties } from '@/lib/data/properties'
+import { buildApiUrl } from '@/lib/api'
+import type { Property } from '@/lib/types'
 
 export default function BookingPage() {
   const { id } = useParams()
   const searchParams = useSearchParams()
   const router = useRouter()
-
-  const property = dummyProperties.find(p => p.id === id)
+  const propertyId = Array.isArray(id) ? id[0] : id
+  const [property, setProperty] = useState<Property | null>(null)
+  const [pageLoading, setPageLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   const checkIn = searchParams.get('checkIn') || ''
   const checkOut = searchParams.get('checkOut') || ''
@@ -22,6 +25,58 @@ export default function BookingPage() {
   const [agreed, setAgreed] = useState(false)
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    if (!propertyId) return
+    let isMounted = true
+
+    const load = async () => {
+      try {
+        setPageLoading(true)
+        setLoadError(null)
+        const response = await fetch(buildApiUrl(`/properties/${propertyId}`), { cache: 'no-store' })
+        if (!response.ok) {
+          throw new Error(`Failed to load property (${response.status})`)
+        }
+        const data = await response.json()
+        if (isMounted) {
+          setProperty(data)
+        }
+      } catch (error) {
+        if (isMounted) {
+          setLoadError(error instanceof Error ? error.message : 'Failed to load property')
+        }
+      } finally {
+        if (isMounted) {
+          setPageLoading(false)
+        }
+      }
+    }
+
+    load()
+    return () => {
+      isMounted = false
+    }
+  }, [propertyId])
+
+  if (pageLoading) {
+    return (
+      <div style={{ textAlign: 'center', padding: '120px 24px' }}>
+        <h2 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '16px' }}>Loading property...</h2>
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div style={{ textAlign: 'center', padding: '120px 24px' }}>
+        <h2 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '16px' }}>{loadError}</h2>
+        <button onClick={() => router.push('/properties')} style={{ backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', border: 'none', padding: '14px 32px', fontSize: '13px', letterSpacing: '1.5px', textTransform: 'uppercase', fontWeight: '700', cursor: 'pointer', borderRadius: '8px' }}>
+          Back to Properties
+        </button>
+      </div>
+    )
+  }
 
   if (!property) {
     return (

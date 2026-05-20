@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 @import 'leaflet/dist/leaflet.css';
+@import 'react-day-picker/dist/style.css';
 
 :root {
   /* Brand Colors */
@@ -73,6 +74,32 @@ h1, h2, h3, h4, h5, h6 {
 
 input, select, textarea, button {
   font-family: 'Figtree', sans-serif;
+}
+
+select {
+  appearance: none;
+  background-color: #ffffff;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--color-text-primary) 50%),
+    linear-gradient(135deg, var(--color-text-primary) 50%, transparent 50%);
+  background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%;
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 36px;
+  border-radius: var(--input-radius);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+select:focus {
+  outline: none;
+  border-color: var(--color-beige);
+  box-shadow: 0 0 0 3px rgba(183, 137, 95, 0.18);
+}
+
+select:disabled {
+  background-color: #f2e9de;
+  color: #6f5b4a;
+  cursor: not-allowed;
 }
 
 .hero-search-input::placeholder {
@@ -191,6 +218,59 @@ input, select, textarea, button {
 
 .booking-date-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.earthy-day-picker {
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 12px;
+  background-color: #ffffff;
+}
+
+.earthy-day-picker .rdp {
+  --rdp-accent-color: var(--color-beige);
+  --rdp-background-color: var(--color-bg-soft);
+  --rdp-outline: 2px solid rgba(183, 137, 95, 0.35);
+  --rdp-cell-size: 36px;
+  --rdp-caption-font-size: 14px;
+  --rdp-nav_button-height: 30px;
+  --rdp-nav_button-width: 30px;
+  margin: 0;
+}
+
+.earthy-day-picker .rdp-caption_label {
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.earthy-day-picker .rdp-head_cell {
+  color: var(--color-text-muted);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.earthy-day-picker .rdp-day {
+  border-radius: 12px;
+}
+
+.earthy-day-picker .rdp-day_selected,
+.earthy-day-picker .rdp-day_range_start,
+.earthy-day-picker .rdp-day_range_end {
+  background-color: var(--color-beige);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.earthy-day-picker .rdp-day_range_middle {
+  background-color: var(--color-bg-soft);
+  color: var(--color-text-primary);
+}
+
+.earthy-day-picker .rdp-day_disabled {
+  color: #a08a75;
+  text-decoration: line-through;
 }
 
 @media (max-width: 1024px) {

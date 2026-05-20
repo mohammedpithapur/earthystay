@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import uuid
 from datetime import datetime, date
 
-from sqlalchemy import String, Integer, Date, DateTime, Enum as SAEnum, ForeignKey
+from sqlalchemy import String, Integer, Date, DateTime, Enum as SAEnum, ForeignKey, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -32,6 +34,8 @@ class Booking(Base):
     pet_charge: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     total: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[BookingStatus] = mapped_column(SAEnum(BookingStatus), default=BookingStatus.pending, nullable=False)
+    is_shadow_block: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    parent_booking_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("bookings.id", ondelete="CASCADE"), nullable=True)
     guest_name: Mapped[str] = mapped_column(String(255), nullable=False)
     guest_email: Mapped[str] = mapped_column(String(255), nullable=False)
     guest_phone: Mapped[str | None] = mapped_column(String(20), nullable=True)
@@ -39,3 +43,9 @@ class Booking(Base):
 
     property: Mapped["Property"] = relationship("Property")
     guest: Mapped["User"] = relationship("User")
+    parent_booking: Mapped[Booking | None] = relationship(
+        "Booking",
+        remote_side="Booking.id",
+        back_populates="shadow_blocks",
+    )
+    shadow_blocks: Mapped[list["Booking"]] = relationship("Booking", back_populates="parent_booking", cascade="all, delete-orphan")

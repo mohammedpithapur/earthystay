@@ -351,6 +351,7 @@
 import Image from 'next/image'
 import { Suspense, useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { addPropertyGroupMember, createPropertyGroup, listAdminProperties, listPropertyGroups, saveProperty, updatePropertyGroupMember } from '@/lib/api'
 import { dummyProperties } from '@/lib/data/properties'
 import { Property, type BathroomDetail } from '@/lib/types'
 
@@ -370,6 +371,8 @@ interface Section {
   icon: string
   fields: string[]
 }
+
+type WholePropertyChoice = 'existing' | 'new'
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -911,7 +914,23 @@ function PricingSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: (
   )
 }
 
-function PoliciesSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: (f: typeof EMPTY_FORM) => void }) {
+function PoliciesSection({
+  form,
+  setForm,
+  availableProperties,
+  groupWithPropertyId,
+  setGroupWithPropertyId,
+  wholePropertyChoice,
+  setWholePropertyChoice,
+}: {
+  form: typeof EMPTY_FORM
+  setForm: (f: typeof EMPTY_FORM) => void
+  availableProperties: Property[]
+  groupWithPropertyId: string
+  setGroupWithPropertyId: (id: string) => void
+  wholePropertyChoice: WholePropertyChoice
+  setWholePropertyChoice: (value: WholePropertyChoice) => void
+}) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div>
@@ -933,6 +952,50 @@ function PoliciesSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: 
           />
         </div>
       </div>
+
+      <div>
+        <FieldLabel>Group With Existing Property (optional)</FieldLabel>
+        {availableProperties.length > 0 ? (
+          <>
+            <select
+              style={selectStyle}
+              value={groupWithPropertyId}
+              onChange={e => setGroupWithPropertyId(e.target.value)}
+            >
+              <option value="">No grouping</option>
+              {availableProperties.map(item => (
+                <option key={item.id} value={item.id}>
+                  {item.name} · {item.city}, {item.state}
+                </option>
+              ))}
+            </select>
+            <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '8px' }}>
+              Choose an existing property to link as a shared group for availability.
+            </p>
+          </>
+        ) : (
+          <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
+            No other properties available for grouping.
+          </p>
+        )}
+      </div>
+
+      {groupWithPropertyId && (
+        <div>
+          <FieldLabel>Whole Property Listing</FieldLabel>
+          <select
+            style={selectStyle}
+            value={wholePropertyChoice}
+            onChange={e => setWholePropertyChoice(e.target.value as WholePropertyChoice)}
+          >
+            <option value="existing">Selected property</option>
+            <option value="new">This listing</option>
+          </select>
+          <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '8px' }}>
+            Only one listing in a group can be the whole-property listing.
+          </p>
+        </div>
+      )}
 
       {/* Cancellation notice */}
       <div style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-gold)', borderRadius: '12px', padding: '20px 24px' }}>
@@ -1096,6 +1159,9 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
   const [activeSection, setActiveSection] = useState<SectionId>('basic')
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [form, setForm] = useState<typeof EMPTY_FORM>(() => createFormFromProperty(property))
+  const [availableProperties, setAvailableProperties] = useState<Property[]>([])
+  const [groupWithPropertyId, setGroupWithPropertyId] = useState('')
+  const [wholePropertyChoice, setWholePropertyChoice] = useState<WholePropertyChoice>('existing')
 
   useEffect(() => {
     // schedule updates asynchronously to avoid cascading synchronous state updates
@@ -1106,6 +1172,32 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
     })
     return () => clearTimeout(t)
   }, [property])
+
+  useEffect(() => {
+    let isMounted = true
+    const loadProperties = async () => {
+      try {
+        const useApi = process.env.NEXT_PUBLIC_USE_API === 'true'
+        const properties = useApi ? await listAdminProperties() : dummyProperties
+        if (isMounted) {
+          setAvailableProperties(properties.filter(item => item.id !== property?.id))
+          setGroupWithPropertyId('')
+          setWholePropertyChoice('existing')
+        }
+      } catch {
+        if (isMounted) {
+          setAvailableProperties(dummyProperties.filter(item => item.id !== property?.id))
+          setGroupWithPropertyId('')
+          setWholePropertyChoice('existing')
+        }
+      }
+    }
+
+    loadProperties()
+    return () => {
+      isMounted = false
+    }
+  }, [property?.id])
 
   // Trap scroll on body
   useEffect(() => {
@@ -1177,22 +1269,77 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
     }
   }
 
-  const handleSave = () => {
+  const applyGrouping = async (saved: Property) => {
+    if (!groupWithPropertyId) {
+      return
+    }
+    const useApi = process.env.NEXT_PUBLIC_USE_API === 'true'
+    if (!useApi) {
+      return
+    }
+
+    const groups = await listPropertyGroups()
+    const selectedProperty = availableProperties.find(item => item.id === groupWithPropertyId)
+    let group = groups.find(g => g.members.some(member => member.property_id === groupWithPropertyId))
+
+    if (!group) {
+      const groupName = selectedProperty ? `${selectedProperty.name} Group` : `${saved.name} Group`
+      group = await createPropertyGroup(groupName)
+    }
+
+    if (!group) {
+      return
+    }
+
+    const refreshHasWhole = (current: { members: { is_whole_property: boolean }[] }) =>
+      current.members.some(member => member.is_whole_property)
+
+    let hasWhole = refreshHasWhole(group)
+    const selectedMember = group.members.find(member => member.property_id === groupWithPropertyId)
+
+    if (!selectedMember) {
+      const selectedIsWhole = !hasWhole && wholePropertyChoice === 'existing'
+      group = await addPropertyGroupMember(group.id, groupWithPropertyId, selectedIsWhole)
+      hasWhole = refreshHasWhole(group)
+    } else if (!hasWhole && wholePropertyChoice === 'existing' && !selectedMember.is_whole_property) {
+      group = await updatePropertyGroupMember(group.id, selectedMember.id, true)
+      hasWhole = refreshHasWhole(group)
+    }
+
+    const newMember = group.members.find(member => member.property_id === saved.id)
+    if (!newMember) {
+      const newIsWhole = !hasWhole && wholePropertyChoice === 'new'
+      await addPropertyGroupMember(group.id, saved.id, newIsWhole)
+    }
+  }
+
+  const handleSave = async () => {
+    if (saveStatus === 'saving') {
+      return false
+    }
+
     setSaveStatus('saving')
-    setTimeout(() => {
+    try {
       const payload = buildPropertyPayload()
-      const existingIndex = dummyProperties.findIndex(item => item.id === payload.id)
+      const saved = await saveProperty(payload, { isEdit })
+      await applyGrouping(saved)
+      const existingIndex = dummyProperties.findIndex(item => item.id === saved.id)
 
       if (existingIndex >= 0) {
-        dummyProperties[existingIndex] = payload
+        dummyProperties[existingIndex] = saved
       } else {
-        dummyProperties.push(payload)
+        dummyProperties.push(saved)
       }
 
-      onSave?.(payload)
+      onSave?.(saved)
       setSaveStatus('saved')
       setTimeout(() => setSaveStatus('idle'), 2000)
-    }, 800)
+      return true
+    } catch (error) {
+      console.error('Failed to save property', error)
+      setSaveStatus('idle')
+      return false
+    }
   }
 
   const overallCompletion = Math.round(
@@ -1200,6 +1347,8 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
   )
 
   const activeIdx = SECTIONS.findIndex(s => s.id === activeSection)
+  const isLastSection = activeIdx === SECTIONS.length - 1
+  const isSaving = saveStatus === 'saving'
 
   return (
     <>
@@ -1260,14 +1409,14 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
               <span style={{ fontSize: '13px', color: '#2E7D32', fontWeight: '600' }}>✓ Saved</span>
             )}
             <button
-              onClick={handleSave}
-              disabled={saveStatus === 'saving'}
+              onClick={() => void handleSave()}
+              disabled={isSaving}
               style={{
-                backgroundColor: saveStatus === 'saving' ? 'var(--color-gold)' : 'var(--color-gold)',
+                backgroundColor: 'var(--color-gold)',
                 color: 'var(--color-text-primary)', border: 'none', padding: '10px 24px',
                 borderRadius: '8px', fontSize: '13px', fontWeight: '700',
                 letterSpacing: '1px', textTransform: 'uppercase',
-                cursor: saveStatus === 'saving' ? 'not-allowed' : 'pointer',
+                cursor: isSaving ? 'not-allowed' : 'pointer',
                 fontFamily: "'Figtree', sans-serif",
               }}
             >
@@ -1354,7 +1503,17 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
               {activeSection === 'photos'    && <PhotosSection       form={form} setForm={setForm} />}
               {activeSection === 'amenities' && <AmenitiesSection    form={form} setForm={setForm} />}
               {activeSection === 'pricing'   && <PricingSection      form={form} setForm={setForm} />}
-              {activeSection === 'policies'  && <PoliciesSection     form={form} setForm={setForm} />}
+              {activeSection === 'policies'  && (
+                <PoliciesSection
+                  form={form}
+                  setForm={setForm}
+                  availableProperties={availableProperties}
+                  groupWithPropertyId={groupWithPropertyId}
+                  setGroupWithPropertyId={setGroupWithPropertyId}
+                  wholePropertyChoice={wholePropertyChoice}
+                  setWholePropertyChoice={setWholePropertyChoice}
+                />
+              )}
               {activeSection === 'rules'     && <HouseRulesSection   form={form} setForm={setForm} />}
 
               {/* Prev / Next section navigation */}
@@ -1375,22 +1534,33 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
                   ← {activeIdx > 0 ? SECTIONS[activeIdx - 1].label : 'Back'}
                 </button>
                 <button
-                  onClick={() => setActiveSection(SECTIONS[Math.min(SECTIONS.length - 1, activeIdx + 1)].id)}
-                  disabled={activeIdx === SECTIONS.length - 1}
+                  onClick={async () => {
+                    if (isLastSection) {
+                      const saved = await handleSave()
+                      if (saved) {
+                        closeEditor()
+                      }
+                      return
+                    }
+
+                    setActiveSection(SECTIONS[Math.min(SECTIONS.length - 1, activeIdx + 1)].id)
+                  }}
+                  disabled={isSaving}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '8px',
                     padding: '12px 20px',
                     border: 'none',
                     borderRadius: '8px',
-                    backgroundColor: activeIdx === SECTIONS.length - 1 ? 'var(--color-border)' : 'var(--color-text-primary)',
-                    color: activeIdx === SECTIONS.length - 1 ? '#ccc' : '#ffffff',
+                    backgroundColor: isSaving ? 'var(--color-border)' : isLastSection ? 'var(--color-gold)' : 'var(--color-text-primary)',
+                    color: isSaving ? '#ccc' : '#ffffff',
                     fontSize: '13px', fontWeight: '700',
-                    cursor: activeIdx === SECTIONS.length - 1 ? 'not-allowed' : 'pointer',
+                    cursor: isSaving ? 'not-allowed' : 'pointer',
                     fontFamily: "'Figtree', sans-serif",
                     letterSpacing: '0.5px',
                   }}
                 >
-                  {activeIdx < SECTIONS.length - 1 ? SECTIONS[activeIdx + 1].label : 'Done'} →
+                  {isLastSection ? 'Done' : SECTIONS[activeIdx + 1].label}
+                  {!isLastSection && ' →'}
                 </button>
               </div>
             </div>

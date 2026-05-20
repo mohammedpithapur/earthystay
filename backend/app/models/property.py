@@ -43,6 +43,11 @@ class Property(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     images: Mapped[list["PropertyImage"]] = relationship("PropertyImage", back_populates="property", cascade="all, delete-orphan")
+    group_memberships: Mapped[list["PropertyGroupMember"]] = relationship(
+        "PropertyGroupMember",
+        back_populates="property",
+        cascade="all, delete-orphan",
+    )
     owner: Mapped["User"] = relationship("User")
 
 

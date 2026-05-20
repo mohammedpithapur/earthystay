@@ -34,6 +34,8 @@ export default function Navbar() {
               height={45}
               priority
               style={{
+                width: '45px',
+                height: '45px',
                 objectFit: 'contain',
                 transform: logoHover ? 'scale(1.05)' : 'scale(1)',
                 transition: 'transform 150ms ease',

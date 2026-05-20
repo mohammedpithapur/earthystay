@@ -10,7 +10,7 @@ from app.models.user import User
 from app.models.property import Property
 from app.models.booking import Booking, BookingStatus
 from app.schemas.booking import BookingCreate, BookingOut, BookingStatusUpdate, BookingListOut
-from app.services.booking import calculate_pricing
+from app.services.booking import calculate_pricing, apply_group_blocking, remove_shadow_blocks
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
 
@@ -59,6 +59,7 @@ async def create_booking(
     db.add(booking)
     await db.commit()
     await db.refresh(booking)
+    await apply_group_blocking(db, booking)
     return booking
 
 
@@ -70,7 +71,10 @@ async def my_bookings(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    base_query = select(Booking).where(Booking.guest_id == user.id)
+    base_query = select(Booking).where(
+        Booking.guest_id == user.id,
+        Booking.is_shadow_block == False,
+    )
     if status:
         base_query = base_query.where(Booking.status == status)
 
@@ -111,7 +115,7 @@ async def admin_list_bookings(
     admin: User = Depends(get_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    base_query = select(Booking)
+    base_query = select(Booking).where(Booking.is_shadow_block == False)
     if search:
         base_query = base_query.where(
             or_(Booking.guest_name.ilike(f"%{search}%"), Booking.guest_email.ilike(f"%{search}%"))
@@ -144,4 +148,6 @@ async def update_booking_status(
     booking.status = BookingStatus(data.status)
     await db.commit()
     await db.refresh(booking)
+    if booking.status == BookingStatus.cancelled:
+        await remove_shadow_blocks(db, booking)
     return booking

@@ -1,9 +1,12 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
-import { dummyProperties } from '@/lib/data/properties'
+import { DayPicker } from 'react-day-picker'
 import MapWrapper from '@/components/shared/MapWrapper'
+import { buildApiUrl } from '@/lib/api'
+import type { Property } from '@/lib/types'
+import type { DateRange } from 'react-day-picker'
 
 const bathroomLabel: Record<string, string> = {
   ensuite: 'Private Ensuite',
@@ -14,15 +17,154 @@ const bathroomLabel: Record<string, string> = {
 export default function PropertyDetailPage() {
   const { id } = useParams()
   const router = useRouter()
-  const property = dummyProperties.find(p => p.id === id)
+  const propertyId = Array.isArray(id) ? id[0] : id
+  const [property, setProperty] = useState<Property | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const [blockedRanges, setBlockedRanges] = useState<Array<{ check_in: string; check_out: string }>>([])
 
   const [activeImage, setActiveImage] = useState(0)
   const [checkIn, setCheckIn] = useState('')
   const [checkOut, setCheckOut] = useState('')
+  const [range, setRange] = useState<DateRange | undefined>(undefined)
   const [guests, setGuests] = useState(1)
   const [pets, setPets] = useState(0)
   const [activeTab, setActiveTab] = useState('overview')
   const [hoveredTags, setHoveredTags] = useState<Record<string, boolean>>({})
+  const [bookingError, setBookingError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!propertyId) return
+    let isMounted = true
+
+    const load = async () => {
+      try {
+        setLoading(true)
+        setLoadError(null)
+        const response = await fetch(buildApiUrl(`/properties/${propertyId}`), { cache: 'no-store' })
+        if (!response.ok) {
+          throw new Error(`Failed to load property (${response.status})`)
+        }
+        const data = await response.json()
+        if (isMounted) {
+          setProperty(data)
+        }
+      } catch (error) {
+        if (isMounted) {
+          setLoadError(error instanceof Error ? error.message : 'Failed to load property')
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    load()
+    return () => {
+      isMounted = false
+    }
+  }, [propertyId])
+
+  useEffect(() => {
+    if (!propertyId) return
+    let isMounted = true
+
+    const loadAvailability = async () => {
+      try {
+        const response = await fetch(buildApiUrl(`/properties/${propertyId}/availability`), { cache: 'no-store' })
+        if (!response.ok) {
+          throw new Error('Failed to load availability')
+        }
+        const data = await response.json()
+        if (isMounted) {
+          setBlockedRanges(Array.isArray(data) ? data : [])
+        }
+      } catch {
+        if (isMounted) {
+          setBlockedRanges([])
+        }
+      }
+    }
+
+    loadAvailability()
+    return () => {
+      isMounted = false
+    }
+  }, [propertyId])
+
+  const formatDateInputValue = (value?: Date) => {
+    if (!value) return ''
+    const year = value.getFullYear()
+    const month = String(value.getMonth() + 1).padStart(2, '0')
+    const day = String(value.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
+  const formatDateLabel = (value?: Date) => (
+    value ? value.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : 'Select'
+  )
+
+  const toDate = (dateStr: string) => new Date(`${dateStr}T00:00:00`)
+
+  const isRangeBlocked = (startStr: string, endStr: string) => {
+    if (!startStr || !endStr) return false
+    const start = toDate(startStr)
+    const end = toDate(endStr)
+    return blockedRanges.some(range => {
+      const rangeStart = toDate(range.check_in)
+      const rangeEnd = toDate(range.check_out)
+      return start < rangeEnd && end > rangeStart
+    })
+  }
+
+  const disabledRanges = blockedRanges
+    .map(range => {
+      const start = toDate(range.check_in)
+      const end = toDate(range.check_out)
+      const endDate = new Date(end)
+      endDate.setDate(endDate.getDate() - 1)
+      if (endDate < start) {
+        endDate.setTime(start.getTime())
+      }
+      return { from: start, to: endDate }
+    })
+    .filter(range => !Number.isNaN(range.from.getTime()) && !Number.isNaN(range.to.getTime()))
+
+  const handleRangeSelect = (selected: DateRange | undefined) => {
+    setRange(selected)
+    const nextCheckIn = formatDateInputValue(selected?.from)
+    const nextCheckOut = formatDateInputValue(selected?.to)
+    setCheckIn(nextCheckIn)
+    setCheckOut(nextCheckOut)
+    if (selected?.from && selected?.to && isRangeBlocked(nextCheckIn, nextCheckOut)) {
+      setBookingError('Selected dates overlap an existing booking')
+      return
+    }
+    setBookingError(null)
+  }
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: 'center', padding: '120px 24px' }}>
+        <h2 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '16px' }}>Loading property...</h2>
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div style={{ textAlign: 'center', padding: '120px 24px' }}>
+        <h2 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '16px' }}>{loadError}</h2>
+        <button
+          onClick={() => router.push('/properties')}
+          style={{ backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', border: 'none', padding: '14px 32px', fontSize: '13px', letterSpacing: '1.5px', textTransform: 'uppercase', fontWeight: '700', cursor: 'pointer', borderRadius: '8px' }}
+        >
+          Back to Properties
+        </button>
+      </div>
+    )
+  }
 
   if (!property) {
     return (
@@ -52,6 +194,7 @@ export default function PropertyDetailPage() {
   const handleBook = () => {
     if (!checkIn || !checkOut) { alert('Please select check-in and check-out dates'); return }
     if (nights < property.min_nights) { alert(`Minimum stay is ${property.min_nights} nights`); return }
+    if (isRangeBlocked(checkIn, checkOut)) { alert('Selected dates are not available'); return }
     router.push(`/booking/${property.id}?checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}&pets=${pets}&nights=${nights}&total=${totalPrice}`)
   }
 
@@ -70,6 +213,9 @@ export default function PropertyDetailPage() {
     padding: '28px',
     marginBottom: '20px',
   }
+
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
 
   return (
     <div className="page-shell" style={{ backgroundColor: '#ffffff' }}>
@@ -465,16 +611,65 @@ export default function PropertyDetailPage() {
           </div>
 
           <div style={{ border: '1px solid var(--color-border)', borderRadius: '8px', marginBottom: '12px' }}>
-            <div className="booking-date-grid" style={{ display: 'grid', borderBottom: '1px solid var(--color-border)' }}>
-              <div style={{ padding: '12px 16px', borderRight: '1px solid var(--color-border)' }}>
-                <label style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Check In</label>
-                <input type="date" value={checkIn} min={new Date().toISOString().split('T')[0]} onChange={e => setCheckIn(e.target.value)} style={{ border: 'none', outline: 'none', fontSize: '13px', color: 'var(--color-text-primary)', width: '100%', minWidth: 0, backgroundColor: 'transparent' }} />
+            <div
+              style={{
+                padding: '14px 16px',
+                borderBottom: '1px solid var(--color-border)',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                gap: '12px',
+              }}
+            >
+              <div>
+                <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '6px', fontWeight: '600' }}>Check In</p>
+                <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{formatDateLabel(range?.from)}</p>
               </div>
-              <div style={{ padding: '12px 16px' }}>
-                <label style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '4px', fontWeight: '600' }}>Check Out</label>
-                <input type="date" value={checkOut} min={checkIn || new Date().toISOString().split('T')[0]} onChange={e => setCheckOut(e.target.value)} style={{ border: 'none', outline: 'none', fontSize: '13px', color: 'var(--color-text-primary)', width: '100%', minWidth: 0, backgroundColor: 'transparent' }} />
+              <div>
+                <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '6px', fontWeight: '600' }}>Check Out</p>
+                <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{formatDateLabel(range?.to)}</p>
               </div>
             </div>
+            <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--color-border)' }}>
+              <div className="earthy-day-picker">
+                <DayPicker
+                  mode="range"
+                  selected={range}
+                  onSelect={handleRangeSelect}
+                  disabled={[{ before: today }, ...(range?.from ? [{ before: range.from }] : []), ...disabledRanges]}
+                  fromDate={today}
+                  excludeDisabled
+                  numberOfMonths={1}
+                />
+              </div>
+              {(range?.from || range?.to) && (
+                <button
+                  onClick={() => {
+                    setRange(undefined)
+                    setCheckIn('')
+                    setCheckOut('')
+                    setBookingError(null)
+                  }}
+                  style={{
+                    marginTop: '10px',
+                    background: 'none',
+                    border: '1px solid var(--color-border)',
+                    color: 'var(--color-text-primary)',
+                    padding: '8px 12px',
+                    borderRadius: '999px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Clear dates
+                </button>
+              )}
+            </div>
+            {bookingError && (
+              <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-border)' }}>
+                <p style={{ color: '#C62828', fontSize: '12px', margin: 0 }}>{bookingError}</p>
+              </div>
+            )}
             <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--color-border)' }}>
               <label style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '8px', fontWeight: '600' }}>Guests</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>

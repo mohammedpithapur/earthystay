@@ -1,8 +1,9 @@
 "use client"
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { dummyProperties } from '@/lib/data/properties'
 import PropertyCard from '@/components/property/PropertyCard'
+import { buildApiUrl } from '@/lib/api'
+import type { Property } from '@/lib/types'
 
 const roomTypeOptions = [
   { value: 'all', label: 'Any Room Type' },
@@ -32,11 +33,11 @@ const formatPrice = (value: number) => {
   return `₹${value.toLocaleString('en-IN')}`
 }
 
-const getRoomType = (property: typeof dummyProperties[number]) => (
+const getRoomType = (property: Property) => (
   property.bathrooms_detail.some(bathroom => bathroom.type === 'shared') ? 'shared' : 'private'
 )
 
-const getPropertyType = (property: typeof dummyProperties[number]) => {
+const getPropertyType = (property: Property) => {
   const name = property.name.toLowerCase()
 
   if (name.includes('villa') || name.includes('haveli') || name.includes('house')) {
@@ -52,6 +53,9 @@ export default function PropertiesClient() {
   const initialLocation = searchParams.get('location') || ''
   const initialPets = searchParams.get('pets') || '0'
 
+  const [properties, setProperties] = useState<Property[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [location, setLocation] = useState(initialLocation)
   const [maxPrice, setMaxPrice] = useState(1000000)
   const [minPrice, setMinPrice] = useState(1000)
@@ -63,8 +67,40 @@ export default function PropertiesClient() {
   const [sortBy, setSortBy] = useState('rating')
   const [filtersOpen, setFiltersOpen] = useState(false)
 
+  useEffect(() => {
+    let isMounted = true
+
+    const load = async () => {
+      try {
+        setLoading(true)
+        setLoadError(null)
+        const response = await fetch(buildApiUrl('/properties?limit=200'), { cache: 'no-store' })
+        if (!response.ok) {
+          throw new Error(`Failed to load properties (${response.status})`)
+        }
+        const data = await response.json()
+        if (isMounted) {
+          setProperties(Array.isArray(data.items) ? data.items : [])
+        }
+      } catch (error) {
+        if (isMounted) {
+          setLoadError(error instanceof Error ? error.message : 'Failed to load properties')
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    load()
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
   const filtered = useMemo(() => {
-    let result = [...dummyProperties]
+    let result = [...properties]
     if (location) {
       result = result.filter(p =>
         p.city.toLowerCase().includes(location.toLowerCase()) ||
@@ -94,6 +130,26 @@ export default function PropertiesClient() {
     setPropertyType('all')
     setBathroomType('all')
     setSortBy('rating')
+  }
+
+  if (loading) {
+    return (
+      <div className="page-shell" style={{ backgroundColor: '#ffffff' }}>
+        <div style={{ padding: '120px 24px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+          Loading properties...
+        </div>
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div className="page-shell" style={{ backgroundColor: '#ffffff' }}>
+        <div style={{ padding: '120px 24px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+          {loadError}
+        </div>
+      </div>
+    )
   }
 
   return (

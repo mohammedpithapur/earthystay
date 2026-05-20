@@ -1,9 +1,39 @@
 "use client"
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import PropertyCard from './PropertyCard'
-import { dummyProperties } from '@/lib/data/properties'
+import { buildApiUrl } from '@/lib/api'
+import type { Property } from '@/lib/types'
 
 export default function FeaturedProperties() {
+  const [properties, setProperties] = useState<Property[]>([])
+
+  useEffect(() => {
+    let isMounted = true
+
+    const load = async () => {
+      try {
+        const response = await fetch(buildApiUrl('/properties?limit=6'), { cache: 'no-store' })
+        if (!response.ok) {
+          throw new Error('Failed to load properties')
+        }
+        const data = await response.json()
+        if (isMounted) {
+          setProperties(Array.isArray(data.items) ? data.items : [])
+        }
+      } catch {
+        if (isMounted) {
+          setProperties([])
+        }
+      }
+    }
+
+    load()
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
   return (
     <section className="section-shell" style={{ backgroundColor: '#ffffff' }}>
       <div className="content-shell">
@@ -41,7 +71,7 @@ export default function FeaturedProperties() {
         </div>
 
         <div className="responsive-card-grid" style={{ marginBottom: '48px' }}>
-          {dummyProperties.map(property => (
+          {properties.map(property => (
             <PropertyCard key={property.id} property={property} />
           ))}
         </div>
