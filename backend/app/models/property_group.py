@@ -5,7 +5,7 @@ from sqlalchemy import Boolean, DateTime, ForeignKey, String, UniqueConstraint, 
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.database import Base
+from app.database import Base, utc_now
 
 
 class PropertyGroup(Base):
@@ -13,7 +13,7 @@ class PropertyGroup(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, nullable=False)
 
     members: Mapped[list["PropertyGroupMember"]] = relationship(
         "PropertyGroupMember",
@@ -38,7 +38,7 @@ class PropertyGroupMember(Base):
     group_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("property_groups.id", ondelete="CASCADE"), nullable=False)
     property_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("properties.id", ondelete="CASCADE"), nullable=False)
     is_whole_property: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, nullable=False)
 
     group: Mapped["PropertyGroup"] = relationship("PropertyGroup", back_populates="members")
     property: Mapped["Property"] = relationship("Property", back_populates="group_memberships")

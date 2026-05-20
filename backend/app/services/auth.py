@@ -7,6 +7,7 @@ from sqlalchemy import select
 
 from app.config import settings
 from app.models.user import User
+from app.database import utc_now
 
 
 def hash_password(password: str) -> str:
@@ -18,7 +19,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 
 def create_token(user: User) -> str:
-    expire = datetime.utcnow() + timedelta(minutes=settings.JWT_EXPIRE_MINUTES)
+    expire = utc_now() + timedelta(minutes=settings.JWT_EXPIRE_MINUTES)
     payload = {"sub": str(user.id), "role": user.role, "exp": expire}
     return jwt.encode(payload, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
 

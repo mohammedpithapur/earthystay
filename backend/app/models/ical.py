@@ -5,7 +5,7 @@ from sqlalchemy import String, DateTime, Enum as SAEnum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 
-from app.database import Base
+from app.database import Base, utc_now
 import enum
 
 
@@ -23,6 +23,6 @@ class ICalLink(Base):
     ical_url: Mapped[str] = mapped_column(String(1000), nullable=False)
     direction: Mapped[ICalDirection] = mapped_column(SAEnum(ICalDirection), nullable=False)
     last_synced: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, nullable=False)
 
     property: Mapped["Property"] = relationship("Property")

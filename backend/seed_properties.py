@@ -2,7 +2,7 @@ import asyncio
 import uuid
 from datetime import datetime
 
-from app.database import async_session
+from app.database import async_session, utc_now
 from app.models.property import Property, PropertyImage
 
 
@@ -164,8 +164,8 @@ async def seed_properties():
                 is_published=p["is_published"],
                 avg_rating=p["avg_rating"],
                 review_count=p["review_count"],
-                created_at=datetime.utcnow(),
-                updated_at=datetime.utcnow(),
+                created_at=utc_now(),
+                updated_at=utc_now(),
             )
             db.add(prop)
             await db.flush()

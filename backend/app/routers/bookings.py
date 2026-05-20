@@ -8,6 +8,7 @@ from app.database import get_db
 from app.dependencies import get_current_user, get_admin
 from app.models.user import User
 from app.models.property import Property
+from app.models.property_group import PropertyGroup, PropertyGroupMember
 from app.models.booking import Booking, BookingStatus
 from app.schemas.booking import BookingCreate, BookingOut, BookingStatusUpdate, BookingListOut
 from app.services.booking import calculate_pricing, apply_group_blocking, remove_shadow_blocks
@@ -24,6 +25,25 @@ async def create_booking(
     property = await db.get(Property, data.property_id)
     if not property or not property.is_published:
         raise HTTPException(status_code=404, detail="Property not found")
+
+    # Acquire pessimistic lock to serialize concurrent bookings on the same property or group
+    group_member = await db.scalar(
+        select(PropertyGroupMember).where(PropertyGroupMember.property_id == data.property_id)
+    )
+    if group_member:
+        # Lock the PropertyGroup row to serialize bookings on any room in this group
+        await db.execute(
+            select(PropertyGroup)
+            .where(PropertyGroup.id == group_member.group_id)
+            .with_for_update()
+        )
+    else:
+        # Lock the individual Property row to serialize bookings on this property
+        await db.execute(
+            select(Property)
+            .where(Property.id == data.property_id)
+            .with_for_update()
+        )
 
     # Check availability — overlapping confirmed/pending bookings
     overlapping = await db.execute(
@@ -57,9 +77,10 @@ async def create_booking(
         guest_phone=user.phone,
     )
     db.add(booking)
+    await db.flush()  # Populates booking.id and database-side defaults without committing transaction
+    await apply_group_blocking(db, booking, commit=False)
     await db.commit()
     await db.refresh(booking)
-    await apply_group_blocking(db, booking)
     return booking
 
 
@@ -146,8 +167,8 @@ async def update_booking_status(
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
     booking.status = BookingStatus(data.status)
+    if booking.status == BookingStatus.cancelled:
+        await remove_shadow_blocks(db, booking, commit=False)
     await db.commit()
     await db.refresh(booking)
-    if booking.status == BookingStatus.cancelled:
-        await remove_shadow_blocks(db, booking)
     return booking

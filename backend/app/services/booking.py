@@ -23,7 +23,7 @@ def calculate_pricing(property: Property, check_in: date, check_out: date, pets:
     }
 
 
-async def apply_group_blocking(db: AsyncSession, booking: Booking) -> None:
+async def apply_group_blocking(db: AsyncSession, booking: Booking, commit: bool = True) -> None:
     if booking.is_shadow_block:
         return
 
@@ -73,14 +73,16 @@ async def apply_group_blocking(db: AsyncSession, booking: Booking) -> None:
         )
         db.add(shadow)
 
-    await db.commit()
+    if commit:
+        await db.commit()
 
 
-async def remove_shadow_blocks(db: AsyncSession, booking: Booking) -> None:
+async def remove_shadow_blocks(db: AsyncSession, booking: Booking, commit: bool = True) -> None:
     if booking.is_shadow_block:
         return
 
     await db.execute(
         delete(Booking).where(Booking.parent_booking_id == booking.id)
     )
-    await db.commit()
+    if commit:
+        await db.commit()

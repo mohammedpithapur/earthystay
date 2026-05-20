@@ -7,7 +7,7 @@ from sqlalchemy import String, Integer, Date, DateTime, Enum as SAEnum, ForeignK
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 
-from app.database import Base
+from app.database import Base, utc_now
 import enum
 
 
@@ -39,7 +39,7 @@ class Booking(Base):
     guest_name: Mapped[str] = mapped_column(String(255), nullable=False)
     guest_email: Mapped[str] = mapped_column(String(255), nullable=False)
     guest_phone: Mapped[str | None] = mapped_column(String(20), nullable=True)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, nullable=False)
 
     property: Mapped["Property"] = relationship("Property")
     guest: Mapped["User"] = relationship("User")

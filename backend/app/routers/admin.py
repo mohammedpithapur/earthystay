@@ -68,8 +68,12 @@ async def create_property(
     property = Property(owner_id=admin.id, **data.model_dump())
     db.add(property)
     await db.commit()
-    await db.refresh(property)
-    return property
+    result = await db.execute(
+        select(Property)
+        .options(selectinload(Property.images))
+        .where(Property.id == property.id)
+    )
+    return result.scalar_one()
 
 
 @router.patch("/properties/{property_id}", response_model=PropertyOut)
@@ -85,8 +89,12 @@ async def update_property(
     for key, val in data.model_dump(exclude_unset=True).items():
         setattr(property, key, val)
     await db.commit()
-    await db.refresh(property)
-    return property
+    result = await db.execute(
+        select(Property)
+        .options(selectinload(Property.images))
+        .where(Property.id == property.id)
+    )
+    return result.scalar_one()
 
 
 @router.delete("/properties/{property_id}")

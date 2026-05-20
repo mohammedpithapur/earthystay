@@ -5,7 +5,7 @@ from sqlalchemy import String, Integer, Float, Boolean, DateTime, Text, ForeignK
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 
-from app.database import Base
+from app.database import Base, utc_now
 
 
 class Property(Base):
@@ -39,8 +39,8 @@ class Property(Base):
     is_published: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     avg_rating: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     review_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
 
     images: Mapped[list["PropertyImage"]] = relationship("PropertyImage", back_populates="property", cascade="all, delete-orphan")
     group_memberships: Mapped[list["PropertyGroupMember"]] = relationship(
