@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import text, update, event
+from sqlalchemy import text, update
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.pool import NullPool
 
@@ -17,6 +17,7 @@ from app.models.user import User, UserRole
 
 
 TEST_DB_ENV = "TEST_DATABASE_URL"
+TEST_SCHEMA = "test_schema"
 
 
 def _get_test_db_url() -> str:
@@ -28,13 +29,22 @@ def _get_test_db_url() -> str:
     return test_db_url
 
 
-# NullPool is required for asyncpg to avoid "another operation is in progress"
-# errors caused by concurrent fixture/test access on the same connection.
+# Bootstrap engine: no search_path override — used only to CREATE/DROP the schema itself.
+# Must exist before test_engine tries to use it.
+_bootstrap_engine = create_async_engine(
+    _get_test_db_url(),
+    connect_args={"prepared_statement_cache_size": 0},
+    echo=False,
+    poolclass=NullPool,
+)
+
+# Test engine: all queries land in test_schema.
+# NullPool avoids asyncpg "another operation is in progress" errors.
 test_engine = create_async_engine(
     _get_test_db_url(),
     connect_args={
-        "statement_cache_size": 0,
-        "server_settings": {"search_path": "test_schema"},
+        "prepared_statement_cache_size": 0,
+        "server_settings": {"search_path": TEST_SCHEMA},
     },
     echo=False,
     poolclass=NullPool,
@@ -55,16 +65,25 @@ app.dependency_overrides[get_db] = override_get_db
 
 @pytest.fixture(scope="session", autouse=True)
 async def _create_test_schema():
+    # Step 1: ensure the schema exists (using bootstrap engine so search_path
+    # doesn't need to resolve yet).
+    async with _bootstrap_engine.begin() as conn:
+        await conn.execute(text(f"CREATE SCHEMA IF NOT EXISTS {TEST_SCHEMA}"))
+
+    # Step 2: create all tables and ENUM types inside test_schema.
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
     yield
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+
+    # Teardown: drop the entire schema (tables + ENUM types) in one shot.
+    async with _bootstrap_engine.begin() as conn:
+        await conn.execute(text(f"DROP SCHEMA IF EXISTS {TEST_SCHEMA} CASCADE"))
 
 
 @pytest.fixture(autouse=True)
 async def _truncate_tables(_create_test_schema):
-    """Truncate all tables before each test for isolation."""
+    """Truncate all tables before each test for full isolation."""
     async with test_engine.begin() as conn:
         table_names = [f'"{table.name}"' for table in Base.metadata.sorted_tables]
         if table_names:
