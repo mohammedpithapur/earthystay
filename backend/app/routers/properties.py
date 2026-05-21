@@ -46,7 +46,9 @@ async def get_property(
     property = result.scalar_one_or_none()
     if not property:
         raise HTTPException(status_code=404, detail="Property not found")
-    return property
+    
+    from app.services.property import apply_property_inheritance
+    return await apply_property_inheritance(db, property)
 
 
 @router.get("/{property_id}/availability")

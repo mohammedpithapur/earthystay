@@ -1,8 +1,17 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { dummyProperties } from '@/lib/data/properties'
+import {
+  listPropertyGroups, createPropertyGroup, updatePropertyGroup, deletePropertyGroup,
+  addPropertyGroupMember, removePropertyGroupMember, updatePropertyGroupMember,
+  listAdminProperties,
+  createAdminReview, deleteAdminReview, fetchPropertyReviews,
+  type PropertyGroup, type CreateReviewPayload
+} from '@/lib/api'
+import type { Property, Review } from '@/lib/types'
 
 const dummyBookings = [
   { id: "BK001", booking_ref: "ES-ABC123", property_id: "1", guest_name: "Mohammed Pithapur", guest_email: "mohammed@example.com", guest_phone: "+91 9874827631", check_in: "2026-06-15", check_out: "2026-06-18", guests: 4, num_pets: 1, nights: 3, total_price: 28000, status: "confirmed", payment_status: "paid", created_at: "2026-05-01" },
@@ -114,10 +123,144 @@ export default function AdminPage() {
     )
   }
 
+  // ── Groups state ──────────────────────────────────────────────────────────
+  const [groups, setGroups] = useState<PropertyGroup[]>([])
+  const [apiProperties, setApiProperties] = useState<Property[]>([])
+  const [groupsLoading, setGroupsLoading] = useState(false)
+  const [newGroupName, setNewGroupName] = useState('')
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null)
+  const [editingGroupId, setEditingGroupId] = useState<string | null>(null)
+  const [editingGroupName, setEditingGroupName] = useState('')
+  const [addingMemberGroupId, setAddingMemberGroupId] = useState<string | null>(null)
+  const [memberPropertyId, setMemberPropertyId] = useState('')
+  const [memberIsWhole, setMemberIsWhole] = useState(false)
+  const [groupError, setGroupError] = useState('')
+  const [groupSuccess, setGroupSuccess] = useState('')
+
+  // ── Reviews state ─────────────────────────────────────────────────────────
+  const [reviewsGroupId, setReviewsGroupId] = useState<string | null>(null)
+  const [groupReviews, setGroupReviews] = useState<Review[]>([])
+  const [reviewsLoading, setReviewsLoading] = useState(false)
+  const [newReview, setNewReview] = useState({ guest_name: '', rating: 5, comment: '', platform: '' })
+  const [addingReview, setAddingReview] = useState(false)
+
+  const loadGroups = useCallback(async () => {
+    setGroupsLoading(true)
+    try {
+      const [gs, props] = await Promise.all([listPropertyGroups(), listAdminProperties()])
+      setGroups(gs)
+      setApiProperties(props)
+    } catch {
+      setGroupError('Failed to load groups')
+    } finally {
+      setGroupsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (activeTab === 'groups') { loadGroups() }
+  }, [activeTab, loadGroups])
+
+  const loadGroupReviews = async (propertyId: string) => {
+    setReviewsLoading(true)
+    try {
+      setGroupReviews(await fetchPropertyReviews(propertyId))
+    } catch { /* noop */ } finally { setReviewsLoading(false) }
+  }
+
+  const handleCreateGroup = async () => {
+    if (!newGroupName.trim()) return
+    setGroupError('')
+    try {
+      const g = await createPropertyGroup(newGroupName.trim())
+      setGroups(prev => [g, ...prev])
+      setNewGroupName('')
+      setGroupSuccess('Group created!')
+      setTimeout(() => setGroupSuccess(''), 2500)
+    } catch { setGroupError('Failed to create group') }
+  }
+
+  const handleRenameGroup = async (groupId: string) => {
+    if (!editingGroupName.trim()) return
+    setGroupError('')
+    try {
+      const updated = await updatePropertyGroup(groupId, editingGroupName.trim())
+      setGroups(prev => prev.map(g => g.id === groupId ? updated : g))
+      setEditingGroupId(null)
+      setGroupSuccess('Group renamed!')
+      setTimeout(() => setGroupSuccess(''), 2500)
+    } catch { setGroupError('Failed to rename group') }
+  }
+
+  const handleDeleteGroup = async (groupId: string) => {
+    if (!confirm('Delete this group? Properties won\'t be deleted.')) return
+    setGroupError('')
+    try {
+      await deletePropertyGroup(groupId)
+      setGroups(prev => prev.filter(g => g.id !== groupId))
+      if (expandedGroup === groupId) setExpandedGroup(null)
+    } catch { setGroupError('Failed to delete group') }
+  }
+
+  const handleAddMember = async (groupId: string) => {
+    if (!memberPropertyId) return
+    setGroupError('')
+    try {
+      const updated = await addPropertyGroupMember(groupId, memberPropertyId, memberIsWhole)
+      setGroups(prev => prev.map(g => g.id === groupId ? updated : g))
+      setAddingMemberGroupId(null)
+      setMemberPropertyId('')
+      setMemberIsWhole(false)
+    } catch (e: unknown) {
+      setGroupError(e instanceof Error ? e.message : 'Failed to add member')
+    }
+  }
+
+  const handleRemoveMember = async (groupId: string, memberId: string) => {
+    setGroupError('')
+    try {
+      const updated = await removePropertyGroupMember(groupId, memberId)
+      setGroups(prev => prev.map(g => g.id === groupId ? updated : g))
+    } catch { setGroupError('Failed to remove member') }
+  }
+
+  const handleToggleWhole = async (groupId: string, memberId: string, current: boolean) => {
+    try {
+      const updated = await updatePropertyGroupMember(groupId, memberId, !current)
+      setGroups(prev => prev.map(g => g.id === groupId ? updated : g))
+    } catch { setGroupError('Failed to update member') }
+  }
+
+  const handleAddReview = async (propertyId: string) => {
+    if (!newReview.guest_name.trim()) return
+    setAddingReview(true)
+    try {
+      const payload: CreateReviewPayload = {
+        property_id: propertyId,
+        guest_name: newReview.guest_name.trim(),
+        rating: newReview.rating,
+        comment: newReview.comment.trim() || undefined,
+        platform: newReview.platform.trim() || undefined,
+      }
+      await createAdminReview(payload)
+      setNewReview({ guest_name: '', rating: 5, comment: '', platform: '' })
+      await loadGroupReviews(propertyId)
+    } catch { setGroupError('Failed to add review') }
+    setAddingReview(false)
+  }
+
+  const handleDeleteReview = async (reviewId: string, propertyId: string) => {
+    try {
+      await deleteAdminReview(reviewId)
+      await loadGroupReviews(propertyId)
+    } catch { setGroupError('Failed to delete review') }
+  }
+
   const tabs = [
     { id: 'overview', label: 'Overview' },
     { id: 'bookings', label: 'Bookings' },
     { id: 'properties', label: 'Properties' },
+    { id: 'groups', label: 'Groups' },
     { id: 'ical', label: 'iCal Sync' },
   ]
 
@@ -155,9 +298,9 @@ export default function AdminPage() {
             <button onClick={() => router.push('/')} style={buttonStyle} onMouseEnter={e => { const target = e.currentTarget as HTMLButtonElement; target.style.borderColor = 'var(--color-gold)'; target.style.color = 'var(--color-gold)' }} onMouseLeave={e => { const target = e.currentTarget as HTMLButtonElement; target.style.borderColor = 'var(--color-gold)'; target.style.color = 'var(--color-text-primary)' }}>
               View Site
             </button>
-            <button onClick={() => router.push('/admin/properties')} style={primaryButtonStyle} onMouseEnter={e => { const target = e.currentTarget as HTMLButtonElement; target.style.backgroundColor = 'var(--color-gold)' }} onMouseLeave={e => { const target = e.currentTarget as HTMLButtonElement; target.style.backgroundColor = 'var(--color-gold)' }}>
+            <Link href="/admin/properties" style={{ ...primaryButtonStyle, display: 'inline-block', textDecoration: 'none', textAlign: 'center' }}>
               + Add Property
-            </button>
+            </Link>
           </div>
         </div>
       </div>
@@ -430,9 +573,9 @@ export default function AdminPage() {
                       <button onClick={() => router.push(`/admin/properties?id=${property.id}`)} style={buttonStyle} onMouseEnter={e => { const target = e.currentTarget as HTMLButtonElement; target.style.borderColor = 'var(--color-gold)'; target.style.color = 'var(--color-gold)' }} onMouseLeave={e => { const target = e.currentTarget as HTMLButtonElement; target.style.borderColor = 'var(--color-gold)'; target.style.color = 'var(--color-text-primary)' }}>
                         Edit
                       </button>
-                      <button onClick={() => router.push(`/properties/${property.id}`)} style={buttonStyle} onMouseEnter={e => { const target = e.currentTarget as HTMLButtonElement; target.style.borderColor = 'var(--color-gold)'; target.style.color = 'var(--color-gold)' }} onMouseLeave={e => { const target = e.currentTarget as HTMLButtonElement; target.style.borderColor = 'var(--color-gold)'; target.style.color = 'var(--color-text-primary)' }}>
+                      <Link href={`/properties/${property.id}`} style={{ ...buttonStyle, display: 'inline-block', textDecoration: 'none', textAlign: 'center' }}>
                         View
-                      </button>
+                      </Link>
                       <button style={{ padding: '8px 16px', border: '1px solid #FFEBEE', borderRadius: '8px', backgroundColor: '#FFEBEE', color: '#C62828', fontSize: '13px', cursor: 'pointer', fontWeight: '700' }}>
                         Delete
                       </button>
@@ -441,6 +584,230 @@ export default function AdminPage() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Groups Tab */}
+        {activeTab === 'groups' && (
+          <div>
+            {groupError && (
+              <div style={{ marginBottom: '16px', padding: '12px 16px', backgroundColor: '#FFEBEE', borderRadius: '8px', color: '#C62828', fontSize: '14px', fontWeight: '600' }}>{groupError}<button onClick={() => setGroupError('')} style={{ marginLeft: '10px', background: 'none', border: 'none', color: '#C62828', cursor: 'pointer', fontWeight: '800' }}>×</button></div>
+            )}
+            {groupSuccess && (
+              <div style={{ marginBottom: '16px', padding: '12px 16px', backgroundColor: '#E8F5E9', borderRadius: '8px', color: '#2E7D32', fontSize: '14px', fontWeight: '600' }}>{groupSuccess}</div>
+            )}
+
+            {/* Create Group */}
+            <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '24px', marginBottom: '24px', boxShadow: '0 8px 24px rgba(26,26,26,0.04)' }}>
+              <h2 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '4px' }}>Property Groups</h2>
+              <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '20px' }}>Group sub-properties together. One property must be the &quot;Whole Property&quot; — it acts as the master for shared amenities, house rules, and reviews.</p>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <input
+                  id="new-group-name"
+                  value={newGroupName}
+                  onChange={e => setNewGroupName(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleCreateGroup()}
+                  placeholder="Group name (e.g. Earthy Villa Estate)"
+                  style={{ flex: 1, minWidth: '200px', padding: '12px 16px', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '14px', outline: 'none', color: 'var(--color-text-primary)' }}
+                />
+                <button
+                  onClick={handleCreateGroup}
+                  style={{ padding: '12px 24px', backgroundColor: 'var(--color-gold)', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '800', cursor: 'pointer', letterSpacing: '0.5px' }}
+                >
+                  + Create Group
+                </button>
+              </div>
+            </div>
+
+            {/* Groups List */}
+            {groupsLoading ? (
+              <div style={{ textAlign: 'center', padding: '60px', color: 'var(--color-text-muted)' }}>Loading groups…</div>
+            ) : groups.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '60px', color: 'var(--color-text-muted)', backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px' }}>
+                <div style={{ fontSize: '32px', marginBottom: '12px' }}>🏘️</div>
+                <p style={{ fontSize: '16px', fontWeight: '700', marginBottom: '6px' }}>No groups yet</p>
+                <p style={{ fontSize: '13px' }}>Create your first group above to group sub-properties</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {groups.map(group => {
+                  const isExpanded = expandedGroup === group.id
+                  const isEditingName = editingGroupId === group.id
+                  const masterMember = group.members.find(m => m.is_whole_property)
+                  const isShowingReviews = reviewsGroupId === group.id
+
+                  return (
+                    <div key={group.id} style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '14px', boxShadow: '0 8px 24px rgba(26,26,26,0.04)', overflow: 'hidden' }}>
+                      {/* Group header */}
+                      <div style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap', cursor: 'pointer' }} onClick={() => setExpandedGroup(isExpanded ? null : group.id)}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
+                          <span style={{ fontSize: '20px' }}>🏘️</span>
+                          {isEditingName ? (
+                            <input
+                              autoFocus
+                              value={editingGroupName}
+                              onChange={e => setEditingGroupName(e.target.value)}
+                              onKeyDown={e => { if (e.key === 'Enter') handleRenameGroup(group.id); if (e.key === 'Escape') setEditingGroupId(null) }}
+                              onClick={e => e.stopPropagation()}
+                              style={{ flex: 1, padding: '8px 12px', border: '1px solid var(--color-gold)', borderRadius: '6px', fontSize: '16px', fontWeight: '700', outline: 'none' }}
+                            />
+                          ) : (
+                            <div>
+                              <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '2px' }}>{group.name}</h3>
+                              <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>{group.members.length} propert{group.members.length === 1 ? 'y' : 'ies'} · {masterMember ? `Master: ${masterMember.property.name}` : 'No master set'}</p>
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                          {isEditingName ? (
+                            <>
+                              <button onClick={() => handleRenameGroup(group.id)} style={{ padding: '7px 14px', backgroundColor: 'var(--color-gold)', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: '800', cursor: 'pointer' }}>Save</button>
+                              <button onClick={() => setEditingGroupId(null)} style={{ padding: '7px 14px', backgroundColor: 'var(--color-bg-soft)', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>Cancel</button>
+                            </>
+                          ) : (
+                            <>
+                              <button onClick={() => { setEditingGroupId(group.id); setEditingGroupName(group.name) }} style={{ padding: '7px 14px', backgroundColor: 'var(--color-bg-soft)', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', color: 'var(--color-text-secondary)' }}>Rename</button>
+                              <button onClick={() => handleDeleteGroup(group.id)} style={{ padding: '7px 14px', backgroundColor: '#FFEBEE', border: '1px solid #FFCDD2', borderRadius: '6px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', color: '#C62828' }}>Delete</button>
+                              <span style={{ color: 'var(--color-text-muted)', fontSize: '18px' }}>{isExpanded ? '▲' : '▼'}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Expanded panel */}
+                      {isExpanded && (
+                        <div style={{ borderTop: '1px solid var(--color-border)', padding: '20px 24px', backgroundColor: 'var(--color-bg-card)' }}>
+                          {/* Members */}
+                          <h4 style={{ fontSize: '13px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-gold)', marginBottom: '12px', fontWeight: '700' }}>Members</h4>
+                          {group.members.length === 0 ? (
+                            <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '16px' }}>No properties in this group yet.</p>
+                          ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+                              {group.members.map(member => (
+                                <div key={member.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', padding: '12px 16px', backgroundColor: '#ffffff', borderRadius: '10px', border: '1px solid var(--color-border)', flexWrap: 'wrap' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                                    <span style={{ fontSize: '16px' }}>{member.is_whole_property ? '🏠' : '🛏️'}</span>
+                                    <div style={{ minWidth: 0 }}>
+                                      <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{member.property.name}</p>
+                                      <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>{member.property.city}, {member.property.state} · {member.is_whole_property ? <strong>Whole Property</strong> : 'Sub-property'}</p>
+                                    </div>
+                                  </div>
+                                  <div style={{ display: 'flex', gap: '8px', flexShrink: 0, flexWrap: 'wrap' }}>
+                                    <button onClick={() => handleToggleWhole(group.id, member.id, member.is_whole_property)} style={{ padding: '6px 12px', backgroundColor: member.is_whole_property ? '#E3F2FD' : 'var(--color-bg-soft)', border: `1px solid ${member.is_whole_property ? '#90CAF9' : 'var(--color-border)'}`, borderRadius: '6px', fontSize: '11px', fontWeight: '700', cursor: 'pointer', color: member.is_whole_property ? '#1565C0' : 'var(--color-text-secondary)' }}>{member.is_whole_property ? 'Unset Master' : 'Set as Master'}</button>
+                                    <button onClick={() => handleRemoveMember(group.id, member.id)} style={{ padding: '6px 12px', backgroundColor: '#FFEBEE', border: '1px solid #FFCDD2', borderRadius: '6px', fontSize: '11px', fontWeight: '700', cursor: 'pointer', color: '#C62828' }}>Remove</button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Add member */}
+                          {addingMemberGroupId === group.id ? (
+                            <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '10px', padding: '16px', marginBottom: '20px' }}>
+                              <h5 style={{ fontSize: '13px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '12px' }}>Add Property to Group</h5>
+                              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                                <div style={{ flex: 1, minWidth: '200px' }}>
+                                  <label style={{ fontSize: '11px', letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '6px', display: 'block', fontWeight: '700' }}>Property</label>
+                                  <select
+                                    value={memberPropertyId}
+                                    onChange={e => setMemberPropertyId(e.target.value)}
+                                    style={{ width: '100%', padding: '10px 14px', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '14px', outline: 'none', backgroundColor: '#fff', cursor: 'pointer' }}
+                                  >
+                                    <option value="">Select a property…</option>
+                                    {apiProperties.map(p => (
+                                      <option key={p.id} value={p.id}>{p.name} — {p.city}</option>
+                                    ))}
+                                  </select>
+                                </div>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--color-text-primary)', fontWeight: '600', cursor: 'pointer', paddingBottom: '10px' }}>
+                                  <input type="checkbox" checked={memberIsWhole} onChange={e => setMemberIsWhole(e.target.checked)} />
+                                  Whole Property (master)
+                                </label>
+                                <button onClick={() => handleAddMember(group.id)} style={{ padding: '10px 20px', backgroundColor: 'var(--color-gold)', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '800', cursor: 'pointer' }}>Add</button>
+                                <button onClick={() => { setAddingMemberGroupId(null); setMemberPropertyId(''); setMemberIsWhole(false) }} style={{ padding: '10px 20px', backgroundColor: 'var(--color-bg-soft)', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>Cancel</button>
+                              </div>
+                            </div>
+                          ) : (
+                            <button onClick={() => { setAddingMemberGroupId(group.id); setGroupError('') }} style={{ padding: '9px 18px', backgroundColor: 'var(--color-bg-soft)', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', color: 'var(--color-text-secondary)', marginBottom: '20px' }}>+ Add Property</button>
+                          )}
+
+                          {/* Reviews section */}
+                          <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '20px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
+                              <h4 style={{ fontSize: '13px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-gold)', fontWeight: '700' }}>Reviews (Shared across group)</h4>
+                              {!isShowingReviews ? (
+                                <button onClick={() => { setReviewsGroupId(group.id); if (masterMember) loadGroupReviews(masterMember.property_id) }} style={{ padding: '7px 14px', backgroundColor: 'var(--color-bg-soft)', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', color: 'var(--color-text-secondary)' }}>Manage Reviews</button>
+                              ) : (
+                                <button onClick={() => setReviewsGroupId(null)} style={{ padding: '7px 14px', backgroundColor: 'var(--color-bg-soft)', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', color: 'var(--color-text-secondary)' }}>Close</button>
+                              )}
+                            </div>
+
+                            {isShowingReviews && (
+                              <div>
+                                {/* Add review form */}
+                                <div style={{ backgroundColor: '#f9f8f5', border: '1px solid var(--color-border)', borderRadius: '10px', padding: '16px', marginBottom: '16px' }}>
+                                  <h5 style={{ fontSize: '13px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '12px' }}>Add External Review</h5>
+                                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '12px' }}>
+                                    <div>
+                                      <label style={{ fontSize: '11px', letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '6px', display: 'block', fontWeight: '700' }}>Guest Name *</label>
+                                      <input value={newReview.guest_name} onChange={e => setNewReview(r => ({ ...r, guest_name: e.target.value }))} placeholder="Jane Doe" style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '14px', outline: 'none', backgroundColor: '#fff', boxSizing: 'border-box' as const }} />
+                                    </div>
+                                    <div>
+                                      <label style={{ fontSize: '11px', letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '6px', display: 'block', fontWeight: '700' }}>Platform</label>
+                                      <input value={newReview.platform} onChange={e => setNewReview(r => ({ ...r, platform: e.target.value }))} placeholder="Airbnb / Booking.com" style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '14px', outline: 'none', backgroundColor: '#fff', boxSizing: 'border-box' as const }} />
+                                    </div>
+                                    <div>
+                                      <label style={{ fontSize: '11px', letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '6px', display: 'block', fontWeight: '700' }}>Rating</label>
+                                      <select value={newReview.rating} onChange={e => setNewReview(r => ({ ...r, rating: parseInt(e.target.value) }))} style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '14px', outline: 'none', backgroundColor: '#fff', cursor: 'pointer' }}>
+                                        {[5,4,3,2,1].map(n => <option key={n} value={n}>{'★'.repeat(n)} ({n}/5)</option>)}
+                                      </select>
+                                    </div>
+                                  </div>
+                                  <div style={{ marginBottom: '12px' }}>
+                                    <label style={{ fontSize: '11px', letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '6px', display: 'block', fontWeight: '700' }}>Comment</label>
+                                    <textarea value={newReview.comment} onChange={e => setNewReview(r => ({ ...r, comment: e.target.value }))} rows={3} placeholder="What did the guest say?" style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '14px', outline: 'none', backgroundColor: '#fff', resize: 'vertical', boxSizing: 'border-box' as const }} />
+                                  </div>
+                                  {masterMember && (
+                                    <button disabled={addingReview || !newReview.guest_name.trim()} onClick={() => handleAddReview(masterMember!.property_id)} style={{ padding: '10px 24px', backgroundColor: addingReview ? '#ccc' : 'var(--color-gold)', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '800', cursor: addingReview ? 'not-allowed' : 'pointer' }}>
+                                      {addingReview ? 'Adding…' : '+ Add Review'}
+                                    </button>
+                                  )}
+                                  {!masterMember && <p style={{ fontSize: '13px', color: '#C62828' }}>Set a master (Whole Property) first to add reviews.</p>}
+                                </div>
+
+                                {/* Reviews list */}
+                                {reviewsLoading ? (
+                                  <p style={{ color: 'var(--color-text-muted)', fontSize: '13px' }}>Loading reviews…</p>
+                                ) : groupReviews.length === 0 ? (
+                                  <p style={{ color: 'var(--color-text-muted)', fontSize: '13px' }}>No reviews yet for this group.</p>
+                                ) : (
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                    {groupReviews.map(review => (
+                                      <div key={review.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', padding: '14px 16px', backgroundColor: '#ffffff', borderRadius: '10px', border: '1px solid var(--color-border)', flexWrap: 'wrap' }}>
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                                            <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{review.guest_name}</p>
+                                            {review.platform && <span style={{ fontSize: '11px', backgroundColor: '#E3F2FD', color: '#1565C0', padding: '2px 8px', borderRadius: '999px', fontWeight: '700' }}>{review.platform}</span>}
+                                            <span style={{ color: 'var(--color-gold)', fontSize: '14px' }}>{'★'.repeat(review.rating)}</span>
+                                          </div>
+                                          {review.comment && <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.5' }}>{review.comment}</p>}
+                                          <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '4px' }}>{new Date(review.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                                        </div>
+                                        <button onClick={() => masterMember && handleDeleteReview(review.id, masterMember!.property_id)} style={{ padding: '6px 12px', backgroundColor: '#FFEBEE', border: '1px solid #FFCDD2', borderRadius: '6px', fontSize: '11px', fontWeight: '700', cursor: 'pointer', color: '#C62828', flexShrink: 0 }}>Delete</button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
 

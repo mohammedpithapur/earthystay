@@ -1,6 +1,6 @@
 import type { Property } from "@/lib/types"
 
-export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000"
+export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000" || "http://172.28.104.24:8000"
 
 
 function getToken() {
@@ -124,4 +124,80 @@ export async function updatePropertyGroupMember(groupId: string, memberId: strin
   }
   return response.json() as Promise<PropertyGroup>
 }
-  
+
+export async function removePropertyGroupMember(groupId: string, memberId: string) {
+  const response = await fetch(buildApiUrl(`/admin/groups/${groupId}/members/${memberId}`), {
+    method: "DELETE",
+    headers: authHeaders(),
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to remove group member (${response.status})`)
+  }
+  return response.json() as Promise<PropertyGroup>
+}
+
+export async function updatePropertyGroup(groupId: string, name: string) {
+  const response = await fetch(buildApiUrl(`/admin/groups/${groupId}`), {
+    method: "PUT",
+    headers: authHeaders(),
+    body: JSON.stringify({ name }),
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to update group (${response.status})`)
+  }
+  return response.json() as Promise<PropertyGroup>
+}
+
+export async function deletePropertyGroup(groupId: string) {
+  const response = await fetch(buildApiUrl(`/admin/groups/${groupId}`), {
+    method: "DELETE",
+    headers: authHeaders(),
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to delete group (${response.status})`)
+  }
+  return response.json()
+}
+
+// ─── Reviews ─────────────────────────────────────────────────────────────────
+
+import type { Review } from "@/lib/types"
+
+export async function fetchPropertyReviews(propertyId: string): Promise<Review[]> {
+  const response = await fetch(buildApiUrl(`/properties/${propertyId}/reviews`))
+  if (!response.ok) {
+    throw new Error(`Failed to fetch reviews (${response.status})`)
+  }
+  return response.json()
+}
+
+export type CreateReviewPayload = {
+  property_id: string
+  guest_name: string
+  rating: number
+  comment?: string
+  platform?: string
+  created_at?: string
+}
+
+export async function createAdminReview(data: CreateReviewPayload): Promise<Review> {
+  const response = await fetch(buildApiUrl("/admin/reviews"), {
+    method: "POST",
+    headers: authHeaders(),
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to create review (${response.status})`)
+  }
+  return response.json()
+}
+
+export async function deleteAdminReview(reviewId: string): Promise<void> {
+  const response = await fetch(buildApiUrl(`/admin/reviews/${reviewId}`), {
+    method: "DELETE",
+    headers: authHeaders(),
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to delete review (${response.status})`)
+  }
+}

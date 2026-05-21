@@ -1,5 +1,7 @@
+from __future__ import annotations
 import uuid
 from datetime import datetime
+from typing import Optional
 
 from sqlalchemy import String, Integer, DateTime, Text, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -13,15 +15,13 @@ class Review(Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     property_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("properties.id"), nullable=False)
-    guest_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    booking_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("bookings.id"), nullable=False)
+    guest_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    booking_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("bookings.id"), nullable=True)
+    guest_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    platform: Mapped[str | None] = mapped_column(String(100), nullable=True)
     rating: Mapped[int] = mapped_column(Integer, nullable=False)
     comment: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, nullable=False)
 
     property: Mapped["Property"] = relationship("Property")
-    guest: Mapped["User"] = relationship("User")
-
-    __table_args__ = (
-        UniqueConstraint("property_id", "guest_id", "booking_id", name="uq_review_per_booking"),
-    )
+    guest: Mapped[Optional["User"]] = relationship("User")

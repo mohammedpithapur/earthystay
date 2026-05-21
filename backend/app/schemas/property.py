@@ -54,6 +54,9 @@ class PropertyOut(BaseModel):
     pet_charge_per_night: int
     amenities: list[str]
     is_published: bool
+    override_house_rules: bool
+    override_amenities: bool
+    override_details: bool
     avg_rating: float
     review_count: int
     created_at: datetime
@@ -88,6 +91,9 @@ class PropertyCreate(BaseModel):
     pet_charge_per_night: int = 0
     amenities: list[str] = []
     is_published: bool = False
+    override_house_rules: bool = False
+    override_amenities: bool = False
+    override_details: bool = False
 
 
 class PropertyUpdate(BaseModel):
@@ -115,6 +121,9 @@ class PropertyUpdate(BaseModel):
     pet_charge_per_night: int | None = None
     amenities: list[str] | None = None
     is_published: bool | None = None
+    override_house_rules: bool | None = None
+    override_amenities: bool | None = None
+    override_details: bool | None = None
 
 
 class PropertyListOut(BaseModel):

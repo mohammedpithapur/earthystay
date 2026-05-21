@@ -43,6 +43,11 @@ export interface Property {
   check_in_time: string  // e.g. "2:00 PM"
   check_out_time: string // e.g. "11:00 AM"
   house_rules: string[]  // list of rules
+  override_house_rules?: boolean
+  override_amenities?: boolean
+  override_details?: boolean
+  updated_at?: string
+  owner_id?: string
 }
 
 export interface Booking {
@@ -72,13 +77,13 @@ export interface Booking {
 export interface Review {
   id: string
   property_id: string
-  user_id: string
+  guest_id?: string | null
+  booking_id?: string | null
+  guest_name: string
+  platform?: string | null
   rating: number
-  comment: string
-  is_published: boolean
-  admin_reply: string
+  comment?: string | null
   created_at: string
-  user?: User
 }
 
 export interface User {

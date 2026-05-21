@@ -271,3 +271,32 @@ async def update_group_member(
 
     await db.commit()
     return await fetch_group(db, group_id)
+
+
+@router.put("/groups/{group_id}", response_model=PropertyGroupOut)
+async def update_group(
+    group_id: str,
+    data: PropertyGroupCreate,
+    admin: User = Depends(get_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    group = await db.get(PropertyGroup, group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    group.name = data.name
+    await db.commit()
+    return await fetch_group(db, group_id)
+
+
+@router.delete("/groups/{group_id}")
+async def delete_group(
+    group_id: str,
+    admin: User = Depends(get_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    group = await db.get(PropertyGroup, group_id)
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    await db.delete(group)
+    await db.commit()
+    return {"message": "Group deleted"}

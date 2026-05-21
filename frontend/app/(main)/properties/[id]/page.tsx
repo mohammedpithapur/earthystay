@@ -4,8 +4,8 @@ import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
 import { DayPicker } from 'react-day-picker'
 import MapWrapper from '@/components/shared/MapWrapper'
-import { buildApiUrl } from '@/lib/api'
-import type { Property } from '@/lib/types'
+import { buildApiUrl, fetchPropertyReviews } from '@/lib/api'
+import type { Property, Review } from '@/lib/types'
 import type { DateRange } from 'react-day-picker'
 
 const bathroomLabel: Record<string, string> = {
@@ -198,11 +198,25 @@ export default function PropertyDetailPage() {
     router.push(`/booking/${property.id}?checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}&pets=${pets}&nights=${nights}&total=${totalPrice}`)
   }
 
-  const reviews = [
-    { id: 1, name: 'Priya S.', rating: 5, comment: 'Absolutely stunning property! Every detail was perfect. Will definitely be back.', date: 'March 2024' },
-    { id: 2, name: 'Rahul M.', rating: 5, comment: 'The views were breathtaking and the amenities were top notch. Highly recommend!', date: 'February 2024' },
-    { id: 3, name: 'Anjali K.', rating: 4, comment: 'Beautiful property in a great location. The host was very responsive and helpful.', date: 'January 2024' },
-  ]
+  // ── Reviews ───────────────────────────────────────────────────────────
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [reviewsLoading, setReviewsLoading] = useState(false)
+
+  useEffect(() => {
+    if (activeTab === 'reviews' && propertyId) {
+      setReviewsLoading(true)
+      fetchPropertyReviews(propertyId)
+        .then(setReviews)
+        .catch(() => {})
+        .finally(() => setReviewsLoading(false))
+    }
+  }, [activeTab, propertyId])
+
+  // Star distribution from real reviews
+  const starCounts = [5, 4, 3, 2, 1].map(star => ({
+    star,
+    count: reviews.filter(r => r.rating === star).length,
+  }))
 
   const tabs = ['overview', 'amenities', 'house rules', 'location', 'reviews']
 
@@ -566,39 +580,57 @@ export default function PropertyDetailPage() {
                 <div style={{ textAlign: 'center' }}>
                   <p style={{ fontSize: '56px', color: 'var(--color-text-primary)', lineHeight: '1', fontWeight: '800' }}>{property.avg_rating}</p>
                   <p style={{ color: 'var(--color-gold)', fontSize: '20px', marginBottom: '4px' }}>{'★'.repeat(Math.floor(property.avg_rating))}</p>
-                  <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>{property.review_count} reviews</p>
+                  <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>{property.review_count} review{property.review_count !== 1 ? 's' : ''}</p>
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  {[5, 4, 3, 2, 1].map(star => (
+                  {starCounts.map(({ star, count }) => (
                     <div key={star} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                       <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', width: '24px' }}>{star}★</span>
                       <div style={{ flex: 1, height: '6px', backgroundColor: 'var(--color-border)', borderRadius: '3px' }}>
-                        <div style={{ height: '100%', backgroundColor: 'var(--color-gold)', borderRadius: '3px', width: star === 5 ? '70%' : star === 4 ? '20%' : star === 3 ? '7%' : '3%' }} />
+                        <div style={{
+                          height: '100%', backgroundColor: 'var(--color-gold)', borderRadius: '3px',
+                          width: reviews.length > 0 ? `${Math.round((count / reviews.length) * 100)}%` : '0%',
+                          transition: 'width 0.4s ease',
+                        }} />
                       </div>
+                      <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', width: '16px', textAlign: 'right' }}>{count}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {reviews.map(review => (
-                  <div key={review.id} style={{ backgroundColor: '#ffffff', padding: '24px', border: '1px solid var(--color-border)', borderRadius: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div style={{ width: '40px', height: '40px', backgroundColor: 'var(--color-gold)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-primary)', fontWeight: '700', fontSize: '16px' }}>
-                          {review.name[0]}
+              {reviewsLoading ? (
+                <div style={{ textAlign: 'center', padding: '40px', color: 'var(--color-text-muted)' }}>Loading reviews…</div>
+              ) : reviews.length === 0 ? (
+                <div style={{ backgroundColor: '#ffffff', padding: '40px', border: '1px solid var(--color-border)', borderRadius: '12px', textAlign: 'center', color: 'var(--color-text-muted)' }}>
+                  <p style={{ fontSize: '32px', marginBottom: '8px' }}>✦</p>
+                  <p style={{ fontWeight: '700', marginBottom: '4px' }}>No reviews yet</p>
+                  <p style={{ fontSize: '13px' }}>Be the first to stay here</p>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {reviews.map(review => (
+                    <div key={review.id} style={{ backgroundColor: '#ffffff', padding: '24px', border: '1px solid var(--color-border)', borderRadius: '12px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <div style={{ width: '40px', height: '40px', backgroundColor: 'var(--color-gold)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-text-primary)', fontWeight: '700', fontSize: '16px', flexShrink: 0 }}>
+                            {review.guest_name[0]?.toUpperCase()}
+                          </div>
+                          <div>
+                            <p style={{ fontWeight: '700', fontSize: '14px', color: 'var(--color-text-primary)' }}>{review.guest_name}</p>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                              <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>{new Date(review.created_at).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</p>
+                              {review.platform && <span style={{ fontSize: '10px', backgroundColor: '#E3F2FD', color: '#1565C0', padding: '2px 6px', borderRadius: '999px', fontWeight: '700', letterSpacing: '0.3px' }}>{review.platform}</span>}
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <p style={{ fontWeight: '700', fontSize: '14px', color: 'var(--color-text-primary)' }}>{review.name}</p>
-                          <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>{review.date}</p>
-                        </div>
+                        <div style={{ color: 'var(--color-gold)', fontSize: '14px' }}>{'★'.repeat(review.rating)}</div>
                       </div>
-                      <div style={{ color: 'var(--color-gold)', fontSize: '14px' }}>{'★'.repeat(review.rating)}</div>
+                      {review.comment && <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', lineHeight: '1.7' }}>{review.comment}</p>}
                     </div>
-                    <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', lineHeight: '1.7' }}>{review.comment}</p>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

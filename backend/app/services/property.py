@@ -46,7 +46,9 @@ async def get_property_filters(
     result = await db.execute(query)
     properties = result.scalars().all()
 
-    return {"items": properties, "total": total, "page": page, "limit": limit}
+    resolved_properties = await apply_properties_inheritance(db, list(properties))
+
+    return {"items": resolved_properties, "total": total, "page": page, "limit": limit}
 
 
 async def update_property_rating(db: AsyncSession, property_id: str):
@@ -60,3 +62,125 @@ async def update_property_rating(db: AsyncSession, property_id: str):
         prop.avg_rating = round(float(avg_rating), 1) if avg_rating else 0.0
         prop.review_count = count
         await db.commit()
+
+
+import copy
+from app.models.property_group import PropertyGroupMember
+
+async def apply_property_inheritance(db: AsyncSession, property_obj: Property) -> Property:
+    if not property_obj:
+        return property_obj
+
+    # Check if property belongs to any group
+    group_member_res = await db.execute(
+        select(PropertyGroupMember).where(PropertyGroupMember.property_id == property_obj.id)
+    )
+    membership = group_member_res.scalar_one_or_none()
+    if not membership:
+        return property_obj
+
+    # Find the "Whole Property" listing in the group
+    whole_prop_res = await db.execute(
+        select(Property)
+        .options(selectinload(Property.images))
+        .join(PropertyGroupMember, PropertyGroupMember.property_id == Property.id)
+        .where(
+            PropertyGroupMember.group_id == membership.group_id,
+            PropertyGroupMember.is_whole_property == True
+        )
+    )
+    whole_property = whole_prop_res.scalar_one_or_none()
+    if not whole_property or whole_property.id == property_obj.id:
+        return property_obj
+
+    # Clone property_obj to prevent modifying the database state
+    cloned = copy.copy(property_obj)
+    cloned.images = list(property_obj.images)
+
+    # Apply inheritance where override is False
+    if not cloned.override_house_rules:
+        cloned.house_rules = whole_property.house_rules
+    if not cloned.override_amenities:
+        cloned.amenities = whole_property.amenities
+    if not cloned.override_details:
+        cloned.description = whole_property.description
+        cloned.address = whole_property.address
+        cloned.city = whole_property.city
+        cloned.state = whole_property.state
+        cloned.country = whole_property.country
+        cloned.latitude = whole_property.latitude
+        cloned.longitude = whole_property.longitude
+        cloned.contact_phone = whole_property.contact_phone
+        cloned.contact_email = whole_property.contact_email
+        cloned.check_in_time = whole_property.check_in_time
+        cloned.check_out_time = whole_property.check_out_time
+
+    return cloned
+
+
+async def apply_properties_inheritance(db: AsyncSession, properties: list[Property]) -> list[Property]:
+    if not properties:
+        return properties
+
+    property_ids = [p.id for p in properties]
+    
+    # 1. Fetch group memberships in a single query
+    memberships_res = await db.execute(
+        select(PropertyGroupMember).where(PropertyGroupMember.property_id.in_(property_ids))
+    )
+    memberships = memberships_res.scalars().all()
+    if not memberships:
+        return properties
+
+    membership_map = {m.property_id: m for m in memberships}
+    group_ids = list(set(m.group_id for m in memberships))
+
+    # 2. Fetch all "Whole Property" listings for these groups in a single query
+    whole_props_res = await db.execute(
+        select(Property, PropertyGroupMember.group_id)
+        .options(selectinload(Property.images))
+        .join(PropertyGroupMember, PropertyGroupMember.property_id == Property.id)
+        .where(
+            PropertyGroupMember.group_id.in_(group_ids),
+            PropertyGroupMember.is_whole_property == True
+        )
+    )
+    whole_props_rows = whole_props_res.all()
+    whole_prop_by_group = {group_id: prop for prop, group_id in whole_props_rows}
+
+    # 3. Apply inheritance
+    resolved_properties = []
+    for p in properties:
+        membership = membership_map.get(p.id)
+        if not membership:
+            resolved_properties.append(p)
+            continue
+
+        whole_property = whole_prop_by_group.get(membership.group_id)
+        if not whole_property or whole_property.id == p.id:
+            resolved_properties.append(p)
+            continue
+
+        cloned = copy.copy(p)
+        cloned.images = list(p.images)
+
+        if not cloned.override_house_rules:
+            cloned.house_rules = whole_property.house_rules
+        if not cloned.override_amenities:
+            cloned.amenities = whole_property.amenities
+        if not cloned.override_details:
+            cloned.description = whole_property.description
+            cloned.address = whole_property.address
+            cloned.city = whole_property.city
+            cloned.state = whole_property.state
+            cloned.country = whole_property.country
+            cloned.latitude = whole_property.latitude
+            cloned.longitude = whole_property.longitude
+            cloned.contact_phone = whole_property.contact_phone
+            cloned.contact_email = whole_property.contact_email
+            cloned.check_in_time = whole_property.check_in_time
+            cloned.check_out_time = whole_property.check_out_time
+
+        resolved_properties.append(cloned)
+
+    return resolved_properties

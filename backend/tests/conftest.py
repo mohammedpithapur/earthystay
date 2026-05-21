@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import text, update
+from sqlalchemy import text, update, event
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.pool import NullPool
 
@@ -28,8 +28,16 @@ def _get_test_db_url() -> str:
     return test_db_url
 
 
+# NullPool is required for asyncpg to avoid "another operation is in progress"
+# errors caused by concurrent fixture/test access on the same connection.
 test_engine = create_async_engine(
-    _get_test_db_url(), connect_args={"statement_cache_size": 0}, echo=False, poolclass=NullPool
+    _get_test_db_url(),
+    connect_args={
+        "statement_cache_size": 0,
+        "server_settings": {"search_path": "test_schema"},
+    },
+    echo=False,
+    poolclass=NullPool,
 )
 TestSessionLocal = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
 
@@ -55,12 +63,12 @@ async def _create_test_schema():
 
 
 @pytest.fixture(autouse=True)
-async def _truncate_tables():
-    async with TestSessionLocal() as session:
+async def _truncate_tables(_create_test_schema):
+    """Truncate all tables before each test for isolation."""
+    async with test_engine.begin() as conn:
         table_names = [f'"{table.name}"' for table in Base.metadata.sorted_tables]
         if table_names:
-            await session.execute(text(f"TRUNCATE {', '.join(table_names)} CASCADE"))
-            await session.commit()
+            await conn.execute(text(f"TRUNCATE {', '.join(table_names)} CASCADE"))
     yield
 
 
