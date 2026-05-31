@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
+import Providers from './providers'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -19,13 +20,15 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
-      <body style={{ backgroundColor: 'var(--color-bg-page)', margin: 0, overflowX: 'hidden' }}>
-        <Navbar />
-        <main style={{ paddingTop: '72px', minHeight: '100vh' }}>
-          {children}
-        </main>
-        <Footer />
+    <html lang="en" suppressHydrationWarning>
+      <body suppressHydrationWarning style={{ backgroundColor: 'var(--color-bg-page)', margin: 0, overflowX: 'hidden' }}>
+        <Providers>
+          <Navbar />
+          <main style={{ paddingTop: '72px', minHeight: '100vh' }}>
+            {children}
+          </main>
+          <Footer />
+        </Providers>
       </body>
     </html>
   )

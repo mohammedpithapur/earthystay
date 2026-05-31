@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
@@ -13,6 +13,13 @@ from app.models.review import Review
 from app.schemas.property import PropertyCreate, PropertyUpdate, PropertyOut, PropertyImageCreate, PropertyImageUpdate, PropertyImageOut
 from app.schemas.property_group import PropertyGroupCreate, PropertyGroupMemberCreate, PropertyGroupMemberUpdate, PropertyGroupOut
 from app.models.property import PropertyImage
+from app.services.upload import (
+    delete_property_image_from_url,
+    upload_property_image_from_bytes,
+    upload_property_image_from_data_url,
+    UploadStorageError,
+    UploadValidationError,
+)
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -24,6 +31,63 @@ async def fetch_group(db: AsyncSession, group_id: str) -> PropertyGroup | None:
         .where(PropertyGroup.id == group_id)
     )
     return result.scalar_one_or_none()
+
+
+async def sync_property_images(db: AsyncSession, property_id: str, images: list[PropertyImageCreate] | None) -> None:
+    if images is None:
+        return
+
+    existing_result = await db.execute(select(PropertyImage).where(PropertyImage.property_id == property_id))
+    for image in existing_result.scalars().all():
+        await db.delete(image)
+
+    if not images:
+        return
+
+    normalized_images = []
+    primary_assigned = False
+    for index, image_data in enumerate(images):
+        is_primary = bool(image_data.is_primary) and not primary_assigned
+        primary_assigned = primary_assigned or is_primary
+        normalized_images.append(
+            PropertyImage(
+                property_id=property_id,
+                image_url=image_data.image_url,
+                is_primary=is_primary,
+                display_order=image_data.display_order or index + 1,
+            )
+        )
+
+    if not primary_assigned and normalized_images:
+        normalized_images[0].is_primary = True
+
+    db.add_all(normalized_images)
+
+
+async def normalize_property_images(images: list[PropertyImageCreate] | None) -> list[PropertyImageCreate] | None:
+    if images is None:
+        return None
+
+    normalized: list[PropertyImageCreate] = []
+    for image in images:
+        image_url = image.image_url
+        if image_url.startswith("data:image"):
+            try:
+                image_url = upload_property_image_from_data_url(image_url)
+            except UploadValidationError as exc:
+                raise HTTPException(status_code=400, detail=str(exc)) from exc
+            except UploadStorageError as exc:
+                raise HTTPException(status_code=500, detail=f"Image upload failed: {exc}") from exc
+
+        normalized.append(
+            PropertyImageCreate(
+                image_url=image_url,
+                is_primary=image.is_primary,
+                display_order=image.display_order,
+            )
+        )
+
+    return normalized
 
 
 # ── Dashboard ──
@@ -42,6 +106,23 @@ async def dashboard(admin: User = Depends(get_admin), db: AsyncSession = Depends
         "total_revenue": revenue,
         "pending_bookings": pending,
     }
+
+
+@router.post("/upload-image")
+async def upload_image(
+    file: UploadFile = File(...),
+    admin: User = Depends(get_admin),
+):
+    try:
+        image_bytes = await file.read()
+        public_url = upload_property_image_from_bytes(image_bytes, file.content_type or "")
+        return {"url": public_url}
+    except UploadValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except UploadStorageError as exc:
+        raise HTTPException(status_code=500, detail=f"Image upload failed: {exc}") from exc
+    finally:
+        await file.close()
 
 
 # ── Properties CRUD ──
@@ -65,9 +146,22 @@ async def create_property(
     admin: User = Depends(get_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    property = Property(owner_id=admin.id, **data.model_dump())
+    images = await normalize_property_images(data.images)
+    property_data = data.model_dump(exclude={"images"})
+    property = Property(owner_id=admin.id, **property_data)
     db.add(property)
-    await db.commit()
+
+    try:
+        await db.flush()
+        await sync_property_images(db, str(property.id), images)
+        await db.commit()
+    except HTTPException:
+        await db.rollback()
+        raise
+    except Exception as exc:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail="Failed to save property") from exc
+
     result = await db.execute(
         select(Property)
         .options(selectinload(Property.images))
@@ -83,12 +177,30 @@ async def update_property(
     admin: User = Depends(get_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    property = await db.get(Property, property_id)
+    result = await db.execute(
+        select(Property)
+        .options(selectinload(Property.images))
+        .where(Property.id == property_id)
+    )
+    property = result.scalar_one_or_none()
     if not property:
         raise HTTPException(status_code=404, detail="Property not found")
-    for key, val in data.model_dump(exclude_unset=True).items():
-        setattr(property, key, val)
-    await db.commit()
+    images = await normalize_property_images(data.images)
+    update_data = data.model_dump(exclude_unset=True, exclude={"images"})
+
+    try:
+        for key, val in update_data.items():
+            setattr(property, key, val)
+
+        await sync_property_images(db, property_id, images)
+        await db.commit()
+    except HTTPException:
+        await db.rollback()
+        raise
+    except Exception as exc:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail="Failed to update property") from exc
+
     result = await db.execute(
         select(Property)
         .options(selectinload(Property.images))
@@ -123,7 +235,22 @@ async def add_image(
     property = await db.get(Property, property_id)
     if not property:
         raise HTTPException(status_code=404, detail="Property not found")
-    image = PropertyImage(property_id=property_id, **data.model_dump())
+
+    image_url = data.image_url
+    if image_url.startswith("data:image"):
+        try:
+            image_url = upload_property_image_from_data_url(image_url)
+        except UploadValidationError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except UploadStorageError as exc:
+            raise HTTPException(status_code=500, detail=f"Image upload failed: {exc}") from exc
+
+    image = PropertyImage(
+        property_id=property_id,
+        image_url=image_url,
+        is_primary=data.is_primary,
+        display_order=data.display_order,
+    )
     db.add(image)
     await db.commit()
     await db.refresh(image)
@@ -156,6 +283,10 @@ async def delete_image(
     image = await db.get(PropertyImage, image_id)
     if not image:
         raise HTTPException(status_code=404, detail="Image not found")
+    try:
+        delete_property_image_from_url(image.image_url)
+    except UploadStorageError as exc:
+        raise HTTPException(status_code=500, detail=f"Image delete failed: {exc}") from exc
     await db.delete(image)
     await db.commit()
     return {"message": "Image deleted"}

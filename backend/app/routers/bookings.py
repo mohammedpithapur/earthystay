@@ -1,12 +1,13 @@
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_, func
 
 from app.database import get_db
 from app.dependencies import get_current_user, get_admin
 from app.models.user import User
+from app.rate_limit import limiter
 from app.models.property import Property
 from app.models.property_group import PropertyGroup, PropertyGroupMember
 from app.models.booking import Booking, BookingStatus
@@ -17,7 +18,9 @@ router = APIRouter(prefix="/bookings", tags=["bookings"])
 
 
 @router.post("", response_model=BookingOut)
+@limiter.limit("10/minute")
 async def create_booking(
+    request: Request,
     data: BookingCreate,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -139,7 +142,11 @@ async def admin_list_bookings(
     base_query = select(Booking).where(Booking.is_shadow_block == False)
     if search:
         base_query = base_query.where(
-            or_(Booking.guest_name.ilike(f"%{search}%"), Booking.guest_email.ilike(f"%{search}%"))
+            or_(
+                Booking.guest_name.ilike(f"%{search}%"),
+                Booking.guest_email.ilike(f"%{search}%"),
+                Booking.booking_ref.ilike(f"%{search}%"),
+            )
         )
     if status:
         base_query = base_query.where(Booking.status == status)

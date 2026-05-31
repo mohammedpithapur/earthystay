@@ -16,6 +16,8 @@ async def get_current_user(
     user = await get_user_from_token(credentials.credentials, db)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="User account is inactive")
     return user
 
 

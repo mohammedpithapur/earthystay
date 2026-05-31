@@ -3,12 +3,14 @@ import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { buildApiUrl } from '@/lib/api'
+import { useAuth } from '@/lib/auth/AuthContext'
 import type { Property } from '@/lib/types'
 
 export default function BookingPage() {
   const { id } = useParams()
   const searchParams = useSearchParams()
   const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
   const propertyId = Array.isArray(id) ? id[0] : id
   const [property, setProperty] = useState<Property | null>(null)
   const [pageLoading, setPageLoading] = useState(true)
@@ -21,10 +23,34 @@ export default function BookingPage() {
   const nights = Number(searchParams.get('nights')) || 0
   const total = Number(searchParams.get('total')) || 0
 
-  const [form, setForm] = useState({ full_name: '', email: '', phone: '', special_requests: '' })
+  // Pre-fill form from logged-in user (editable)
+  const [form, setForm] = useState({
+    full_name: '',
+    email: '',
+    phone: '',
+    special_requests: '',
+  })
   const [agreed, setAgreed] = useState(false)
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  // Auth guard: redirect to login if not authenticated
+  useEffect(() => {
+    if (authLoading) return
+    if (!user) {
+      const currentUrl = `/booking/${propertyId}?${searchParams.toString()}`
+      router.replace(`/login?next=${encodeURIComponent(currentUrl)}`)
+    } else if (!form.full_name) {
+      // Pre-fill with user data (user can edit before submitting)
+      setForm(f => ({
+        ...f,
+        full_name: user.full_name,
+        email: user.email,
+        phone: user.phone || '',
+      }))
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, authLoading])
 
   useEffect(() => {
     if (!propertyId) return
@@ -208,13 +234,11 @@ export default function BookingPage() {
             <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--color-gold)', marginBottom: '28px' }} />
 
             <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-              <Image
-                src={property.images.find(i => i.is_primary)?.image_url || property.images[0]?.image_url}
-                alt={property.name}
-                width={120}
-                height={90}
-                style={{ width: '120px', height: '90px', objectFit: 'cover', flexShrink: 0, borderRadius: '8px' }}
-              />
+                {(() => {
+                  const src = property.images.find(i => i.is_primary)?.image_url || property.images[0]?.image_url
+                  if (src) return <Image src={src} alt={property.name} width={120} height={90} style={{ width: '120px', height: '90px', objectFit: 'cover', flexShrink: 0, borderRadius: '8px' }} />
+                  return <div style={{ width: 120, height: 90, borderRadius: 8, backgroundColor: 'var(--color-bg-card)' }} />
+                })()}
               <div style={{ flex: '1 1 0', minWidth: 0 }}>
                 <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '4px' }}>{property.name}</h3>
                 <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '12px' }}>{property.city}, {property.state}</p>

@@ -1,10 +1,15 @@
 "use client"
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Copy from '@/lib/copy'
-// Avoid importing next/link to prevent module/type resolution issues in some setups
 
 export default function Footer() {
+  const [year, setYear] = useState(2024)
+
+  useEffect(() => {
+    setYear(new Date().getFullYear())
+  }, [])
+
   return (
     <footer style={{ backgroundColor: 'var(--color-navbar)', color: 'var(--color-navbar-text)' }}>
       <div style={{
@@ -16,65 +21,61 @@ export default function Footer() {
         gap: '24px',
         alignItems: 'start',
       }}>
+
+        {/* Brand column */}
         <div>
-          <h2 style={{
-            color: 'var(--color-navbar-text)',
-            fontSize: '22px',
-            letterSpacing: '3px',
-            marginBottom: '16px',
-            fontWeight: '800',
-          }}>
+          <h2 style={{ color: 'var(--color-navbar-text)', fontSize: '22px', letterSpacing: '3px', marginBottom: '16px', fontWeight: '800' }}>
             EARTHY STAYS
           </h2>
           <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--color-navbar-text)', marginBottom: '20px' }} />
-          <p style={{
-            color: 'rgba(255,255,255,0.82)',
-            fontSize: '18px',
-            lineHeight: '1.8',
-            marginBottom: '28px',
-          }}>
+          <p style={{ color: 'rgba(255,255,255,0.82)', fontSize: '18px', lineHeight: '1.8', marginBottom: '28px' }}>
             {Copy.footerDescription}
           </p>
 
+          {/* Social icons */}
           <div style={{ display: 'flex', gap: '12px' }}>
             {[
-              { label: 'Instagram', text: '/instagram.png', href: '#' },
-              { label: 'Facebook', text: '/facebook.png', href: '#' },
-              { label: 'Twitter', text: '/twitter.png', href: '#' },
+              { label: 'Instagram', src: '/instagram.png', href: '#' },
+              { label: 'Facebook', src: '/facebook.png', href: '#' },
+              { label: 'Twitter', src: '/twitter.png', href: '#' },
             ].map(social => (
               <a
                 key={social.label}
                 href={social.href}
                 title={social.label}
                 style={{
-                  width: '40px', height: '40px',
+                  width: '40px',
+                  height: '40px',
                   border: '1px solid var(--color-navbar-border)',
                   borderRadius: '8px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '11px',
-                  fontWeight: '700',
                   color: 'rgba(255,255,255,0.82)',
                   textDecoration: 'none',
-                  transition: 'border-color 0.3s ease, color 0.3s ease',
-                  letterSpacing: '0.5px',
+                  transition: 'border-color 0.3s ease',
                 }}
                 onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                  (e.currentTarget as HTMLAnchorElement).style.borderColor = 'var(--color-navbar-text)'
-                  ;(e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-navbar-text)'
+                  e.currentTarget.style.borderColor = 'var(--color-navbar-text)'
                 }}
                 onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => {
-                  (e.currentTarget as HTMLAnchorElement).style.borderColor = 'var(--color-navbar-border)'
-                  ;(e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.82)'
+                  e.currentTarget.style.borderColor = 'var(--color-navbar-border)'
                 }}
               >
-                <Image src={social.text} alt={social.label} width={24} height={24} style={{ objectFit: 'contain' }} />
+                <Image
+                  src={social.src}
+                  alt={social.label}
+                  width={24}
+                  height={24}
+                  suppressHydrationWarning
+                  style={{ objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
+                />
               </a>
             ))}
           </div>
         </div>
 
+        {/* Quick Links column */}
         <div>
           <h4 style={{ color: 'var(--color-navbar-text)', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '24px', fontWeight: '700' }}>
             Quick Links
@@ -97,8 +98,8 @@ export default function Footer() {
                   gap: '8px',
                   transition: 'color 0.2s ease',
                 }}
-                onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-navbar-text)'}
-                onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.82)'}
+                onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.color = 'var(--color-navbar-text)' }}
+                onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.color = 'rgba(255,255,255,0.82)' }}
               >
                 <span style={{ color: 'var(--color-navbar-text)', fontSize: '9px' }}>→</span>
                 {link.label}
@@ -107,6 +108,7 @@ export default function Footer() {
           </div>
         </div>
 
+        {/* Contact + Policies column */}
         <div>
           <h4 style={{ color: 'var(--color-navbar-text)', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '24px', fontWeight: '700' }}>
             Contact Us
@@ -138,8 +140,8 @@ export default function Footer() {
                 key={link.href}
                 href={link.href}
                 style={{ color: 'rgba(255,255,255,0.82)', fontSize: '13px', textDecoration: 'none', transition: 'color 0.2s ease' }}
-                onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-navbar-text)'}
-                onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(255,255,255,0.82)'}
+                onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.color = 'var(--color-navbar-text)' }}
+                onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.color = 'rgba(255,255,255,0.82)' }}
               >
                 {link.label}
               </a>
@@ -161,7 +163,7 @@ export default function Footer() {
         gap: '12px',
       }}>
         <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px' }}>
-          &copy; {new Date().getFullYear()} Earthy Stays. All rights reserved.
+          &copy; {year} Earthy Stays. All rights reserved.
         </p>
         <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px' }}>
           Payments secured by <span style={{ color: 'var(--color-navbar-text)' }}>Razorpay</span>

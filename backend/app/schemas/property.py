@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from uuid import UUID
 from datetime import datetime
 
@@ -61,7 +61,7 @@ class PropertyOut(BaseModel):
     review_count: int
     created_at: datetime
     updated_at: datetime
-    images: list[PropertyImageOut] = []
+    images: list[PropertyImageOut] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}
 
@@ -94,6 +94,7 @@ class PropertyCreate(BaseModel):
     override_house_rules: bool = False
     override_amenities: bool = False
     override_details: bool = False
+    images: list[PropertyImageCreate] = Field(default_factory=list)
 
 
 class PropertyUpdate(BaseModel):
@@ -124,6 +125,7 @@ class PropertyUpdate(BaseModel):
     override_house_rules: bool | None = None
     override_amenities: bool | None = None
     override_details: bool | None = None
+    images: list[PropertyImageCreate] | None = None
 
 
 class PropertyListOut(BaseModel):

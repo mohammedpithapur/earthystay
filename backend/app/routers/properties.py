@@ -1,3 +1,6 @@
+import hashlib
+import json
+
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -8,6 +11,7 @@ from app.models.booking import Booking, BookingStatus
 from app.models.property import Property
 from app.schemas.property import PropertyListOut, PropertyOut
 from app.services.property import get_property_filters
+from app.services.cache import cache_get_json, cache_set_json
 
 router = APIRouter(prefix="/properties", tags=["properties"])
 
@@ -25,12 +29,32 @@ async def list_properties(
     limit: int = Query(12, ge=1, le=50),
     db: AsyncSession = Depends(get_db),
 ):
+    cache_payload = {
+        "city": city,
+        "state": state,
+        "min_price": min_price,
+        "max_price": max_price,
+        "guests": guests,
+        "pets_allowed": pets_allowed,
+        "amenities": amenities,
+        "page": page,
+        "limit": limit,
+    }
+    cache_hash = hashlib.sha256(json.dumps(cache_payload, sort_keys=True).encode()).hexdigest()
+    cache_key = f"properties:list:{cache_hash}"
+    cached = await cache_get_json(cache_key)
+    if cached:
+        return cached
+
     amenity_list = amenities.split(",") if amenities else None
-    return await get_property_filters(
+    result = await get_property_filters(
         db, city=city, state=state, min_price=min_price, max_price=max_price,
         guests=guests, pets_allowed=pets_allowed, amenities=amenity_list,
         page=page, limit=limit,
     )
+    response = PropertyListOut.model_validate(result).model_dump(mode="json")
+    await cache_set_json(cache_key, response, ttl_seconds=300)
+    return response
 
 
 @router.get("/{property_id}", response_model=PropertyOut)

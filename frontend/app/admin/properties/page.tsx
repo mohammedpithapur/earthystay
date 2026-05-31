@@ -351,8 +351,11 @@
 import Image from 'next/image'
 import { Suspense, useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { addPropertyGroupMember, createPropertyGroup, listAdminProperties, listPropertyGroups, saveProperty, updatePropertyGroupMember } from '@/lib/api'
-import { dummyProperties } from '@/lib/data/properties'
+import { addPropertyGroupMember, createPropertyGroup, deleteAdminPropertyImage, listAdminProperties, listPropertyGroups, saveProperty, updateAdminPropertyImage, updatePropertyGroupMember, type ApiFetcher } from '@/lib/api'
+import { useAuth } from '@/lib/auth/AuthContext'
+import { useRequireAuth } from '@/lib/auth/useRequireAuth'
+import { uploadPropertyImage } from '@/lib/supabase/storage'
+// NOTE: admin UI now loads properties from the API via `listAdminProperties`
 import { Property, type BathroomDetail } from '@/lib/types'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -373,6 +376,8 @@ interface Section {
 }
 
 type WholePropertyChoice = 'existing' | 'new'
+type UploadProgressMap = Record<string, number>
+type UploadErrorMap = Record<string, string>
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -443,6 +448,20 @@ type PropertyFormState = {
   pets_allowed: boolean
   is_published: boolean
   house_rules: string[]
+}
+
+type PhotosSectionProps = {
+  form: typeof EMPTY_FORM
+  setForm: React.Dispatch<React.SetStateAction<typeof EMPTY_FORM>>
+  fetchWithAuth: ApiFetcher
+  uploadProgress: UploadProgressMap
+  uploadErrors: UploadErrorMap
+  uploadNotice: string
+  isUploading: boolean
+  setUploadProgress: React.Dispatch<React.SetStateAction<UploadProgressMap>>
+  setUploadErrors: React.Dispatch<React.SetStateAction<UploadErrorMap>>
+  setUploadNotice: React.Dispatch<React.SetStateAction<string>>
+  setIsUploading: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 const EMPTY_FORM: PropertyFormState = {
@@ -698,44 +717,161 @@ function LocationSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: 
   )
 }
 
-function PhotosSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: (f: typeof EMPTY_FORM) => void }) {
+function PhotosSection({
+  form,
+  setForm,
+  fetchWithAuth,
+  uploadProgress,
+  uploadErrors,
+  uploadNotice,
+  isUploading,
+  setUploadProgress,
+  setUploadErrors,
+  setUploadNotice,
+  setIsUploading,
+}: PhotosSectionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const uploadFilesRef = useRef<Record<string, File>>({})
+
+  const appendFiles = async (files: File[]) => {
+    if (files.length === 0) {
+      return
+    }
+
+    setUploadNotice('')
+    setIsUploading(true)
+
+    for (const [index, file] of files.entries()) {
+      const tempId = `upload-${Date.now()}-${index}-${Math.random().toString(16).slice(2)}`
+      const localPreviewUrl = URL.createObjectURL(file)
+
+      // keep the original File for retries
+      uploadFilesRef.current[tempId] = file
+
+      setForm(prev => {
+        const startIndex = prev.images.length
+        return {
+          ...prev,
+          images: [
+            ...prev.images,
+            {
+              id: tempId,
+              property_id: '',
+              image_url: localPreviewUrl,
+              is_primary: prev.images.length === 0,
+              display_order: startIndex + 1,
+            },
+          ],
+        }
+      })
+
+      setUploadProgress(prev => ({ ...prev, [tempId]: 0 }))
+      setUploadErrors(prev => {
+        if (!prev[tempId]) {
+          return prev
+        }
+        const next = { ...prev }
+        delete next[tempId]
+        return next
+      })
+
+      try {
+        const publicUrl = await uploadPropertyImage(file, percent => {
+          setUploadProgress(prev => ({ ...prev, [tempId]: percent }))
+        }, fetchWithAuth)
+
+        setForm(prev => ({
+          ...prev,
+          images: prev.images.map(img => img.id === tempId ? { ...img, image_url: publicUrl } : img),
+        }))
+        // upload succeeded — no need to keep the original file
+        delete uploadFilesRef.current[tempId]
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Image upload failed'
+        setUploadErrors(prev => ({ ...prev, [tempId]: message }))
+        setUploadNotice('Some images failed to upload. Retry failed items or remove them.')
+      } finally {
+      }
+    }
+
+    setIsUploading(false)
+  }
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
-    // Visual only — no real upload
-    const files = Array.from(e.dataTransfer.files)
-    const newImages = files.map((f, i) => ({
-      id: `new-${Date.now()}-${i}`,
-      property_id: '',
-      image_url: URL.createObjectURL(f),
-      is_primary: form.images.length === 0 && i === 0,
-      display_order: form.images.length + i + 1,
-    }))
-    setForm({ ...form, images: [...form.images, ...newImages] })
+    void appendFiles(Array.from(e.dataTransfer.files))
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
-    const newImages = files.map((f, i) => ({
-      id: `new-${Date.now()}-${i}`,
-      property_id: '',
-      image_url: URL.createObjectURL(f),
-      is_primary: form.images.length === 0 && i === 0,
-      display_order: form.images.length + i + 1,
-    }))
-    setForm({ ...form, images: [...form.images, ...newImages] })
+    void appendFiles(Array.from(e.target.files || []))
+    e.target.value = ''
   }
 
-  const setPrimary = (id: string) => {
+  const setPrimary = async (id: string) => {
+    const selected = form.images.find(img => img.id === id)
+    if (!selected) {
+      return
+    }
+
+    const currentPrimary = form.images.find(img => img.is_primary)
     setForm({ ...form, images: form.images.map(img => ({ ...img, is_primary: img.id === id })) })
+
+    if (id.startsWith('upload-') || selected.image_url.startsWith('blob:')) {
+      return
+    }
+
+    try {
+      if (currentPrimary && currentPrimary.id !== id && !currentPrimary.id.startsWith('upload-') && !currentPrimary.image_url.startsWith('blob:')) {
+        await updateAdminPropertyImage(currentPrimary.id, { is_primary: false }, fetchWithAuth)
+      }
+      await updateAdminPropertyImage(id, { is_primary: true }, fetchWithAuth)
+    } catch (error) {
+      setUploadNotice(error instanceof Error ? error.message : 'Failed to update cover image')
+    }
   }
 
-  const removeImage = (id: string) => {
+  const removeImage = async (id: string) => {
+    const imageToRemove = form.images.find(img => img.id === id)
+    if (imageToRemove?.image_url.startsWith('blob:')) {
+      URL.revokeObjectURL(imageToRemove.image_url)
+    }
+
+    const isTemporaryImage = id.startsWith('upload-') || imageToRemove?.image_url.startsWith('blob:')
+
+    if (!isTemporaryImage) {
+      try {
+        await deleteAdminPropertyImage(id, fetchWithAuth)
+      } catch (error) {
+        setUploadNotice(error instanceof Error ? error.message : 'Failed to delete image')
+        return
+      }
+    }
+
     const remaining = form.images.filter(img => img.id !== id)
     if (remaining.length > 0 && !remaining.some(img => img.is_primary)) {
       remaining[0].is_primary = true
+      if (!remaining[0].id.startsWith('upload-') && !remaining[0].image_url.startsWith('blob:')) {
+        void updateAdminPropertyImage(remaining[0].id, { is_primary: true }, fetchWithAuth).catch(error => {
+          setUploadNotice(error instanceof Error ? error.message : 'Failed to set replacement cover image')
+        })
+      }
     }
+    setUploadProgress(prev => {
+      if (!prev[id]) {
+        return prev
+      }
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+    setUploadErrors(prev => {
+      if (!prev[id]) {
+        return prev
+      }
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
     setForm({ ...form, images: remaining })
   }
 
@@ -756,7 +892,7 @@ function PhotosSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: (f
       >
         <div style={{ fontSize: '32px', marginBottom: '12px' }}>📸</div>
         <p style={{ fontSize: '16px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '6px' }}>Drag & drop photos here</p>
-        <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '16px' }}>or click to browse files</p>
+        <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '16px' }}>JPG, PNG, WEBP only. Max 10MB each.</p>
         <div style={{
           display: 'inline-block', backgroundColor: 'var(--color-text-primary)', color: '#ffffff',
           padding: '10px 24px', borderRadius: '8px', fontSize: '13px', fontWeight: '700',
@@ -764,8 +900,16 @@ function PhotosSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: (f
         }}>
           Choose Photos
         </div>
-        <input ref={fileInputRef} type="file" multiple accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
+        <input ref={fileInputRef} type="file" multiple accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={handleFileChange} />
       </div>
+
+      {isUploading && (
+        <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>Uploading images to secure storage...</p>
+      )}
+
+      {uploadNotice && (
+        <p style={{ fontSize: '12px', color: '#C62828' }}>{uploadNotice}</p>
+      )}
 
       {/* Image Grid */}
       {form.images.length > 0 && (
@@ -774,17 +918,21 @@ function PhotosSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: (f
           <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '16px' }}>Click a photo to set it as primary cover image</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px' }}>
             {form.images.map(img => (
-              <div key={img.id} style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', aspectRatio: '4/3', cursor: 'pointer' }} onClick={() => setPrimary(img.id)}>
-                <Image src={img.image_url} alt="" fill sizes="(max-width: 768px) 100vw, 150px" style={{ objectFit: 'cover' }} />
+              <div key={img.id} style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', aspectRatio: '4/3', cursor: 'pointer' }} onClick={() => { void setPrimary(img.id) }}>
+                {img.image_url ? (
+                  <Image src={img.image_url} alt="" fill sizes="(max-width: 768px) 100vw, 150px" style={{ objectFit: 'cover' }} />
+                ) : (
+                  <div style={{ width: '100%', height: '100%', backgroundColor: 'var(--color-bg-card)' }} />
+                )}
                 {img.is_primary && (
                   <div style={{ position: 'absolute', top: '8px', left: '8px', backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', fontSize: '10px', fontWeight: '800', padding: '3px 8px', borderRadius: '4px', letterSpacing: '0.5px' }}>
                     COVER
                   </div>
                 )}
                 <button
-                  onClick={e => { e.stopPropagation(); removeImage(img.id) }}
+                  onClick={e => { e.stopPropagation(); void removeImage(img.id) }}
                   style={{
-                    position: 'absolute', top: '8px', right: '8px',
+                    position: 'absolute', top: '8px', right: '8px', zIndex: 2,
                     width: '24px', height: '24px', borderRadius: '50%',
                     backgroundColor: 'rgba(0,0,0,0.6)', border: 'none',
                     color: '#fff', fontSize: '14px', cursor: 'pointer',
@@ -792,10 +940,53 @@ function PhotosSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: (f
                   }}
                 >×</button>
                 <div style={{
-                  position: 'absolute', inset: 0,
+                  position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1,
                   border: img.is_primary ? '2px solid var(--color-gold)' : '2px solid transparent',
                   borderRadius: '10px', transition: 'border-color 0.2s',
                 }} />
+                {uploadProgress[img.id] !== undefined && uploadProgress[img.id] < 100 && (
+                  <div style={{
+                    position: 'absolute', left: '0', right: '0', bottom: '0',
+                    height: '6px', backgroundColor: 'rgba(0, 0, 0, 0.18)',
+                  }}>
+                    <div style={{
+                      height: '100%',
+                      width: `${uploadProgress[img.id]}%`,
+                      backgroundColor: 'var(--color-gold)',
+                      transition: 'width 0.15s ease',
+                    }} />
+                  </div>
+                )}
+                {uploadErrors[img.id] && (
+                  <div style={{
+                    position: 'absolute', left: '0', right: '0', bottom: '0',
+                    padding: '6px 8px', backgroundColor: 'rgba(198, 40, 40, 0.9)',
+                    color: '#fff', fontSize: '10px', fontWeight: '700', display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'space-between'
+                  }}>
+                    <span style={{ flex: 1, paddingRight: '8px' }}>{uploadErrors[img.id]}</span>
+                    <button
+                      onClick={e => { e.stopPropagation(); void (async () => {
+                        const id = img.id
+                        const file = uploadFilesRef.current[id]
+                        if (!file) return
+                        // clear prior error and restart progress
+                        setUploadErrors(prev => { const next = { ...prev }; delete next[id]; return next })
+                        setUploadProgress(prev => ({ ...prev, [id]: 0 }))
+                        try {
+                          const publicUrl = await uploadPropertyImage(file, percent => setUploadProgress(prev => ({ ...prev, [id]: percent })), fetchWithAuth)
+                          setForm(prev => ({ ...prev, images: prev.images.map(i => i.id === id ? { ...i, image_url: publicUrl } : i) }))
+                          delete uploadFilesRef.current[id]
+                        } catch (err) {
+                          const msg = err instanceof Error ? err.message : 'Image upload failed'
+                          setUploadErrors(prev => ({ ...prev, [id]: msg }))
+                        }
+                      }) }}
+                      style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', padding: '4px 8px', borderRadius: '6px', cursor: 'pointer', fontSize: '11px' }}
+                    >
+                      Retry
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -1155,6 +1346,8 @@ function calcCompletion(form: typeof EMPTY_FORM, sectionId: SectionId): number {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps) {
+  const { user, loading } = useRequireAuth({ requireAdmin: true })
+  const { fetchWithAuth } = useAuth()
   const isEdit = Boolean(property)
   const [activeSection, setActiveSection] = useState<SectionId>('basic')
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
@@ -1162,6 +1355,10 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
   const [availableProperties, setAvailableProperties] = useState<Property[]>([])
   const [groupWithPropertyId, setGroupWithPropertyId] = useState('')
   const [wholePropertyChoice, setWholePropertyChoice] = useState<WholePropertyChoice>('existing')
+  const [imageUploadProgress, setImageUploadProgress] = useState<UploadProgressMap>({})
+  const [imageUploadErrors, setImageUploadErrors] = useState<UploadErrorMap>({})
+  const [imageUploadNotice, setImageUploadNotice] = useState('')
+  const [isUploadingImages, setIsUploadingImages] = useState(false)
 
   useEffect(() => {
     // schedule updates asynchronously to avoid cascading synchronous state updates
@@ -1169,6 +1366,10 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
       setForm(createFormFromProperty(property))
       setActiveSection('basic')
       setSaveStatus('idle')
+      setImageUploadProgress({})
+      setImageUploadErrors({})
+      setImageUploadNotice('')
+      setIsUploadingImages(false)
     })
     return () => clearTimeout(t)
   }, [property])
@@ -1177,8 +1378,7 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
     let isMounted = true
     const loadProperties = async () => {
       try {
-        const useApi = process.env.NEXT_PUBLIC_USE_API === 'true'
-        const properties = useApi ? await listAdminProperties() : dummyProperties
+        const properties = await listAdminProperties(fetchWithAuth)
         if (isMounted) {
           setAvailableProperties(properties.filter(item => item.id !== property?.id))
           setGroupWithPropertyId('')
@@ -1186,7 +1386,7 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
         }
       } catch {
         if (isMounted) {
-          setAvailableProperties(dummyProperties.filter(item => item.id !== property?.id))
+          setAvailableProperties([])
           setGroupWithPropertyId('')
           setWholePropertyChoice('existing')
         }
@@ -1194,10 +1394,9 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
     }
 
     loadProperties()
-    return () => {
-      isMounted = false
-    }
-  }, [property?.id])
+
+    return () => { isMounted = false }
+  }, [fetchWithAuth, property?.id])
 
   // Trap scroll on body
   useEffect(() => {
@@ -1210,7 +1409,9 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
   }
 
   const getNextPropertyId = () => {
-    const maxId = dummyProperties.reduce((max, item) => {
+    const combined = [...availableProperties]
+    if (property) combined.push(property)
+    const maxId = combined.reduce((max, item) => {
       const parsed = Number.parseInt(item.id, 10)
       return Number.isNaN(parsed) ? max : Math.max(max, parsed)
     }, 0)
@@ -1273,18 +1474,13 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
     if (!groupWithPropertyId) {
       return
     }
-    const useApi = process.env.NEXT_PUBLIC_USE_API === 'true'
-    if (!useApi) {
-      return
-    }
-
-    const groups = await listPropertyGroups()
+    const groups = await listPropertyGroups(fetchWithAuth)
     const selectedProperty = availableProperties.find(item => item.id === groupWithPropertyId)
     let group = groups.find(g => g.members.some(member => member.property_id === groupWithPropertyId))
 
     if (!group) {
       const groupName = selectedProperty ? `${selectedProperty.name} Group` : `${saved.name} Group`
-      group = await createPropertyGroup(groupName)
+      group = await createPropertyGroup(groupName, fetchWithAuth)
     }
 
     if (!group) {
@@ -1299,17 +1495,17 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
 
     if (!selectedMember) {
       const selectedIsWhole = !hasWhole && wholePropertyChoice === 'existing'
-      group = await addPropertyGroupMember(group.id, groupWithPropertyId, selectedIsWhole)
+      group = await addPropertyGroupMember(group.id, groupWithPropertyId, selectedIsWhole, fetchWithAuth)
       hasWhole = refreshHasWhole(group)
     } else if (!hasWhole && wholePropertyChoice === 'existing' && !selectedMember.is_whole_property) {
-      group = await updatePropertyGroupMember(group.id, selectedMember.id, true)
+      group = await updatePropertyGroupMember(group.id, selectedMember.id, true, fetchWithAuth)
       hasWhole = refreshHasWhole(group)
     }
 
     const newMember = group.members.find(member => member.property_id === saved.id)
     if (!newMember) {
       const newIsWhole = !hasWhole && wholePropertyChoice === 'new'
-      await addPropertyGroupMember(group.id, saved.id, newIsWhole)
+      await addPropertyGroupMember(group.id, saved.id, newIsWhole, fetchWithAuth)
     }
   }
 
@@ -1318,18 +1514,26 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
       return false
     }
 
+    if (isUploadingImages) {
+      setImageUploadNotice('Please wait for all image uploads to finish before saving.')
+      return false
+    }
+
     setSaveStatus('saving')
     try {
       const payload = buildPropertyPayload()
-      const saved = await saveProperty(payload, { isEdit })
+      const saved = await saveProperty(payload, { isEdit }, fetchWithAuth)
       await applyGrouping(saved)
-      const existingIndex = dummyProperties.findIndex(item => item.id === saved.id)
-
-      if (existingIndex >= 0) {
-        dummyProperties[existingIndex] = saved
-      } else {
-        dummyProperties.push(saved)
-      }
+      // update local available properties state (do not mutate demo data)
+      setAvailableProperties(prev => {
+        const idx = prev.findIndex(p => p.id === saved.id)
+        if (idx >= 0) {
+          const copy = [...prev]
+          copy[idx] = saved
+          return copy
+        }
+        return [saved, ...prev]
+      })
 
       onSave?.(saved)
       setSaveStatus('saved')
@@ -1337,6 +1541,7 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
       return true
     } catch (error) {
       console.error('Failed to save property', error)
+      setImageUploadNotice(error instanceof Error ? error.message : 'Failed to save property')
       setSaveStatus('idle')
       return false
     }
@@ -1349,6 +1554,16 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
   const activeIdx = SECTIONS.findIndex(s => s.id === activeSection)
   const isLastSection = activeIdx === SECTIONS.length - 1
   const isSaving = saveStatus === 'saving'
+  const disableSaveActions = isSaving || isUploadingImages
+
+  if (loading || !user) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
+        <div style={{ width: '40px', height: '40px', border: '3px solid var(--color-gold)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    )
+  }
 
   return (
     <>
@@ -1410,17 +1625,17 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
             )}
             <button
               onClick={() => void handleSave()}
-              disabled={isSaving}
+              disabled={disableSaveActions}
               style={{
                 backgroundColor: 'var(--color-gold)',
                 color: 'var(--color-text-primary)', border: 'none', padding: '10px 24px',
                 borderRadius: '8px', fontSize: '13px', fontWeight: '700',
                 letterSpacing: '1px', textTransform: 'uppercase',
-                cursor: isSaving ? 'not-allowed' : 'pointer',
+                cursor: disableSaveActions ? 'not-allowed' : 'pointer',
                 fontFamily: "'Figtree', sans-serif",
               }}
             >
-              {isEdit ? 'Save Changes' : 'Publish Listing'}
+              {isUploadingImages ? 'Uploading Images...' : isEdit ? 'Save Changes' : 'Publish Listing'}
             </button>
           </div>
         </div>
@@ -1500,7 +1715,21 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
               {/* Section content */}
               {activeSection === 'basic'     && <BasicInfoSection    form={form} setForm={setForm} />}
               {activeSection === 'location'  && <LocationSection     form={form} setForm={setForm} />}
-              {activeSection === 'photos'    && <PhotosSection       form={form} setForm={setForm} />}
+              {activeSection === 'photos'    && (
+                <PhotosSection
+                  form={form}
+                  setForm={setForm}
+                  fetchWithAuth={fetchWithAuth}
+                  uploadProgress={imageUploadProgress}
+                  uploadErrors={imageUploadErrors}
+                  uploadNotice={imageUploadNotice}
+                  isUploading={isUploadingImages}
+                  setUploadProgress={setImageUploadProgress}
+                  setUploadErrors={setImageUploadErrors}
+                  setUploadNotice={setImageUploadNotice}
+                  setIsUploading={setIsUploadingImages}
+                />
+              )}
               {activeSection === 'amenities' && <AmenitiesSection    form={form} setForm={setForm} />}
               {activeSection === 'pricing'   && <PricingSection      form={form} setForm={setForm} />}
               {activeSection === 'policies'  && (
@@ -1536,8 +1765,8 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
                 <button
                   onClick={async () => {
                     if (isLastSection) {
-                      const saved = await handleSave()
-                      if (saved) {
+                      const savedResult = await handleSave()
+                      if (savedResult) {
                         closeEditor()
                       }
                       return
@@ -1545,16 +1774,16 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
 
                     setActiveSection(SECTIONS[Math.min(SECTIONS.length - 1, activeIdx + 1)].id)
                   }}
-                  disabled={isSaving}
+                  disabled={disableSaveActions}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '8px',
                     padding: '12px 20px',
                     border: 'none',
                     borderRadius: '8px',
-                    backgroundColor: isSaving ? 'var(--color-border)' : isLastSection ? 'var(--color-gold)' : 'var(--color-text-primary)',
-                    color: isSaving ? '#ccc' : '#ffffff',
+                    backgroundColor: disableSaveActions ? 'var(--color-border)' : isLastSection ? 'var(--color-gold)' : 'var(--color-text-primary)',
+                    color: disableSaveActions ? '#ccc' : '#ffffff',
                     fontSize: '13px', fontWeight: '700',
-                    cursor: isSaving ? 'not-allowed' : 'pointer',
+                    cursor: disableSaveActions ? 'not-allowed' : 'pointer',
                     fontFamily: "'Figtree', sans-serif",
                     letterSpacing: '0.5px',
                   }}
@@ -1586,7 +1815,33 @@ function AdminPropertiesPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const propertyId = searchParams.get('id')
-  const property = propertyId ? (dummyProperties.find(item => item.id === propertyId) ?? null) : null
+  const { fetchWithAuth } = useAuth()
+  const { user, loading } = useRequireAuth({ requireAdmin: true })
+  const [properties, setProperties] = useState<Property[] | null>(null)
+
+  useEffect(() => {
+    if (loading || !user || user.role !== 'admin') {
+      return
+    }
+
+    let mounted = true
+    const load = async () => {
+      try {
+        const list = await listAdminProperties(fetchWithAuth)
+        if (mounted) setProperties(list)
+      } catch {
+        if (mounted) setProperties([])
+      }
+    }
+    void load()
+    return () => { mounted = false }
+  }, [fetchWithAuth, loading, user])
+
+  if (loading || !user || user.role !== 'admin') {
+    return null
+  }
+
+  const property = propertyId && properties ? (properties.find(item => item.id === propertyId) ?? null) : null
 
   return (
     <PropertyEditorModal

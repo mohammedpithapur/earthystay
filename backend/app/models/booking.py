@@ -1,14 +1,22 @@
 from __future__ import annotations
 
 import uuid
+import secrets
+import string
 from datetime import datetime, date
 
-from sqlalchemy import String, Integer, Date, DateTime, Enum as SAEnum, ForeignKey, Boolean
+from sqlalchemy import String, Integer, Date, DateTime, Enum as SAEnum, ForeignKey, Boolean, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 
 from app.database import Base, utc_now
 import enum
+
+
+def _generate_booking_ref() -> str:
+    chars = string.ascii_uppercase + string.digits
+    suffix = ''.join(secrets.choice(chars) for _ in range(6))
+    return f'ES-{suffix}'
 
 
 class BookingStatus(str, enum.Enum):
@@ -20,6 +28,12 @@ class BookingStatus(str, enum.Enum):
 
 class Booking(Base):
     __tablename__ = "bookings"
+    __table_args__ = (
+        Index("ix_bookings_property_id", "property_id"),
+        Index("ix_bookings_guest_id", "guest_id"),
+        Index("ix_bookings_status", "status"),
+        Index("ix_bookings_property_dates", "property_id", "check_in", "check_out"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     property_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("properties.id"), nullable=False)
@@ -36,6 +50,7 @@ class Booking(Base):
     status: Mapped[BookingStatus] = mapped_column(SAEnum(BookingStatus), default=BookingStatus.pending, nullable=False)
     is_shadow_block: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     parent_booking_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("bookings.id", ondelete="CASCADE"), nullable=True)
+    booking_ref: Mapped[str] = mapped_column(String(20), default=_generate_booking_ref, nullable=False, index=True)
     guest_name: Mapped[str] = mapped_column(String(255), nullable=False)
     guest_email: Mapped[str] = mapped_column(String(255), nullable=False)
     guest_phone: Mapped[str | None] = mapped_column(String(20), nullable=True)

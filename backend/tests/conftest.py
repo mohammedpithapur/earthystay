@@ -33,7 +33,7 @@ def _get_test_db_url() -> str:
 # Must exist before test_engine tries to use it.
 _bootstrap_engine = create_async_engine(
     _get_test_db_url(),
-    connect_args={"prepared_statement_cache_size": 0},
+    connect_args={"statement_cache_size": 0},
     echo=False,
     poolclass=NullPool,
 )
@@ -43,9 +43,10 @@ _bootstrap_engine = create_async_engine(
 test_engine = create_async_engine(
     _get_test_db_url(),
     connect_args={
-        "prepared_statement_cache_size": 0,
+        "statement_cache_size": 0,
         "server_settings": {"search_path": TEST_SCHEMA},
     },
+    execution_options={"schema_translate_map": {None: TEST_SCHEMA}},
     echo=False,
     poolclass=NullPool,
 )
@@ -72,7 +73,11 @@ async def _create_test_schema():
 
     # Step 2: create all tables and ENUM types inside test_schema.
     async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(
+            lambda sync_conn: Base.metadata.create_all(
+                sync_conn.execution_options(schema_translate_map={None: TEST_SCHEMA})
+            )
+        )
 
     yield
 
@@ -85,7 +90,7 @@ async def _create_test_schema():
 async def _truncate_tables(_create_test_schema):
     """Truncate all tables before each test for full isolation."""
     async with test_engine.begin() as conn:
-        table_names = [f'"{table.name}"' for table in Base.metadata.sorted_tables]
+        table_names = [f'{TEST_SCHEMA}."{table.name}"' for table in Base.metadata.sorted_tables]
         if table_names:
             await conn.execute(text(f"TRUNCATE {', '.join(table_names)} CASCADE"))
     yield

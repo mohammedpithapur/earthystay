@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from uuid import UUID
 from datetime import datetime, date
 
@@ -11,6 +11,8 @@ class UserOut(BaseModel):
     full_name: str
     phone: str | None
     role: str
+    is_active: bool
+    is_email_verified: bool
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -30,8 +32,9 @@ class PasswordChange(BaseModel):
 
 class RegisterIn(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(min_length=8)
     full_name: str
+    phone: str | None = None
 
 
 class LoginIn(BaseModel):
@@ -51,7 +54,7 @@ class ForgotPasswordIn(BaseModel):
 
 class ResetPasswordIn(BaseModel):
     token: str
-    new_password: str
+    new_password: str = Field(min_length=8)
 
 
 # ── Dashboard ──

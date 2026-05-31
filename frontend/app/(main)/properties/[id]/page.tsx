@@ -237,14 +237,22 @@ export default function PropertyDetailPage() {
       {/* Photo Gallery */}
       <div style={{ backgroundColor: 'var(--color-navbar)', padding: '6px' }}>
         <div style={{ position: 'relative', minHeight: 'clamp(280px, 55vw, 500px)', overflow: 'hidden', marginBottom: '8px' }}>
-          <Image
-            src={property.images[activeImage]?.image_url}
-            alt={property.name}
-            fill
-            sizes="100vw"
-            style={{ objectFit: 'cover' }}
-            priority
-          />
+          {(() => {
+            const mainSrc = property.images[activeImage]?.image_url
+            if (mainSrc) {
+              return (
+                <Image
+                  src={mainSrc}
+                  alt={property.name}
+                  fill
+                  sizes="100vw"
+                  style={{ objectFit: 'cover' }}
+                  priority
+                />
+              )
+            }
+            return <div style={{ width: '100%', height: '100%', backgroundColor: 'var(--color-bg-card)' }} />
+          })()}
           <div style={{ position: 'absolute', bottom: '16px', right: '16px', backgroundColor: 'rgba(0,0,0,0.6)', color: '#ffffff', padding: '6px 14px', fontSize: '13px', borderRadius: '6px' }}>
             {activeImage + 1} / {property.images.length}
           </div>
@@ -257,15 +265,19 @@ export default function PropertyDetailPage() {
         </div>
         <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', padding: '4px 4px' }}>
           {property.images.map((img, i) => (
-            <Image
-              key={img.id}
-              src={img.image_url}
-              alt={`${property.name} ${i + 1}`}
-              onClick={() => setActiveImage(i)}
-              width={72}
-              height={48}
-              style={{ objectFit: 'cover', cursor: 'pointer', flexShrink: 0, opacity: activeImage === i ? 1 : 0.7, border: activeImage === i ? '2px solid var(--color-gold)' : '2px solid transparent', borderRadius: '6px', transition: 'opacity 0.15s ease' }}
-            />
+            img.image_url ? (
+              <Image
+                key={img.id}
+                src={img.image_url}
+                alt={`${property.name} ${i + 1}`}
+                onClick={() => setActiveImage(i)}
+                width={72}
+                height={48}
+                style={{ objectFit: 'cover', cursor: 'pointer', flexShrink: 0, opacity: activeImage === i ? 1 : 0.7, border: activeImage === i ? '2px solid var(--color-gold)' : '2px solid transparent', borderRadius: '6px', transition: 'opacity 0.15s ease' }}
+              />
+            ) : (
+              <div key={img.id} onClick={() => setActiveImage(i)} style={{ width: 72, height: 48, borderRadius: 6, backgroundColor: 'var(--color-bg-card)', cursor: 'pointer', opacity: activeImage === i ? 1 : 0.7, border: activeImage === i ? '2px solid var(--color-gold)' : '2px solid transparent' }} />
+            )
           ))}
         </div>
       </div>
