@@ -1,11 +1,13 @@
 from pydantic import model_validator
+from pydantic import Field
+from pydantic import AliasChoices
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     FRONTEND_BASE_URL: str = "http://localhost:3000"
-    DATABASE_URL: str
+    DATABASE_URL: str = Field(validation_alias=AliasChoices("DATABASE_URL", "TEST_DATABASE_URL"))
 
     # Access token - short-lived, sent in Authorization header
     JWT_SECRET: str
