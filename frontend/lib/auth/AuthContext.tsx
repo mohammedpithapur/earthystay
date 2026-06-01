@@ -3,6 +3,17 @@ import { createContext, useContext, useEffect, useState, useCallback, useRef } f
 import type { User } from '@/lib/types'
 
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000'
+const E2E_SKIP_AUTH = process.env.NEXT_PUBLIC_E2E_SKIP_AUTH === '1'
+
+const E2E_ADMIN_USER: User = {
+  id: 'e2e-admin',
+  email: 'admin@example.com',
+  full_name: 'E2E Admin',
+  phone: '',
+  profile_photo: '',
+  role: 'admin',
+  created_at: new Date(0).toISOString(),
+}
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -43,9 +54,9 @@ const REFRESH_MARGIN_MS = 2 * 60 * 1000 // start refresh 2 min before expiry
 // ── Provider ──────────────────────────────────────────────────────────────────
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [accessToken, setAccessToken] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<User | null>(E2E_SKIP_AUTH ? E2E_ADMIN_USER : null)
+  const [accessToken, setAccessToken] = useState<string | null>(E2E_SKIP_AUTH ? 'e2e-admin-token' : null)
+  const [loading, setLoading] = useState(!E2E_SKIP_AUTH)
 
   // Ref so scheduleRefresh can call silentRefresh without a circular dep
   const silentRefreshRef = useRef<(() => Promise<string | null>) | undefined>(undefined)
@@ -103,6 +114,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // On first mount: restore session from the refresh cookie (if any)
   useEffect(() => {
+    if (E2E_SKIP_AUTH) {
+      setLoading(false)
+      return
+    }
+
     const timer = setTimeout(() => {
       silentRefresh().finally(() => setLoading(false))
     }, 0)
@@ -155,6 +171,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [scheduleRefresh])
 
   const logout = useCallback(async () => {
+    if (E2E_SKIP_AUTH) {
+      setUser(null)
+      setAccessToken(null)
+      return
+    }
+
     clearRefreshTimer()
     await fetch(`${API_BASE}/auth/logout`, {
       method: 'POST',

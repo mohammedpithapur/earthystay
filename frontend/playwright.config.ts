@@ -17,7 +17,7 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   webServer: {
-    command: 'npm run dev -- --hostname 0.0.0.0 --port 3000',
+    command: 'NEXT_PUBLIC_E2E_SKIP_AUTH=1 npm run dev -- --hostname 0.0.0.0 --port 3000',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
   },

@@ -379,6 +379,8 @@ These apply across all phases:
 - Loading states must be shown while API fetches (skeleton loaders or spinners)
 - Forms must disable submit button while saving (`isSaving` state)
 
+- **E2E/Test Hooks:** Remove any E2E-only UI or seeded test helpers (for example, `?e2e` seed hooks or in-page test links) before production deploy. Gate test-only code behind explicit environment flags (e.g., `NEXT_PUBLIC_E2E_SKIP_AUTH`) and ensure CI/staging, not production, enable them.
+
 ### Testing (All Phases)
 - Write at least one happy-path test for each new backend endpoint in `backend/tests/`
 - Test the payment webhook with Razorpay's test event simulator before going live

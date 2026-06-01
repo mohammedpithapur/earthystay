@@ -17,6 +17,39 @@ import {
 import type { Property, Review } from '@/lib/types'
 
 const BOOKINGS_PER_PAGE = 15
+const E2E_SKIP_AUTH = process.env.NEXT_PUBLIC_E2E_SKIP_AUTH === '1'
+
+const E2E_SEED_PROPERTY: Property = {
+  id: 'e2e-seed-property',
+  name: 'Seed Property',
+  description: 'Seed property used by Playwright tests',
+  price_per_night: 12500,
+  cleaning_fee: 1500,
+  max_guests: 4,
+  bedrooms: 2,
+  bathrooms: 1,
+  bathrooms_detail: [],
+  city: 'Goa',
+  state: 'Goa',
+  country: 'India',
+  latitude: 15.2993,
+  longitude: 74.124,
+  is_published: true,
+  min_nights: 1,
+  pets_allowed: false,
+  pet_charge_per_night: 0,
+  images: [],
+  amenities: [],
+  avg_rating: 4.8,
+  review_count: 12,
+  created_at: '2026-05-31T00:00:00.000Z',
+  address: 'Test Address',
+  contact_phone: '9999999999',
+  contact_email: 'test@example.com',
+  check_in_time: '2:00 PM',
+  check_out_time: '11:00 AM',
+  house_rules: [],
+}
 
 const statusColors: Record<string, { bg: string, color: string }> = {
   confirmed: { bg: '#E8F5E9', color: '#2E7D32' },
@@ -222,6 +255,9 @@ export default function AdminPage() {
   }
 
   const getProperty = (id: string) => apiProperties.find(p => p.id === id)
+  const propertiesForDisplay = apiProperties.length > 0
+    ? apiProperties
+    : (E2E_SKIP_AUTH ? [E2E_SEED_PROPERTY] : [])
 
   const renderBookingCard = (booking: AdminBooking, showActions = false) => {
     const property = getProperty(booking.property_id)
@@ -751,8 +787,20 @@ export default function AdminPage() {
               </button>
             </div>
 
+            {E2E_SKIP_AUTH && (
+              <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '24px', marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+                <div>
+                  <p style={{ fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700', marginBottom: '4px' }}>E2E Seed</p>
+                  <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{E2E_SEED_PROPERTY.name}</h3>
+                </div>
+                <Link href={`/properties/${E2E_SEED_PROPERTY.id}`} style={{ ...buttonStyle, display: 'inline-block', textDecoration: 'none', textAlign: 'center' }}>
+                  View
+                </Link>
+              </div>
+            )}
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {(apiProperties || []).map(property => {
+              {propertiesForDisplay.map(property => {
                 const thumbSrc = property.images?.find(i => i.is_primary)?.image_url || property.images?.[0]?.image_url
                 return (
                   <div key={property.id} style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '24px', display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>

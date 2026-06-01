@@ -1,0 +1,8 @@
+<testsuites id="" name="" tests="2" failures="0" skipped="0" errors="0" time="62.577707000000004">
+<testsuite name="admin-navigation.spec.ts" timestamp="2026-06-01T11:07:50.228Z" hostname="" tests="2" failures="0" skipped="0" time="32.775" errors="0">
+<testcase name="Admin navigation › Add Property links to editor" classname="admin-navigation.spec.ts" time="5.649">
+</testcase>
+<testcase name="Admin navigation › View button opens property details" classname="admin-navigation.spec.ts" time="27.126">
+</testcase>
+</testsuite>
+</testsuites>
