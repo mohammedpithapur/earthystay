@@ -1,7 +1,7 @@
+/* eslint-disable @next/next/no-img-element */
 "use client"
 
 import { useState } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import Copy from '@/lib/copy'
 
@@ -147,12 +147,17 @@ export default function WhyChooseUs() {
                 backgroundColor: 'rgba(255,255,255,0.12)',
                 position: 'relative',
               }}>
-                <Image
+                <img
                   src={reason.image}
                   alt={reason.alt}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 33vw"
-                  style={{ objectFit: 'cover' }}
+                  loading="lazy"
+                  decoding="async"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    display: 'block',
+                  }}
                 />
               </div>
               <div style={{ width: '32px', height: '2px', backgroundColor: 'var(--color-navbar-text)', marginBottom: '20px' }} />

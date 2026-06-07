@@ -146,8 +146,43 @@ export default function PropertyDetailPage() {
 
   if (loading) {
     return (
-      <div style={{ textAlign: 'center', padding: '120px 24px' }}>
-        <h2 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '16px' }}>Loading property...</h2>
+      <div className="page-shell" style={{ backgroundColor: '#ffffff' }}>
+        {/* Gallery skeleton */}
+        <div style={{ backgroundColor: 'var(--color-navbar)', padding: '6px' }}>
+          <div style={{
+            height: 'clamp(280px, 55vw, 520px)',
+            background: 'linear-gradient(90deg, #2a2a2a 25%, #333 50%, #2a2a2a 75%)',
+            backgroundSize: '200% 100%',
+            animation: 'shimmer 1.4s infinite',
+            marginBottom: '8px',
+          }} />
+          <div style={{ display: 'flex', gap: '6px', padding: '4px' }}>
+            {[1,2,3].map(i => (
+              <div key={i} style={{ width: 72, height: 48, borderRadius: 6, background: 'linear-gradient(90deg, #2a2a2a 25%, #333 50%, #2a2a2a 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite', flexShrink: 0 }} />
+            ))}
+          </div>
+        </div>
+        {/* Content skeleton */}
+        <div className="content-shell-lg" style={{ padding: '48px 24px 72px' }}>
+          <div className="responsive-grid-detail">
+            <div>
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
+                {[100, 150, 80].map((w, i) => (
+                  <div key={i} style={{ height: 28, width: w, borderRadius: 6, background: 'linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
+                ))}
+              </div>
+              <div style={{ height: 48, width: '80%', borderRadius: 8, background: 'linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite', marginBottom: 24 }} />
+              {[100, 80, 90, 70].map((w, i) => (
+                <div key={i} style={{ height: 16, width: `${w}%`, borderRadius: 4, background: 'linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite', marginBottom: 10 }} />
+              ))}
+            </div>
+            <div style={{ border: '1px solid var(--color-border)', borderRadius: 12, padding: 28 }}>
+              <div style={{ height: 40, width: '55%', borderRadius: 6, background: 'linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite', marginBottom: 20 }} />
+              <div style={{ height: 200, borderRadius: 8, background: 'linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite', marginBottom: 16 }} />
+              <div style={{ height: 52, borderRadius: 8, background: '#f0f0f0', animation: 'shimmer 1.4s infinite' }} />
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
@@ -236,7 +271,7 @@ export default function PropertyDetailPage() {
 
       {/* Photo Gallery */}
       <div style={{ backgroundColor: 'var(--color-navbar)', padding: '6px' }}>
-        <div style={{ position: 'relative', minHeight: 'clamp(280px, 55vw, 500px)', overflow: 'hidden', marginBottom: '8px' }}>
+        <div style={{ position: 'relative', minHeight: 'clamp(300px, 60vw, 540px)', overflow: 'hidden', marginBottom: '8px', borderRadius: '4px' }}>
           {(() => {
             const mainSrc = property.images[activeImage]?.image_url
             if (mainSrc) {
@@ -245,38 +280,51 @@ export default function PropertyDetailPage() {
                   src={mainSrc}
                   alt={property.name}
                   fill
+                  unoptimized
                   sizes="100vw"
-                  style={{ objectFit: 'cover' }}
+                  style={{ objectFit: 'cover', transition: 'opacity 0.3s ease' }}
                   priority
                 />
               )
             }
             return <div style={{ width: '100%', height: '100%', backgroundColor: 'var(--color-bg-card)' }} />
           })()}
-          <div style={{ position: 'absolute', bottom: '16px', right: '16px', backgroundColor: 'rgba(0,0,0,0.6)', color: '#ffffff', padding: '6px 14px', fontSize: '13px', borderRadius: '6px' }}>
+          {/* Gradient overlay for text */}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '120px', background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)', pointerEvents: 'none' }} />
+          {/* Counter */}
+          <div style={{ position: 'absolute', bottom: '16px', right: '16px', backgroundColor: 'rgba(0,0,0,0.65)', color: '#ffffff', padding: '6px 14px', fontSize: '13px', borderRadius: '6px', backdropFilter: 'blur(4px)', fontWeight: '600', letterSpacing: '0.5px' }}>
             {activeImage + 1} / {property.images.length}
           </div>
           {property.images.length > 1 && (
             <>
-              <button onClick={() => setActiveImage(i => Math.max(0, i - 1))} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', backgroundColor: 'rgba(0,0,0,0.5)', color: '#ffffff', border: 'none', width: '44px', height: '44px', fontSize: '20px', cursor: 'pointer', borderRadius: '8px' }}>‹</button>
-              <button onClick={() => setActiveImage(i => Math.min(property.images.length - 1, i + 1))} style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', backgroundColor: 'rgba(0,0,0,0.5)', color: '#ffffff', border: 'none', width: '44px', height: '44px', fontSize: '20px', cursor: 'pointer', borderRadius: '8px' }}>›</button>
+              <button
+                onClick={() => setActiveImage(i => Math.max(0, i - 1))}
+                style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', backgroundColor: 'rgba(0,0,0,0.55)', color: '#ffffff', border: 'none', width: '48px', height: '48px', fontSize: '22px', cursor: 'pointer', borderRadius: '50%', backdropFilter: 'blur(4px)', transition: 'background 0.2s ease', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.8)')}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.55)')}
+              >‹</button>
+              <button
+                onClick={() => setActiveImage(i => Math.min(property.images.length - 1, i + 1))}
+                style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', backgroundColor: 'rgba(0,0,0,0.55)', color: '#ffffff', border: 'none', width: '48px', height: '48px', fontSize: '22px', cursor: 'pointer', borderRadius: '50%', backdropFilter: 'blur(4px)', transition: 'background 0.2s ease', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.8)')}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.55)')}
+              >›</button>
             </>
           )}
         </div>
-        <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', padding: '4px 4px' }}>
+        {/* Thumbnail strip */}
+        <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', padding: '4px 4px', scrollbarWidth: 'none' }}>
           {property.images.map((img, i) => (
             img.image_url ? (
-              <Image
+              <div
                 key={img.id}
-                src={img.image_url}
-                alt={`${property.name} ${i + 1}`}
                 onClick={() => setActiveImage(i)}
-                width={72}
-                height={48}
-                style={{ objectFit: 'cover', cursor: 'pointer', flexShrink: 0, opacity: activeImage === i ? 1 : 0.7, border: activeImage === i ? '2px solid var(--color-gold)' : '2px solid transparent', borderRadius: '6px', transition: 'opacity 0.15s ease' }}
-              />
+                style={{ position: 'relative', width: 84, height: 56, flexShrink: 0, cursor: 'pointer', borderRadius: 6, overflow: 'hidden', border: activeImage === i ? '2px solid var(--color-gold)' : '2px solid rgba(255,255,255,0.2)', transition: 'border-color 0.15s ease, transform 0.15s ease', transform: activeImage === i ? 'scale(1.05)' : 'scale(1)' }}
+              >
+                <Image src={img.image_url} alt={`${property.name} ${i + 1}`} fill unoptimized style={{ objectFit: 'cover', opacity: activeImage === i ? 1 : 0.7, transition: 'opacity 0.15s ease' }} />
+              </div>
             ) : (
-              <div key={img.id} onClick={() => setActiveImage(i)} style={{ width: 72, height: 48, borderRadius: 6, backgroundColor: 'var(--color-bg-card)', cursor: 'pointer', opacity: activeImage === i ? 1 : 0.7, border: activeImage === i ? '2px solid var(--color-gold)' : '2px solid transparent' }} />
+              <div key={img.id} onClick={() => setActiveImage(i)} style={{ width: 84, height: 56, borderRadius: 6, backgroundColor: 'var(--color-bg-card)', cursor: 'pointer', opacity: activeImage === i ? 1 : 0.7, border: activeImage === i ? '2px solid var(--color-gold)' : '2px solid transparent', flexShrink: 0 }} />
             )
           ))}
         </div>
@@ -309,33 +357,32 @@ export default function PropertyDetailPage() {
           </h1>
 
           {/* Quick Stats */}
-          <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', padding: '20px 0', borderTop: '1px solid var(--color-border)', borderBottom: '1px solid var(--color-border)', marginBottom: '32px' }}>
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', padding: '20px 0', borderTop: '1px solid var(--color-border)', borderBottom: '1px solid var(--color-border)', marginBottom: '32px' }}>
             {[
-              { label: `${property.max_guests} Guests` },
-              { label: `${property.bedrooms} Bedrooms` },
-              { label: `Min ${property.min_nights} Nights` },
+              { icon: '👥', label: `${property.max_guests} Guests` },
+              { icon: '🛏️', label: `${property.bedrooms} Bedroom${property.bedrooms !== 1 ? 's' : ''}` },
+              { icon: '🌙', label: `Min ${property.min_nights} Night${property.min_nights !== 1 ? 's' : ''}` },
+              { icon: '🚿', label: `${property.bathrooms} Bath${property.bathrooms !== 1 ? 's' : ''}` },
             ].map(stat => (
-              <div key={stat.label} style={{ fontSize: '14px', color: 'var(--color-text-secondary)', fontWeight: '500' }}>
+              <div key={stat.label} style={{
+                display: 'flex', alignItems: 'center', gap: '6px',
+                backgroundColor: 'var(--color-bg-soft)',
+                padding: '8px 14px',
+                borderRadius: '8px',
+                fontSize: '13px',
+                fontWeight: '600',
+                color: 'var(--color-text-primary)',
+              }}>
+                <span style={{ fontSize: '15px' }}>{stat.icon}</span>
                 {stat.label}
               </div>
             ))}
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <span style={{ fontSize: '14px', color: 'var(--color-text-secondary)', fontWeight: '600' }}>
-                {property.bathrooms} Bathroom{property.bathrooms > 1 ? 's' : ''}
-              </span>
-              {property.bathrooms_detail.map((b, i) => (
-                <span key={i} style={{ fontSize: '12px', color: 'var(--color-text-muted)', paddingLeft: '8px' }}>
-                  {b.count}x {bathroomLabel[b.type]}
-                </span>
-              ))}
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <span style={{ fontSize: '14px', color: 'var(--color-text-secondary)', fontWeight: '600' }}>Times</span>
-              <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>In: {property.check_in_time}</span>
-              <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>Out: {property.check_out_time}</span>
-            </div>
+            {property.pets_allowed && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#E8F5E9', padding: '8px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: '600', color: '#2E7D32' }}>
+                <span style={{ fontSize: '15px' }}>🐾</span>
+                Pets Welcome
+              </div>
+            )}
           </div>
 
           {/* Tabs - Vertical on Mobile, Horizontal on Desktop */}
@@ -763,7 +810,12 @@ export default function PropertyDetailPage() {
             </p>
           )}
 
-          <button onClick={handleBook} style={{ width: '100%', backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', border: 'none', padding: '18px', fontSize: '14px', letterSpacing: '2px', fontWeight: '700', textTransform: 'uppercase', cursor: 'pointer', marginBottom: '12px', borderRadius: '8px' }}>
+          <button
+            onClick={handleBook}
+            style={{ width: '100%', backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', border: 'none', padding: '18px', fontSize: '14px', letterSpacing: '2px', fontWeight: '700', textTransform: 'uppercase', cursor: 'pointer', marginBottom: '12px', borderRadius: '8px', transition: 'all 0.2s ease' }}
+            onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 24px rgba(0,0,0,0.15)' }}
+            onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
+          >
             Reserve Now
           </button>
 

@@ -1,33 +1,52 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { API_BASE } from '@/lib/auth/AuthContext'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const token = searchParams.get('token') || ''
   const [form, setForm] = useState({ password: '', confirm_password: '' })
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [apiError, setApiError] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
 
   const validate = () => {
     const newErrors: Record<string, string> = {}
+    if (!token) newErrors.token = 'This reset link is missing a token. Please request a new link.'
     if (!form.password) newErrors.password = 'Password is required'
-    else if (form.password.length < 6) newErrors.password = 'Password must be at least 6 characters'
+    else if (form.password.length < 8) newErrors.password = 'Password must be at least 8 characters'
     if (!form.confirm_password) newErrors.confirm_password = 'Please confirm your password'
     else if (form.password !== form.confirm_password) newErrors.confirm_password = 'Passwords do not match'
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) return
+    setApiError('')
     setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
+    try {
+      const response = await fetch(`${API_BASE}/auth/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ token, new_password: form.password }),
+      })
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}))
+        throw new Error(err.detail || 'Unable to reset password')
+      }
       setSuccess(true)
-      setTimeout(() => router.push('/login'), 2500)
-    }, 1500)
+      setTimeout(() => router.push('/login?reset=success'), 1800)
+    } catch (err) {
+      setApiError(err instanceof Error ? err.message : 'Unable to reset password')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const inputStyle = (field: string) => ({
@@ -41,7 +60,6 @@ export default function ResetPasswordPage() {
   return (
     <div className="auth-shell" style={{ backgroundColor: 'var(--color-bg-soft)' }}>
       <div className="auth-card">
-
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
           <Link href="/" style={{ textDecoration: 'none' }}>
             <h1 style={{ color: 'var(--color-text-primary)', fontSize: '28px', letterSpacing: '3px', marginBottom: '8px', fontWeight: '800' }}>
@@ -52,7 +70,6 @@ export default function ResetPasswordPage() {
         </div>
 
         <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: 'clamp(24px, 4vw, 40px)' }}>
-
           {!success ? (
             <>
               <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '8px' }}>
@@ -63,15 +80,25 @@ export default function ResetPasswordPage() {
                 Choose a strong password that you haven&apos;t used before.
               </p>
 
+              {(errors.token || apiError) && (
+                <div style={{ backgroundColor: '#FFF5F5', border: '1px solid #FEB2B2', borderRadius: '8px', padding: '12px 16px', marginBottom: '20px', color: '#C53030', fontSize: '14px', lineHeight: '1.5' }}>
+                  {errors.token || apiError}{' '}
+                  <Link href="/forgot-password" style={{ color: '#9B2C2C', fontWeight: '700' }}>
+                    Request a new link
+                  </Link>
+                </div>
+              )}
+
               <div style={{ marginBottom: '20px' }}>
                 <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '8px', fontWeight: '600' }}>
                   New Password
                 </label>
                 <input
                   type="password"
-                  placeholder="••••••••"
+                  placeholder="********"
                   value={form.password}
-                  onChange={e => setForm({ ...form, password: e.target.value })}
+                  onChange={e => { setForm({ ...form, password: e.target.value }); setApiError('') }}
+                  onKeyDown={e => e.key === 'Enter' && handleSubmit()}
                   style={inputStyle('password')}
                 />
                 {errors.password && <p style={{ color: '#E53E3E', fontSize: '12px', marginTop: '4px' }}>{errors.password}</p>}
@@ -83,18 +110,18 @@ export default function ResetPasswordPage() {
                 </label>
                 <input
                   type="password"
-                  placeholder="••••••••"
+                  placeholder="********"
                   value={form.confirm_password}
-                  onChange={e => setForm({ ...form, confirm_password: e.target.value })}
+                  onChange={e => { setForm({ ...form, confirm_password: e.target.value }); setApiError('') }}
+                  onKeyDown={e => e.key === 'Enter' && handleSubmit()}
                   style={inputStyle('confirm_password')}
                 />
                 {errors.confirm_password && <p style={{ color: '#E53E3E', fontSize: '12px', marginTop: '4px' }}>{errors.confirm_password}</p>}
               </div>
 
-              {/* Password strength hint */}
               <div style={{ backgroundColor: 'var(--color-bg-soft)', borderRadius: '8px', padding: '12px 16px', marginBottom: '24px' }}>
                 <p style={{ fontSize: '12px', color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>
-                  Password must be at least 6 characters. Use a mix of letters, numbers and symbols for a stronger password.
+                  Password must be at least 8 characters. Use a mix of letters, numbers and symbols for a stronger password.
                 </p>
               </div>
 
@@ -102,11 +129,11 @@ export default function ResetPasswordPage() {
                 onClick={handleSubmit}
                 disabled={loading}
                 style={{
-                  width: '100%', backgroundColor: loading ? 'var(--color-gold)' : 'var(--color-gold)',
+                  width: '100%', backgroundColor: 'var(--color-gold)',
                   color: 'var(--color-text-primary)', border: 'none', padding: '16px',
                   fontSize: '13px', letterSpacing: '2px', fontWeight: '700',
                   textTransform: 'uppercase', cursor: loading ? 'not-allowed' : 'pointer',
-                  borderRadius: '8px'
+                  borderRadius: '8px', opacity: loading ? 0.7 : 1
                 }}
               >
                 {loading ? 'Updating...' : 'Update Password'}
@@ -123,11 +150,11 @@ export default function ResetPasswordPage() {
                 &#10003;
               </div>
               <h2 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '12px' }}>
-                Password Updated!
+                Password Updated
               </h2>
               <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--color-gold)', margin: '0 auto 16px' }} />
               <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', lineHeight: '1.7' }}>
-                Your password has been successfully updated. Redirecting you to sign in...
+                Your password has been updated. Redirecting you to sign in...
               </p>
             </div>
           )}

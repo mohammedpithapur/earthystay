@@ -26,7 +26,7 @@ async def list_properties(
     pets_allowed: bool | None = Query(None),
     amenities: str | None = Query(None),  # comma-separated
     page: int = Query(1, ge=1),
-    limit: int = Query(12, ge=1, le=50),
+    limit: int = Query(12, ge=1, le=200),
     db: AsyncSession = Depends(get_db),
 ):
     cache_payload = {

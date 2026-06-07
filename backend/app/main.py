@@ -14,7 +14,7 @@ from starlette.responses import JSONResponse
 from app.config import settings
 from app.database import get_db
 from app.rate_limit import limiter
-from app.routers import admin, auth, bookings, ical, properties, reviews, users
+from app.routers import admin, auth, bookings, ical, payments, properties, reviews, users
 
 
 logger = logging.getLogger("earthystay.api")
@@ -76,6 +76,7 @@ app.include_router(users.router)
 app.include_router(admin.router)
 app.include_router(ical.router)
 app.include_router(reviews.router)
+app.include_router(payments.router)
 
 
 @app.get("/")

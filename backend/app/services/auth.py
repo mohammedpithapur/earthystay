@@ -34,7 +34,7 @@ def hash_reset_token(token: str) -> str:
 
 def create_password_reset_token() -> tuple[str, str, datetime]:
     token = secrets.token_urlsafe(32)
-    return token, hash_reset_token(token), utc_now() + timedelta(minutes=30)
+    return token, hash_reset_token(token), utc_now() + timedelta(minutes=15)
 
 
 def _serialize_user(user: User) -> dict:
@@ -72,7 +72,7 @@ def create_access_token(user: User) -> str:
     expire = utc_now() + timedelta(minutes=settings.JWT_EXPIRE_MINUTES)
     payload = {
         "sub": str(user.id),
-        "role": user.role,
+        "role": user.role.value,
         "exp": expire,
         "type": "access",
     }

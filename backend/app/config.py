@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     JWT_EXPIRE_MINUTES: int = 20
 
     # Refresh token - long-lived, stored in httpOnly cookie
-    JWT_REFRESH_SECRET: str
+    JWT_REFRESH_SECRET: str | None = None
     JWT_REFRESH_EXPIRE_DAYS: int = 7
 
     # Cookie settings
@@ -38,11 +38,21 @@ class Settings(BaseSettings):
     REDIS_URL: str | None = None
     RESEND_API_KEY: str | None = None
     RESEND_FROM_EMAIL: str = "EarthyStay <noreply@yourdomain.com>"
+    FAST2SMS_API_KEY: str | None = None
+
+    RAZORPAY_KEY_ID: str = ""
+    RAZORPAY_KEY_SECRET: str = ""
 
     model_config = {"env_file": ".env"}
 
     @model_validator(mode="after")
     def validate_production_settings(self):
+        if not self.JWT_REFRESH_SECRET:
+            if self.ENVIRONMENT == "production":
+                raise ValueError("JWT_REFRESH_SECRET must be set when ENVIRONMENT=production")
+
+            self.JWT_REFRESH_SECRET = self.JWT_SECRET
+
         if self.ENVIRONMENT != "production":
             return self
 

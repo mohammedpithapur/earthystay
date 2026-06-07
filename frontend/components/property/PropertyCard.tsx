@@ -41,6 +41,7 @@ export default function PropertyCard({ property }: Props) {
             src={primaryImage}
             alt={property.name}
             fill
+            unoptimized
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             style={{ objectFit: 'cover', transition: 'transform 0.4s ease' }}
             onMouseEnter={e => {

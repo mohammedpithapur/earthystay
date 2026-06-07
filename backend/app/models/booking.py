@@ -20,10 +20,16 @@ def _generate_booking_ref() -> str:
 
 
 class BookingStatus(str, enum.Enum):
-    pending = "pending"
+    pending   = "pending"
     confirmed = "confirmed"
     completed = "completed"
     cancelled = "cancelled"
+
+
+class PaymentStatus(str, enum.Enum):
+    unpaid   = "unpaid"
+    paid     = "paid"
+    refunded = "refunded"
 
 
 class Booking(Base):
@@ -48,6 +54,7 @@ class Booking(Base):
     pet_charge: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     total: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[BookingStatus] = mapped_column(SAEnum(BookingStatus), default=BookingStatus.pending, nullable=False)
+    payment_status: Mapped[PaymentStatus] = mapped_column(SAEnum(PaymentStatus), default=PaymentStatus.unpaid, nullable=False)
     is_shadow_block: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     parent_booking_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("bookings.id", ondelete="CASCADE"), nullable=True)
     booking_ref: Mapped[str] = mapped_column(String(20), default=_generate_booking_ref, nullable=False, index=True)
@@ -64,3 +71,4 @@ class Booking(Base):
         back_populates="shadow_blocks",
     )
     shadow_blocks: Mapped[list["Booking"]] = relationship("Booking", back_populates="parent_booking", cascade="all, delete-orphan")
+    payment: Mapped["Payment | None"] = relationship("Payment", back_populates="booking", uselist=False)  # type: ignore[name-defined]

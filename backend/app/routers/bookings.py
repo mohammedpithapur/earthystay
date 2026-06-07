@@ -1,6 +1,6 @@
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_, func
 
@@ -13,6 +13,9 @@ from app.models.property_group import PropertyGroup, PropertyGroupMember
 from app.models.booking import Booking, BookingStatus
 from app.schemas.booking import BookingCreate, BookingOut, BookingStatusUpdate, BookingListOut
 from app.services.booking import calculate_pricing, apply_group_blocking, remove_shadow_blocks
+from app.services.email import send_booking_cancellation_email
+from app.services.sms import send_booking_cancellation_sms
+
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
 
@@ -114,21 +117,7 @@ async def my_bookings(
     return {"items": items, "total": total, "page": page, "limit": limit}
 
 
-@router.get("/{booking_id}", response_model=BookingOut)
-async def get_booking(
-    booking_id: str,
-    user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    booking = await db.get(Booking, booking_id)
-    if not booking:
-        raise HTTPException(status_code=404, detail="Booking not found")
-    if booking.guest_id != user.id and user.role.value != "admin":
-        raise HTTPException(status_code=403, detail="Access denied")
-    return booking
-
-
-# ── Admin booking management ──
+# ── Admin booking management — registered BEFORE /{booking_id} to avoid shadowing ──
 
 @router.get("/admin/all", response_model=BookingListOut)
 async def admin_list_bookings(
@@ -167,15 +156,59 @@ async def admin_list_bookings(
 async def update_booking_status(
     booking_id: str,
     data: BookingStatusUpdate,
+    background_tasks: BackgroundTasks,
     admin: User = Depends(get_admin),
     db: AsyncSession = Depends(get_db),
 ):
     booking = await db.get(Booking, booking_id)
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")
+    
+    old_status = booking.status
     booking.status = BookingStatus(data.status)
     if booking.status == BookingStatus.cancelled:
         await remove_shadow_blocks(db, booking, commit=False)
     await db.commit()
     await db.refresh(booking)
+
+    # Trigger cancellation notifications if status transitioned to cancelled
+    if booking.status == BookingStatus.cancelled and old_status != BookingStatus.cancelled:
+        property_obj = await db.get(Property, booking.property_id)
+        property_name = property_obj.name if property_obj else "EarthyStay Property"
+        is_refunded = (booking.payment_status.value == "refunded")
+
+        background_tasks.add_task(
+            send_booking_cancellation_email,
+            to_email=booking.guest_email,
+            guest_name=booking.guest_name,
+            booking_ref=booking.booking_ref,
+            property_name=property_name,
+            refund=is_refunded,
+            total=str(booking.total),
+        )
+        if booking.guest_phone:
+            background_tasks.add_task(
+                send_booking_cancellation_sms,
+                phone=booking.guest_phone,
+                booking_ref=booking.booking_ref,
+                property_name=property_name,
+                refund=is_refunded,
+            )
+
+    return booking
+
+
+# ── /{booking_id} — must come LAST to avoid shadowing admin routes ──
+
+@router.get("/{booking_id}", response_model=BookingOut)
+async def get_booking(
+    booking_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    booking = await db.get(Booking, booking_id)
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    if booking.guest_id != user.id and user.role.value != "admin":
+        raise HTTPException(status_code=403, detail="Access denied")
     return booking

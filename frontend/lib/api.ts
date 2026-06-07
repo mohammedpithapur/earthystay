@@ -131,6 +131,7 @@ export type MyBooking = {
   pet_charge: number
   total: number
   status: string
+  payment_status: string
   guest_name: string
   guest_email: string
   guest_phone: string | null
@@ -148,6 +149,41 @@ export type ListMyBookingsParams = {
   status?: string
   page?: number
   limit?: number
+}
+
+// ─── Payment types ─────────────────────────────────────────────────────────────
+
+export type BookingCreate = {
+  property_id: string
+  check_in: string   // "YYYY-MM-DD"
+  check_out: string  // "YYYY-MM-DD"
+  guests: number
+  pets: number
+}
+
+export type PaymentOrderOut = {
+  payment_id: string
+  razorpay_order_id: string
+  amount: number   // paise
+  currency: string
+  key_id: string
+}
+
+export type PaymentVerifyIn = {
+  razorpay_order_id: string
+  razorpay_payment_id: string
+  razorpay_signature: string
+}
+
+export type PaymentOut = {
+  id: string
+  booking_id: string
+  razorpay_order_id: string
+  razorpay_payment_id: string | null
+  amount: number
+  currency: string
+  status: string
+  created_at: string
 }
 
 // ─── Properties ───────────────────────────────────────────────────────────────
@@ -419,4 +455,91 @@ export async function getPublicProperty(propertyId: string): Promise<Property> {
   const response = await fetch(buildApiUrl(`/properties/${propertyId}`))
   if (!response.ok) throw new Error(`Property not found (${response.status})`)
   return response.json()
+}
+
+// ── Bookings ─────────────────────────────────────────────────────────────────────────────────
+
+export async function createBooking(
+  data: BookingCreate,
+  fetcher: ApiFetcher,
+): Promise<MyBooking> {
+  const response = await fetcher(buildApiUrl('/bookings'), {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}))
+    throw new Error((err as { detail?: string }).detail || `Booking failed (${response.status})`)
+  }
+  return response.json()
+}
+
+// ── Payments ────────────────────────────────────────────────────────────────────────────────
+
+export async function createPaymentOrder(
+  bookingId: string,
+  fetcher: ApiFetcher,
+): Promise<PaymentOrderOut> {
+  const response = await fetcher(buildApiUrl('/payments/create-order'), {
+    method: 'POST',
+    body: JSON.stringify({ booking_id: bookingId }),
+  })
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}))
+    throw new Error((err as { detail?: string }).detail || `Failed to create payment order (${response.status})`)
+  }
+  return response.json()
+}
+
+export async function verifyPayment(
+  data: PaymentVerifyIn,
+  fetcher: ApiFetcher,
+): Promise<MyBooking> {
+  const response = await fetcher(buildApiUrl('/payments/verify'), {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}))
+    throw new Error((err as { detail?: string }).detail || `Payment verification failed (${response.status})`)
+  }
+  return response.json()
+}
+
+export async function triggerRefund(
+  paymentId: string,
+  fetcher: ApiFetcher,
+): Promise<PaymentOut> {
+  const response = await fetcher(buildApiUrl(`/payments/${paymentId}/refund`), {
+    method: 'POST',
+  })
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}))
+    throw new Error((err as { detail?: string }).detail || `Refund failed (${response.status})`)
+  }
+  return response.json()
+}
+
+export async function getPaymentForBooking(
+  bookingId: string,
+  fetcher: ApiFetcher,
+): Promise<PaymentOut> {
+  const response = await fetcher(buildApiUrl(`/payments/booking/${bookingId}`))
+  if (!response.ok) throw new Error(`Payment not found (${response.status})`)
+  return response.json()
+}
+
+export async function updateAdminBookingWithRefund(
+  bookingId: string,
+  status: string,
+  paymentId: string | undefined,
+  fetcher: ApiFetcher,
+): Promise<AdminBooking> {
+  // If cancelling a paid booking, trigger refund first
+  if (status === 'cancelled' && paymentId) {
+    await triggerRefund(paymentId, fetcher).catch(() => {
+      // Refund may fail if already refunded — continue with cancellation
+    })
+  }
+  return updateAdminBookingStatus(bookingId, status, fetcher)
 }

@@ -35,6 +35,7 @@ class BookingOut(BaseModel):
     pet_charge: int
     total: int
     status: str
+    payment_status: str
     booking_ref: str
     guest_name: str
     guest_email: str

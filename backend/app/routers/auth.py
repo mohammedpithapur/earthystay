@@ -1,14 +1,16 @@
 import secrets
+from datetime import timedelta
 from urllib.parse import urlencode
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app.config import settings
-from app.database import get_db
+from app.database import get_db, utc_now
 from app.dependencies import get_current_user
+from app.models.password_reset import PasswordResetToken
 from app.models.user import User
 from app.rate_limit import limiter
 from app.schemas.user import RegisterIn, LoginIn, TokenOut, UserOut, ForgotPasswordIn, ResetPasswordIn
@@ -18,7 +20,6 @@ from app.services.auth import (
     create_password_reset_token, hash_reset_token,
 )
 from app.services.email import send_password_reset_email
-from app.database import utc_now
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -228,9 +229,23 @@ async def forgot_password(data: ForgotPasswordIn, db: AsyncSession = Depends(get
     result = await db.execute(select(User).where(User.email == data.email))
     user = result.scalar_one_or_none()
     if user and user.is_active:
+        sent_in_last_hour = await db.scalar(
+            select(func.count()).where(
+                PasswordResetToken.user_id == user.id,
+                PasswordResetToken.created_at >= utc_now() - timedelta(hours=1),
+            )
+        )
+        if sent_in_last_hour and sent_in_last_hour >= 3:
+            return {"message": "If the email exists, a reset link has been sent."}
+
         token, token_hash, expires_at = create_password_reset_token()
-        user.password_reset_token_hash = token_hash
-        user.password_reset_expires_at = expires_at
+        db.add(
+            PasswordResetToken(
+                user_id=user.id,
+                token_hash=token_hash,
+                expires_at=expires_at,
+            )
+        )
         await db.commit()
 
         reset_url = f"{settings.FRONTEND_BASE_URL.rstrip('/')}/reset-password?token={token}"
@@ -242,21 +257,25 @@ async def forgot_password(data: ForgotPasswordIn, db: AsyncSession = Depends(get
 
 
 @router.post("/reset-password")
-async def reset_password(data: ResetPasswordIn, db: AsyncSession = Depends(get_db)):
+async def reset_password(data: ResetPasswordIn, response: Response, db: AsyncSession = Depends(get_db)):
     token_hash = hash_reset_token(data.token)
     result = await db.execute(
-        select(User).where(
-            User.password_reset_token_hash == token_hash,
-            User.password_reset_expires_at > utc_now(),
+        select(PasswordResetToken, User)
+        .join(User, User.id == PasswordResetToken.user_id)
+        .where(
+            PasswordResetToken.token_hash == token_hash,
+            PasswordResetToken.expires_at > utc_now(),
+            PasswordResetToken.used_at.is_(None),
             User.is_active == True,
         )
     )
-    user = result.scalar_one_or_none()
-    if not user:
+    row = result.one_or_none()
+    if not row:
         raise HTTPException(status_code=400, detail="Invalid or expired reset token")
 
+    reset_token, user = row
     user.password_hash = hash_password(data.new_password)
-    user.password_reset_token_hash = None
-    user.password_reset_expires_at = None
+    reset_token.used_at = utc_now()
     await db.commit()
+    _clear_refresh_cookie(response)
     return {"message": "Password has been reset."}

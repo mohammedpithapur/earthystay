@@ -118,7 +118,7 @@ export default function PropertiesClient() {
     else if (sortBy === 'price_high') result.sort((a, b) => b.price_per_night - a.price_per_night)
     else if (sortBy === 'reviews') result.sort((a, b) => b.review_count - a.review_count)
     return result
-  }, [location, minPrice, maxPrice, minBedrooms, petsOnly, roomType, propertyType, bathroomType, sortBy])
+  }, [properties, location, minPrice, maxPrice, minBedrooms, petsOnly, roomType, propertyType, bathroomType, sortBy])
 
   const resetFilters = () => {
     setLocation('')
@@ -135,8 +135,26 @@ export default function PropertiesClient() {
   if (loading) {
     return (
       <div className="page-shell" style={{ backgroundColor: '#ffffff' }}>
-        <div style={{ padding: '120px 24px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
-          Loading properties...
+        {/* Hero shimmer */}
+        <div style={{ backgroundColor: 'var(--color-navbar)', padding: '64px 24px', textAlign: 'center' }}>
+          <p style={{ color: 'var(--color-gold)', fontSize: '12px', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '12px', fontWeight: '600' }}>Explore</p>
+          <h1 style={{ color: 'var(--color-navbar-text)', fontSize: 'clamp(28px, 4vw, 48px)', fontWeight: '800', marginBottom: '8px' }}>Our Properties</h1>
+          <p style={{ color: 'rgba(255,255,255,0.82)', fontSize: '15px' }}>Escape to thoughtfully curated stays inspired by nature, comfort, and local experiences.</p>
+        </div>
+        <div className="content-shell-lg" style={{ padding: '48px 24px 72px' }}>
+          <div className="responsive-card-grid">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} style={{ borderRadius: '12px', border: '1px solid var(--color-border)', overflow: 'hidden', backgroundColor: '#fff' }}>
+                <div style={{ width: '100%', aspectRatio: '4/3', background: 'linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%)', backgroundSize: '200% 100%', animation: 'shimmer 1.4s infinite' }} />
+                <div style={{ padding: '16px 20px' }}>
+                  <div style={{ height: 20, width: '70%', background: '#f0f0f0', borderRadius: 6, marginBottom: 10, animation: 'shimmer 1.4s infinite' }} />
+                  <div style={{ height: 14, width: '50%', background: '#f0f0f0', borderRadius: 6, marginBottom: 14, animation: 'shimmer 1.4s infinite' }} />
+                  <div style={{ height: 1, background: 'var(--color-border)', marginBottom: 12 }} />
+                  <div style={{ height: 24, width: '40%', background: '#f0f0f0', borderRadius: 6, animation: 'shimmer 1.4s infinite' }} />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     )

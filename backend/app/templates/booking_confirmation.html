@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+  <body style="margin:0;background:#f7f3ec;font-family:Arial,sans-serif;color:#2f2a23;">
+    <div style="max-width:560px;margin:0 auto;padding:32px 20px;">
+      <div style="background:#ffffff;border:1px solid #e7ddcf;border-radius:8px;padding:32px;">
+        <p style="margin:0 0 8px;font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#9a7a2f;font-weight:700;">EarthyStay</p>
+        <h1 style="margin:0 0 16px;font-size:24px;line-height:1.25;">Booking Confirmed!</h1>
+        <p style="margin:0 0 24px;font-size:15px;line-height:1.7;color:#5f574d;">
+          Hi {{ guest_name }}, your stay at <strong>{{ property_name }}</strong> is officially confirmed! Here are the details of your upcoming booking.
+        </p>
+
+        <!-- Booking Details Card -->
+        <div style="background:#fcfbf9;border:1px solid #efeae0;border-radius:6px;padding:20px;margin-bottom:24px;">
+          <table style="width:100%;border-collapse:collapse;font-size:14px;color:#2f2a23;">
+            <tr>
+              <td style="padding:6px 0;font-weight:700;width:40%;">Booking Reference:</td>
+              <td style="padding:6px 0;color:#5f574d;">{{ booking_ref }}</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 0;font-weight:700;">Check-in:</td>
+              <td style="padding:6px 0;color:#5f574d;">{{ check_in }} (2:00 PM)</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 0;font-weight:700;">Check-out:</td>
+              <td style="padding:6px 0;color:#5f574d;">{{ check_out }} (11:00 AM)</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 0;font-weight:700;">Guests:</td>
+              <td style="padding:6px 0;color:#5f574d;">{{ guests }} guest(s)</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 0;font-weight:700;">Nights:</td>
+              <td style="padding:6px 0;color:#5f574d;">{{ nights }} night(s)</td>
+            </tr>
+            <tr>
+              <td style="padding:12px 0 6px;font-weight:700;border-top:1px solid #efeae0;">Total Amount Paid:</td>
+              <td style="padding:12px 0 6px;color:#9a7a2f;font-weight:700;font-size:16px;">₹{{ total }}</td>
+            </tr>
+          </table>
+        </div>
+
+        <div style="text-align:center;margin-bottom:24px;">
+          <a href="{{ dashboard_url }}" style="display:inline-block;background:#c9a84a;color:#2f2a23;text-decoration:none;border-radius:6px;padding:14px 22px;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
+            View Your Dashboard
+          </a>
+        </div>
+
+        <p style="margin:24px 0 0;font-size:13px;line-height:1.6;color:#7a7167;border-top:1px solid #efeae0;padding-top:16px;">
+          Please note: All bookings on EarthyStay are strictly non-refundable. For location directions or property-specific questions, please check your dashboard or contact guest support.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

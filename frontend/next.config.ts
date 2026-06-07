@@ -12,6 +12,11 @@ function supabaseHostname(): string {
   return "xxxx.supabase.co";
 }
 
+function apiOrigin(): string {
+  const apiBase = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
+  return new URL(apiBase).origin;
+}
+
 const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -21,10 +26,10 @@ const securityHeaders = [
     value: [
       "default-src 'self'",
       "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
-      "style-src 'self' 'unsafe-inline'",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: blob: https://images.unsplash.com https://*.supabase.co",
-      "font-src 'self' data:",
-      "connect-src 'self' https://*.supabase.co",
+      "font-src 'self' data: https://fonts.gstatic.com",
+      `connect-src 'self' ${apiOrigin()} https://*.supabase.co`,
       "frame-ancestors 'none'",
     ].join("; "),
   },
@@ -37,6 +42,7 @@ const nextConfig: NextConfig = {
     root: ".",
   },
   images: {
+    dangerouslyAllowLocalIP: process.env.NODE_ENV !== "production",
     remotePatterns: [
       {
         protocol: "https",

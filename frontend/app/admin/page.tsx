@@ -9,7 +9,7 @@ import {
   listPropertyGroups, createPropertyGroup, updatePropertyGroup, deletePropertyGroup,
   addPropertyGroupMember, removePropertyGroupMember, updatePropertyGroupMember,
   listAdminProperties, deleteAdminProperty,
-  getAdminDashboard, listAdminBookings, updateAdminBookingStatus,
+  getAdminDashboard, listAdminBookings, updateAdminBookingStatus, updateAdminBookingWithRefund,
   createAdminReview, deleteAdminReview, fetchPropertyReviews,
   listICalLinks, createICalLink, deleteICalLink, getICalExportUrl,
   type PropertyGroup, type CreateReviewPayload, type AdminBooking, type AdminDashboard, type ICalLink,
@@ -204,6 +204,18 @@ export default function AdminPage() {
     } catch { /* noop */ }
   }
 
+  const handleCancelWithRefund = async (booking: AdminBooking) => {
+    const isPaid = (booking as AdminBooking & { payment_status?: string }).payment_status === 'paid'
+    const msg = isPaid
+      ? `Cancel booking ${booking.booking_ref} and issue a full refund of ₹${booking.total.toLocaleString('en-IN')}? This cannot be undone.`
+      : `Cancel booking ${booking.booking_ref}? This cannot be undone.`
+    if (!confirm(msg)) return
+    try {
+      const updated = await updateAdminBookingWithRefund(booking.id, 'cancelled', undefined, fetchWithAuth)
+      setBookings(prev => prev.map(b => b.id === booking.id ? updated : b))
+    } catch (e) { alert((e as Error).message || 'Failed to cancel booking') }
+  }
+
   const handleDeleteProperty = async (propertyId: string, name: string) => {
     if (!confirm(`Delete "${name}"? This cannot be undone.`)) return
     try {
@@ -319,8 +331,8 @@ export default function AdminPage() {
                 <button onClick={() => handleUpdateBookingStatus(booking.id, 'confirmed')} style={{ padding: '9px 12px', backgroundColor: '#E8F5E9', color: '#2E7D32', border: 'none', fontSize: '12px', cursor: 'pointer', fontWeight: '800', borderRadius: '8px' }}>
                   Confirm
                 </button>
-                <button onClick={() => handleUpdateBookingStatus(booking.id, 'cancelled')} style={{ padding: '9px 12px', backgroundColor: '#FFEBEE', color: '#C62828', border: 'none', fontSize: '12px', cursor: 'pointer', fontWeight: '800', borderRadius: '8px' }}>
-                  Cancel
+                <button onClick={() => handleCancelWithRefund(booking)} style={{ padding: '9px 12px', backgroundColor: '#FFEBEE', color: '#C62828', border: 'none', fontSize: '12px', cursor: 'pointer', fontWeight: '800', borderRadius: '8px' }}>
+                  {(booking as AdminBooking & { payment_status?: string }).payment_status === 'paid' ? 'Cancel + Refund' : 'Cancel'}
                 </button>
               </>
             )}
@@ -732,7 +744,9 @@ export default function AdminPage() {
                                   {booking.status === 'pending' && (
                                     <>
                                       <button onClick={() => handleUpdateBookingStatus(booking.id, 'confirmed')} style={{ padding: '6px 10px', backgroundColor: '#E8F5E9', color: '#2E7D32', border: 'none', fontSize: '12px', cursor: 'pointer', fontWeight: '700', borderRadius: '6px' }}>Confirm</button>
-                                      <button onClick={() => handleUpdateBookingStatus(booking.id, 'cancelled')} style={{ padding: '6px 10px', backgroundColor: '#FFEBEE', color: '#C62828', border: 'none', fontSize: '12px', cursor: 'pointer', fontWeight: '700', borderRadius: '6px' }}>Cancel</button>
+                                      <button onClick={() => handleCancelWithRefund(booking)} style={{ padding: '6px 10px', backgroundColor: '#FFEBEE', color: '#C62828', border: 'none', fontSize: '12px', cursor: 'pointer', fontWeight: '700', borderRadius: '6px' }}>
+                                        {(booking as AdminBooking & { payment_status?: string }).payment_status === 'paid' ? 'Cancel+Refund' : 'Cancel'}
+                                      </button>
                                     </>
                                   )}
                                   {booking.status === 'confirmed' && (

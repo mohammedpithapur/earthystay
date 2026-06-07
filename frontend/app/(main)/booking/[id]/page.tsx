@@ -2,16 +2,79 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
-import { buildApiUrl } from '@/lib/api'
+import { buildApiUrl, createBooking, createPaymentOrder, verifyPayment } from '@/lib/api'
 import { useAuth } from '@/lib/auth/AuthContext'
 import type { Property } from '@/lib/types'
+
+// ── Razorpay type declarations ────────────────────────────────────────────────
+interface RazorpayOptions {
+  key: string
+  amount: number
+  currency: string
+  name: string
+  description: string
+  order_id: string
+  prefill: {
+    name: string
+    email: string
+    contact: string
+  }
+  theme: {
+    color: string
+  }
+  modal: {
+    ondismiss: () => void
+  }
+  handler: (response: RazorpayResponse) => void
+}
+
+interface RazorpayResponse {
+  razorpay_order_id: string
+  razorpay_payment_id: string
+  razorpay_signature: string
+}
+
+interface RazorpayInstance {
+  open(): void
+}
+
+declare global {
+  interface Window {
+    Razorpay: new (options: RazorpayOptions) => RazorpayInstance
+  }
+}
+
+// ── Payment steps ─────────────────────────────────────────────────────────────
+type PaymentStep = 'form' | 'creating_booking' | 'creating_order' | 'paying' | 'verifying' | 'done' | 'error'
+
+const STEP_LABELS: Record<PaymentStep, string> = {
+  form:             'Pay ₹{{amount}}',
+  creating_booking: 'Creating Booking…',
+  creating_order:   'Opening Payment…',
+  paying:           'Complete Payment in Razorpay',
+  verifying:        'Confirming Payment…',
+  done:             'Confirmed! Redirecting…',
+  error:            'Try Again',
+}
+
+function loadRazorpayScript(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (window.Razorpay) return resolve()
+    const script = document.createElement('script')
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.onload = () => resolve()
+    script.onerror = () => reject(new Error('Failed to load Razorpay script'))
+    document.body.appendChild(script)
+  })
+}
 
 export default function BookingPage() {
   const { id } = useParams()
   const searchParams = useSearchParams()
   const router = useRouter()
-  const { user, loading: authLoading } = useAuth()
+  const { user, fetchWithAuth, loading: authLoading } = useAuth()
   const propertyId = Array.isArray(id) ? id[0] : id
+
   const [property, setProperty] = useState<Property | null>(null)
   const [pageLoading, setPageLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -23,7 +86,6 @@ export default function BookingPage() {
   const nights = Number(searchParams.get('nights')) || 0
   const total = Number(searchParams.get('total')) || 0
 
-  // Pre-fill form from logged-in user (editable)
   const [form, setForm] = useState({
     full_name: '',
     email: '',
@@ -31,17 +93,17 @@ export default function BookingPage() {
     special_requests: '',
   })
   const [agreed, setAgreed] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [paymentStep, setPaymentStep] = useState<PaymentStep>('form')
+  const [paymentError, setPaymentError] = useState<string | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  // Auth guard: redirect to login if not authenticated
+  // Auth guard
   useEffect(() => {
     if (authLoading) return
     if (!user) {
       const currentUrl = `/booking/${propertyId}?${searchParams.toString()}`
       router.replace(`/login?next=${encodeURIComponent(currentUrl)}`)
     } else if (!form.full_name) {
-      // Pre-fill with user data (user can edit before submitting)
       setForm(f => ({
         ...f,
         full_name: user.full_name,
@@ -52,43 +114,32 @@ export default function BookingPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, authLoading])
 
+  // Load property
   useEffect(() => {
     if (!propertyId) return
     let isMounted = true
-
     const load = async () => {
       try {
         setPageLoading(true)
         setLoadError(null)
-        const response = await fetch(buildApiUrl(`/properties/${propertyId}`), { cache: 'no-store' })
-        if (!response.ok) {
-          throw new Error(`Failed to load property (${response.status})`)
-        }
-        const data = await response.json()
-        if (isMounted) {
-          setProperty(data)
-        }
+        const res = await fetch(buildApiUrl(`/properties/${propertyId}`), { cache: 'no-store' })
+        if (!res.ok) throw new Error(`Failed to load property (${res.status})`)
+        const data = await res.json()
+        if (isMounted) setProperty(data)
       } catch (error) {
-        if (isMounted) {
-          setLoadError(error instanceof Error ? error.message : 'Failed to load property')
-        }
+        if (isMounted) setLoadError(error instanceof Error ? error.message : 'Failed to load property')
       } finally {
-        if (isMounted) {
-          setPageLoading(false)
-        }
+        if (isMounted) setPageLoading(false)
       }
     }
-
     load()
-    return () => {
-      isMounted = false
-    }
+    return () => { isMounted = false }
   }, [propertyId])
 
   if (pageLoading) {
     return (
       <div style={{ textAlign: 'center', padding: '120px 24px' }}>
-        <h2 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '16px' }}>Loading property...</h2>
+        <h2 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '16px' }}>Loading property…</h2>
       </div>
     )
   }
@@ -115,7 +166,8 @@ export default function BookingPage() {
     )
   }
 
-  const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })
+  const formatDate = (dateStr: string) =>
+    new Date(dateStr).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })
 
   const validate = () => {
     const newErrors: Record<string, string> = {}
@@ -123,7 +175,7 @@ export default function BookingPage() {
     if (!form.email.trim()) newErrors.email = 'Email is required'
     else if (!/\S+@\S+\.\S+/.test(form.email)) newErrors.email = 'Enter a valid email'
     if (!form.phone.trim()) newErrors.phone = 'Phone number is required'
-    else if (form.phone.length < 10) newErrors.phone = 'Enter a valid phone number'
+    else if (form.phone.replace(/\D/g, '').length < 10) newErrors.phone = 'Enter a valid phone number'
     if (!agreed) newErrors.agreed = 'You must agree to the non-refundable policy'
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -131,12 +183,91 @@ export default function BookingPage() {
 
   const handleSubmit = async () => {
     if (!validate()) return
-    setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
-      router.push(`/booking/${id}/confirmation?name=${form.full_name}&email=${form.email}&checkIn=${checkIn}&checkOut=${checkOut}&total=${total}`)
-    }, 1500)
+    setPaymentError(null)
+
+    try {
+      // ── Step 1: Create booking ─────────────────────────────────────────────
+      setPaymentStep('creating_booking')
+      const booking = await createBooking(
+        {
+          property_id: propertyId!,
+          check_in: checkIn,
+          check_out: checkOut,
+          guests,
+          pets,
+        },
+        fetchWithAuth,
+      )
+
+      // ── Step 2: Create Razorpay order ──────────────────────────────────────
+      setPaymentStep('creating_order')
+      const order = await createPaymentOrder(booking.id, fetchWithAuth)
+
+      // ── Step 3: Load Razorpay script ───────────────────────────────────────
+      await loadRazorpayScript()
+
+      // ── Step 4: Open Razorpay checkout modal ───────────────────────────────
+      setPaymentStep('paying')
+
+      await new Promise<void>((resolve, reject) => {
+        const rzp = new window.Razorpay({
+          key: order.key_id,
+          amount: order.amount,
+          currency: order.currency,
+          name: 'EarthyStay',
+          description: `Booking for ${property.name}`,
+          order_id: order.razorpay_order_id,
+          prefill: {
+            name: form.full_name,
+            email: form.email,
+            contact: form.phone,
+          },
+          theme: { color: '#C9A84C' },
+          modal: {
+            ondismiss: () => {
+              // User closed the modal without paying
+              setPaymentStep('form')
+              setPaymentError('Payment cancelled. Your booking slot is reserved for a short time — complete payment to confirm.')
+              reject(new Error('Payment modal dismissed'))
+            },
+          },
+          handler: async (response: RazorpayResponse) => {
+            try {
+              // ── Step 5: Verify payment ────────────────────────────────────
+              setPaymentStep('verifying')
+              const confirmedBooking = await verifyPayment(
+                {
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                },
+                fetchWithAuth,
+              )
+
+              // ── Step 6: Redirect to confirmation ─────────────────────────
+              setPaymentStep('done')
+              router.push(
+                `/booking/${propertyId}/confirmation?ref=${confirmedBooking.booking_ref}&name=${encodeURIComponent(form.full_name)}&email=${encodeURIComponent(form.email)}&checkIn=${checkIn}&checkOut=${checkOut}&total=${confirmedBooking.total}`,
+              )
+              resolve()
+            } catch (err) {
+              reject(err)
+            }
+          },
+        })
+        rzp.open()
+      })
+
+    } catch (err) {
+      if ((err as Error).message !== 'Payment modal dismissed') {
+        setPaymentStep('error')
+        setPaymentError((err as Error).message || 'Something went wrong. Please try again.')
+      }
+    }
   }
+
+  const isProcessing = paymentStep !== 'form' && paymentStep !== 'error'
+  const buttonLabel = STEP_LABELS[paymentStep].replace('{{amount}}', total.toLocaleString('en-IN'))
 
   const basePrice = property.price_per_night * nights
   const petCharge = pets * nights * property.pet_charge_per_night
@@ -190,6 +321,14 @@ export default function BookingPage() {
         {/* Left */}
         <div>
 
+          {/* Payment error notice */}
+          {paymentError && (
+            <div style={{ backgroundColor: '#FFF5F5', border: '1px solid #E53E3E', borderRadius: '12px', padding: '16px 20px', marginBottom: '24px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+              <span style={{ fontSize: '18px', flexShrink: 0 }}>⚠️</span>
+              <p style={{ fontSize: '13px', color: '#C53030', lineHeight: '1.6', margin: 0 }}>{paymentError}</p>
+            </div>
+          )}
+
           {/* Guest Info */}
           <div style={cardStyle}>
             <h2 style={{ fontSize: '22px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '8px' }}>
@@ -200,17 +339,17 @@ export default function BookingPage() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '20px' }}>
               <div style={{ gridColumn: '1 / -1' }}>
                 <label style={labelStyle}>Full Name</label>
-                <input type="text" placeholder="John Doe" value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} style={inputStyle('full_name')} />
+                <input type="text" placeholder="John Doe" value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} style={inputStyle('full_name')} disabled={isProcessing} />
                 {errors.full_name && <p style={{ color: '#E53E3E', fontSize: '12px', marginTop: '4px' }}>{errors.full_name}</p>}
               </div>
               <div>
                 <label style={labelStyle}>Email Address</label>
-                <input type="email" placeholder="you@example.com" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} style={inputStyle('email')} />
+                <input type="email" placeholder="you@example.com" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} style={inputStyle('email')} disabled={isProcessing} />
                 {errors.email && <p style={{ color: '#E53E3E', fontSize: '12px', marginTop: '4px' }}>{errors.email}</p>}
               </div>
               <div>
                 <label style={labelStyle}>Phone Number</label>
-                <input type="tel" placeholder="+91 9874827631" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} style={inputStyle('phone')} />
+                <input type="tel" placeholder="+91 9874827631" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} style={inputStyle('phone')} disabled={isProcessing} />
                 {errors.phone && <p style={{ color: '#E53E3E', fontSize: '12px', marginTop: '4px' }}>{errors.phone}</p>}
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
@@ -220,6 +359,7 @@ export default function BookingPage() {
                   value={form.special_requests}
                   onChange={e => setForm({ ...form, special_requests: e.target.value })}
                   rows={4}
+                  disabled={isProcessing}
                   style={{ ...inputStyle('special_requests'), resize: 'vertical' }}
                 />
               </div>
@@ -234,11 +374,11 @@ export default function BookingPage() {
             <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--color-gold)', marginBottom: '28px' }} />
 
             <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                {(() => {
-                  const src = property.images.find(i => i.is_primary)?.image_url || property.images[0]?.image_url
-                  if (src) return <Image src={src} alt={property.name} width={120} height={90} style={{ width: '120px', height: '90px', objectFit: 'cover', flexShrink: 0, borderRadius: '8px' }} />
-                  return <div style={{ width: 120, height: 90, borderRadius: 8, backgroundColor: 'var(--color-bg-card)' }} />
-                })()}
+              {(() => {
+                const src = property.images.find(i => i.is_primary)?.image_url || property.images[0]?.image_url
+                if (src) return <Image src={src} alt={property.name} width={120} height={90} style={{ width: '120px', height: '90px', objectFit: 'cover', flexShrink: 0, borderRadius: '8px' }} />
+                return <div style={{ width: 120, height: 90, borderRadius: 8, backgroundColor: 'var(--color-bg-card)' }} />
+              })()}
               <div style={{ flex: '1 1 0', minWidth: 0 }}>
                 <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '4px' }}>{property.name}</h3>
                 <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '12px' }}>{property.city}, {property.state}</p>
@@ -278,7 +418,8 @@ export default function BookingPage() {
 
             <button
               onClick={() => setAgreed(!agreed)}
-              style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}
+              disabled={isProcessing}
+              style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', background: 'none', border: 'none', cursor: isProcessing ? 'not-allowed' : 'pointer', padding: 0, textAlign: 'left' }}
             >
               <div style={{
                 width: '20px', height: '20px', flexShrink: 0,
@@ -306,12 +447,12 @@ export default function BookingPage() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--color-text-secondary)' }}>
-                <span>₹{property.price_per_night.toLocaleString('en-IN')} x {nights} nights</span>
+                <span>₹{property.price_per_night.toLocaleString('en-IN')} × {nights} nights</span>
                 <span>₹{basePrice.toLocaleString('en-IN')}</span>
               </div>
               {pets > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--color-text-secondary)' }}>
-                  <span>{pets} pet{pets > 1 ? 's' : ''} x {nights} nights</span>
+                  <span>{pets} pet{pets > 1 ? 's' : ''} × {nights} nights</span>
                   <span>₹{petCharge.toLocaleString('en-IN')}</span>
                 </div>
               )}
@@ -330,12 +471,34 @@ export default function BookingPage() {
             <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>Includes all fees and taxes</p>
           </div>
 
+          {/* Progress indicator */}
+          {isProcessing && paymentStep !== 'done' && (
+            <div style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '16px 20px', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{
+                  width: '20px', height: '20px', borderRadius: '50%',
+                  border: '2px solid var(--color-gold)',
+                  borderTopColor: 'transparent',
+                  animation: 'spin 0.8s linear infinite',
+                  flexShrink: 0,
+                }} />
+                <p style={{ fontSize: '13px', color: 'var(--color-text-primary)', margin: 0, fontWeight: '600' }}>
+                  {paymentStep === 'creating_booking' && 'Reserving your dates…'}
+                  {paymentStep === 'creating_order' && 'Preparing payment…'}
+                  {paymentStep === 'paying' && 'Please complete payment in Razorpay…'}
+                  {paymentStep === 'verifying' && 'Confirming your payment…'}
+                </p>
+              </div>
+            </div>
+          )}
+
           <button
+            id="btn-pay-now"
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={isProcessing}
             style={{
               width: '100%',
-              backgroundColor: loading ? 'var(--color-gold)' : 'var(--color-gold)',
+              backgroundColor: isProcessing ? '#C9A84C99' : 'var(--color-gold)',
               color: 'var(--color-text-primary)',
               border: 'none',
               padding: '20px',
@@ -343,13 +506,13 @@ export default function BookingPage() {
               letterSpacing: '2px',
               fontWeight: '700',
               textTransform: 'uppercase',
-              cursor: loading ? 'not-allowed' : 'pointer',
+              cursor: isProcessing ? 'not-allowed' : 'pointer',
               marginBottom: '16px',
               borderRadius: '8px',
-              transition: 'opacity 0.2s ease',
+              transition: 'all 0.2s ease',
             }}
           >
-            {loading ? 'Processing...' : `Pay ₹${total.toLocaleString('en-IN')}`}
+            {buttonLabel}
           </button>
 
           <div style={{ textAlign: 'center' }}>
@@ -363,6 +526,12 @@ export default function BookingPage() {
         </div>
       </div>
       </div>
+
+      <style>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   )
 }

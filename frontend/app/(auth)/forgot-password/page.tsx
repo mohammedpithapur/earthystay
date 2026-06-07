@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import { API_BASE } from '@/lib/auth/AuthContext'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -13,16 +14,27 @@ export default function ForgotPasswordPage() {
     if (!/\S+@\S+\.\S+/.test(email)) { setError('Enter a valid email'); return }
     setError('')
     setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
+    try {
+      const response = await fetch(`${API_BASE}/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}))
+        throw new Error(err.detail || 'Unable to send reset link')
+      }
       setSubmitted(true)
-    }, 1500)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to send reset link')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
     <div className="auth-shell" style={{ backgroundColor: 'var(--color-bg-soft)' }}>
       <div className="auth-card">
-
         <div style={{ textAlign: 'center', marginBottom: '40px' }}>
           <Link href="/" style={{ textDecoration: 'none' }}>
             <h1 style={{ color: 'var(--color-text-primary)', fontSize: '28px', letterSpacing: '3px', marginBottom: '8px', fontWeight: '800' }}>
@@ -33,7 +45,6 @@ export default function ForgotPasswordPage() {
         </div>
 
         <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: 'clamp(24px, 4vw, 40px)' }}>
-
           {!submitted ? (
             <>
               <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '8px' }}>
@@ -53,6 +64,7 @@ export default function ForgotPasswordPage() {
                   placeholder="you@example.com"
                   value={email}
                   onChange={e => { setEmail(e.target.value); setError('') }}
+                  onKeyDown={e => e.key === 'Enter' && handleSubmit()}
                   style={{
                     width: '100%', padding: '14px 16px',
                     border: `1px solid ${error ? '#E53E3E' : 'var(--color-border)'}`,
@@ -68,11 +80,11 @@ export default function ForgotPasswordPage() {
                 onClick={handleSubmit}
                 disabled={loading}
                 style={{
-                  width: '100%', backgroundColor: loading ? 'var(--color-gold)' : 'var(--color-gold)',
+                  width: '100%', backgroundColor: 'var(--color-gold)',
                   color: 'var(--color-text-primary)', border: 'none', padding: '16px',
                   fontSize: '13px', letterSpacing: '2px', fontWeight: '700',
                   textTransform: 'uppercase', cursor: loading ? 'not-allowed' : 'pointer',
-                  marginBottom: '24px', borderRadius: '8px'
+                  marginBottom: '24px', borderRadius: '8px', opacity: loading ? 0.7 : 1
                 }}
               >
                 {loading ? 'Sending...' : 'Send Reset Link'}
@@ -100,7 +112,7 @@ export default function ForgotPasswordPage() {
               </h2>
               <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--color-gold)', margin: '0 auto 16px' }} />
               <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', lineHeight: '1.7', marginBottom: '28px' }}>
-                We sent a password reset link to <strong>{email}</strong>. Please check your inbox and follow the instructions.
+                If an account exists for <strong>{email}</strong>, a password reset link has been sent.
               </p>
               <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '24px' }}>
                 Didn&apos;t receive it? Check your spam folder or{' '}

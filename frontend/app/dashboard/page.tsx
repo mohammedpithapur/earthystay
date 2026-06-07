@@ -20,6 +20,12 @@ const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
   cancelled: { bg: '#FFEBEE', color: '#C62828' },
 }
 
+const PAYMENT_STATUS_COLORS: Record<string, { bg: string; color: string; label: string }> = {
+  paid:     { bg: '#E8F5E9', color: '#2E7D32', label: '✓ Paid' },
+  unpaid:   { bg: '#FFF8E7', color: '#E65100', label: 'Unpaid' },
+  refunded: { bg: '#E3F2FD', color: '#1565C0', label: 'Refunded' },
+}
+
 // ─── Voucher Modal ────────────────────────────────────────────────────────────
 
 function VoucherModal({ booking, property, onClose }: {
@@ -156,9 +162,16 @@ function BookingCard({ booking, property, expanded, onToggle, onVoucher }: {
                 <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>{property.city}, {property.state}</p>
               )}
             </div>
-            <span style={{ backgroundColor: STATUS_COLORS[booking.status]?.bg, color: STATUS_COLORS[booking.status]?.color, padding: '4px 12px', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', borderRadius: '6px', flexShrink: 0 }}>
-              {booking.status}
-            </span>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <span style={{ backgroundColor: STATUS_COLORS[booking.status]?.bg, color: STATUS_COLORS[booking.status]?.color, padding: '4px 12px', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', borderRadius: '6px', flexShrink: 0 }}>
+                {booking.status}
+              </span>
+              {booking.payment_status && PAYMENT_STATUS_COLORS[booking.payment_status] && (
+                <span style={{ backgroundColor: PAYMENT_STATUS_COLORS[booking.payment_status].bg, color: PAYMENT_STATUS_COLORS[booking.payment_status].color, padding: '4px 12px', fontSize: '11px', fontWeight: '700', borderRadius: '6px', flexShrink: 0 }}>
+                  {PAYMENT_STATUS_COLORS[booking.payment_status].label}
+                </span>
+              )}
+            </div>
           </div>
 
           <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', marginTop: '12px' }}>

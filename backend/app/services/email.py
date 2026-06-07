@@ -1,4 +1,5 @@
 import logging
+from pathlib import Path
 
 import httpx
 
@@ -6,6 +7,14 @@ from app.config import settings
 
 
 logger = logging.getLogger("earthystay.email")
+TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "templates"
+
+
+def _render_template(name: str, **context: str) -> str:
+    template = (TEMPLATE_DIR / name).read_text(encoding="utf-8")
+    for key, value in context.items():
+        template = template.replace("{{ " + key + " }}", value)
+    return template
 
 
 async def send_password_reset_email(to_email: str, reset_url: str) -> bool:
@@ -17,6 +26,7 @@ async def send_password_reset_email(to_email: str, reset_url: str) -> bool:
         return False
 
     async with httpx.AsyncClient(timeout=10) as client:
+        html = _render_template("reset_password.html", reset_url=reset_url)
         response = await client.post(
             "https://api.resend.com/emails",
             headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}"},
@@ -24,14 +34,163 @@ async def send_password_reset_email(to_email: str, reset_url: str) -> bool:
                 "from": settings.RESEND_FROM_EMAIL,
                 "to": [to_email],
                 "subject": "Reset your EarthyStay password",
-                "html": (
-                    "<p>Use this link to reset your EarthyStay password.</p>"
-                    f'<p><a href="{reset_url}">Reset password</a></p>'
-                    "<p>This link expires in 30 minutes.</p>"
-                ),
+                "html": html,
             },
         )
     if response.is_success:
         return True
     logger.error("Resend password reset email failed: %s %s", response.status_code, response.text)
     return False
+
+
+async def send_booking_confirmation_email(
+    to_email: str,
+    guest_name: str,
+    booking_ref: str,
+    property_name: str,
+    check_in: str,
+    check_out: str,
+    guests: str,
+    nights: str,
+    total: str,
+) -> bool:
+    dashboard_url = f"{settings.FRONTEND_BASE_URL}/dashboard"
+    html = _render_template(
+        "booking_confirmation.html",
+        guest_name=guest_name,
+        booking_ref=booking_ref,
+        property_name=property_name,
+        check_in=check_in,
+        check_out=check_out,
+        guests=guests,
+        nights=nights,
+        total=total,
+        dashboard_url=dashboard_url,
+    )
+    subject = f"Booking Confirmed: {property_name} ({booking_ref})"
+
+    if not settings.RESEND_API_KEY:
+        if settings.ENVIRONMENT == "development":
+            logger.info("[DEV EMAIL] Confirmation to %s:\n%s", to_email, html)
+            return True
+        logger.error("RESEND_API_KEY is not configured")
+        return False
+
+    async with httpx.AsyncClient(timeout=10) as client:
+        response = await client.post(
+            "https://api.resend.com/emails",
+            headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}"},
+            json={
+                "from": settings.RESEND_FROM_EMAIL,
+                "to": [to_email],
+                "subject": subject,
+                "html": html,
+            },
+        )
+    if response.is_success:
+        return True
+    logger.error("Resend confirmation email failed: %s %s", response.status_code, response.text)
+    return False
+
+
+async def send_booking_cancellation_email(
+    to_email: str,
+    guest_name: str,
+    booking_ref: str,
+    property_name: str,
+    refund: bool,
+    total: str,
+) -> bool:
+    dashboard_url = f"{settings.FRONTEND_BASE_URL}/dashboard"
+    if refund:
+        refund_status_message = f"A full refund of \u20b9{total} has been initiated to your original payment method. Please allow 5-7 business days for it to reflect in your account."
+    else:
+        refund_status_message = "As per our booking terms, this cancellation is non-refundable."
+
+    html = _render_template(
+        "booking_cancellation.html",
+        guest_name=guest_name,
+        booking_ref=booking_ref,
+        property_name=property_name,
+        refund_status_message=refund_status_message,
+        dashboard_url=dashboard_url,
+    )
+    subject = f"Booking Cancelled: {booking_ref}"
+
+    if not settings.RESEND_API_KEY:
+        if settings.ENVIRONMENT == "development":
+            logger.info("[DEV EMAIL] Cancellation to %s:\n%s", to_email, html)
+            return True
+        logger.error("RESEND_API_KEY is not configured")
+        return False
+
+    async with httpx.AsyncClient(timeout=10) as client:
+        response = await client.post(
+            "https://api.resend.com/emails",
+            headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}"},
+            json={
+                "from": settings.RESEND_FROM_EMAIL,
+                "to": [to_email],
+                "subject": subject,
+                "html": html,
+            },
+        )
+    if response.is_success:
+        return True
+    logger.error("Resend cancellation email failed: %s %s", response.status_code, response.text)
+    return False
+
+
+async def send_admin_new_booking_email(
+    admin_email: str,
+    guest_name: str,
+    guest_email: str,
+    guest_phone: str,
+    booking_ref: str,
+    property_name: str,
+    check_in: str,
+    check_out: str,
+    guests: str,
+    nights: str,
+    total: str,
+) -> bool:
+    admin_url = f"{settings.FRONTEND_BASE_URL}/admin"
+    html = _render_template(
+        "admin_new_booking.html",
+        property_name=property_name,
+        booking_ref=booking_ref,
+        check_in=check_in,
+        check_out=check_out,
+        nights=nights,
+        guests=guests,
+        total=total,
+        guest_name=guest_name,
+        guest_email=guest_email,
+        guest_phone=guest_phone or "N/A",
+        admin_url=admin_url,
+    )
+    subject = f"[Admin Alert] New booking for {property_name} ({booking_ref})"
+
+    if not settings.RESEND_API_KEY:
+        if settings.ENVIRONMENT == "development":
+            logger.info("[DEV EMAIL] Admin Alert to %s:\n%s", admin_email, html)
+            return True
+        logger.error("RESEND_API_KEY is not configured")
+        return False
+
+    async with httpx.AsyncClient(timeout=10) as client:
+        response = await client.post(
+            "https://api.resend.com/emails",
+            headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}"},
+            json={
+                "from": settings.RESEND_FROM_EMAIL,
+                "to": [admin_email],
+                "subject": subject,
+                "html": html,
+            },
+        )
+    if response.is_success:
+        return True
+    logger.error("Resend admin email failed: %s %s", response.status_code, response.text)
+    return False
+

@@ -16,7 +16,7 @@
 | 5 | Admin Panel | ✅ Complete | — |
 | 6 | Reviews | ✅ Complete | — |
 | 7 | User Dashboard | ✅ Complete | — |
-| 8 | Forgot / Reset Password | ❌ Remaining | ~1 day |
+| 8 | Forgot / Reset Password | Complete | ~1 day |
 | 9 | Payment Integration | ❌ Remaining | ~3–4 days |
 | 10 | Notifications (Email + SMS) | ❌ Remaining | ~2 days |
 
@@ -89,11 +89,6 @@
 - Loading skeleton animations while API fetches
 - Sign Out wired to `AuthContext.logout()`
 
----
-
-## ❌ Remaining Phases
-
----
 
 ### Phase 8 — Forgot / Reset Password
 
@@ -103,39 +98,39 @@
 
 ##### Backend (`backend/`)
 
-- [ ] **Choose email provider** — Resend (recommended, simplest API) or SendGrid  
+- [x] **Choose email provider** — Resend (recommended, simplest API) or SendGrid  
   Add to `requirements.txt`: `resend` or `sendgrid`  
   Add to `.env`: `RESEND_API_KEY=re_xxxx` and `FROM_EMAIL=noreply@yourdomain.com`
 
-- [ ] **Add `password_reset_tokens` table** (or store token in Redis)  
+- [x] **Add `password_reset_tokens` table** (or store token in Redis)  
   Fields: `id`, `user_id`, `token_hash` (bcrypt or SHA-256), `expires_at`, `used_at`  
   Alternative: encode token as a signed JWT with short expiry (15 min) — no DB table needed
 
-- [ ] **Implement `POST /auth/forgot-password`**  
+- [x] **Implement `POST /auth/forgot-password`**  
   - Look up user by email (always return 200 to prevent email enumeration)
   - Generate a secure random token (`secrets.token_urlsafe(32)`)
   - Store hashed token + expiry in DB (or sign a JWT)
   - Send reset email via Resend with link: `https://yourdomain.com/reset-password?token=<token>`
 
-- [ ] **Implement `POST /auth/reset-password`**  
+- [x] **Implement `POST /auth/reset-password`**  
   - Receive `token` + `new_password`
   - Verify token exists, is not expired, and is not already used
   - Hash new password with bcrypt and update `users.password_hash`
   - Mark token as used (or delete it)
   - Return 200 success
 
-- [ ] **Add email template**  
+- [x] **Add email template**  
   Create `app/templates/reset_password.html` or use inline HTML  
   Brand it with EarthyStay logo, clean minimal design, CTA button
 
 ##### Frontend (`frontend/`)
 
-- [ ] **Wire `/forgot-password` page**  
+- [x] **Wire `/forgot-password` page**  
   - Email input form → POST to `GET /auth/forgot-password`
   - Show "Check your email" success state
   - Show error if email format is wrong
 
-- [ ] **Wire `/reset-password` page**  
+- [x] **Wire `/reset-password` page**  
   - Read `?token=` from URL query params
   - New password + Confirm password inputs
   - POST to `/auth/reset-password` with token + new_password
@@ -154,20 +149,18 @@
 
 ---
 
+## ❌ Remaining Phases
+
+---
+
 ### Phase 9 — Payment Integration
 
 **Current state:** Bookings are created and go straight to `pending` status with no payment step. There is zero payment infrastructure in the codebase.
 
 #### What needs to be built
 
-##### Choose Payment Gateway
-| Gateway | Best for | Notes |
-|---------|----------|-------|
-| **Razorpay** | India-first, INR | Best UX for Indian users, UPI + cards + netbanking |
-| **Stripe** | International | Best developer experience, not available for INR natively |
-| **Cashfree** | India | Good alternative to Razorpay |
 
-> **Recommendation: Razorpay** — EarthyStay is India-focused (INR prices, Indian properties)
+> **We are using Razorpay** — EarthyStay is India-focused (INR prices, Indian properties)
 
 ##### Backend (`backend/`)
 

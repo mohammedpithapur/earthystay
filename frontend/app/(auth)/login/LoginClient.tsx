@@ -9,6 +9,7 @@ export default function LoginClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const next = searchParams.get('next') || '/dashboard'
+  const resetSuccess = searchParams.get('reset') === 'success'
   const { login, user, loading } = useAuth()
 
   const [form, setForm] = useState({ email: '', password: '' })
@@ -103,6 +104,12 @@ export default function LoginClient() {
           {apiError && (
             <div style={{ backgroundColor: '#FFF5F5', border: '1px solid #FEB2B2', borderRadius: '8px', padding: '12px 16px', marginBottom: '20px', color: '#C53030', fontSize: '14px' }}>
               {apiError}
+            </div>
+          )}
+
+          {resetSuccess && !apiError && (
+            <div style={{ backgroundColor: '#F0FFF4', border: '1px solid #9AE6B4', borderRadius: '8px', padding: '12px 16px', marginBottom: '20px', color: '#276749', fontSize: '14px' }}>
+              Password updated. You can sign in with your new password.
             </div>
           )}
 
