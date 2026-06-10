@@ -33,6 +33,10 @@ export default function PropertyDetailPage() {
   const [hoveredTags, setHoveredTags] = useState<Record<string, boolean>>({})
   const [bookingError, setBookingError] = useState<string | null>(null)
 
+  // ── Reviews State ────────────────────────────────────────────────────────
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [reviewsLoading, setReviewsLoading] = useState(false)
+
   useEffect(() => {
     if (!propertyId) return
     let isMounted = true
@@ -92,6 +96,16 @@ export default function PropertyDetailPage() {
       isMounted = false
     }
   }, [propertyId])
+
+  useEffect(() => {
+    if (activeTab === 'reviews' && propertyId) {
+      setReviewsLoading(true)
+      fetchPropertyReviews(propertyId)
+        .then(setReviews)
+        .catch(() => {})
+        .finally(() => setReviewsLoading(false))
+    }
+  }, [activeTab, propertyId])
 
   const formatDateInputValue = (value?: Date) => {
     if (!value) return ''
@@ -232,20 +246,6 @@ export default function PropertyDetailPage() {
     if (isRangeBlocked(checkIn, checkOut)) { alert('Selected dates are not available'); return }
     router.push(`/booking/${property.id}?checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}&pets=${pets}&nights=${nights}&total=${totalPrice}`)
   }
-
-  // ── Reviews ───────────────────────────────────────────────────────────
-  const [reviews, setReviews] = useState<Review[]>([])
-  const [reviewsLoading, setReviewsLoading] = useState(false)
-
-  useEffect(() => {
-    if (activeTab === 'reviews' && propertyId) {
-      setReviewsLoading(true)
-      fetchPropertyReviews(propertyId)
-        .then(setReviews)
-        .catch(() => {})
-        .finally(() => setReviewsLoading(false))
-    }
-  }, [activeTab, propertyId])
 
   // Star distribution from real reviews
   const starCounts = [5, 4, 3, 2, 1].map(star => ({

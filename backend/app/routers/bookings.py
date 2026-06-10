@@ -12,9 +12,8 @@ from app.models.property import Property
 from app.models.property_group import PropertyGroup, PropertyGroupMember
 from app.models.booking import Booking, BookingStatus
 from app.schemas.booking import BookingCreate, BookingOut, BookingStatusUpdate, BookingListOut
-from app.services.booking import calculate_pricing, apply_group_blocking, remove_shadow_blocks
+from app.services.booking import calculate_pricing, apply_group_blocking, remove_shadow_blocks, auto_cleanup_expired_bookings
 from app.services.email import send_booking_cancellation_email
-from app.services.sms import send_booking_cancellation_sms
 
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
@@ -28,6 +27,7 @@ async def create_booking(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    await auto_cleanup_expired_bookings(db)
     property = await db.get(Property, data.property_id)
     if not property or not property.is_published:
         raise HTTPException(status_code=404, detail="Property not found")
@@ -98,6 +98,7 @@ async def my_bookings(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    await auto_cleanup_expired_bookings(db)
     base_query = select(Booking).where(
         Booking.guest_id == user.id,
         Booking.is_shadow_block == False,
@@ -128,6 +129,7 @@ async def admin_list_bookings(
     admin: User = Depends(get_admin),
     db: AsyncSession = Depends(get_db),
 ):
+    await auto_cleanup_expired_bookings(db)
     base_query = select(Booking).where(Booking.is_shadow_block == False)
     if search:
         base_query = base_query.where(
@@ -186,14 +188,7 @@ async def update_booking_status(
             refund=is_refunded,
             total=str(booking.total),
         )
-        if booking.guest_phone:
-            background_tasks.add_task(
-                send_booking_cancellation_sms,
-                phone=booking.guest_phone,
-                booking_ref=booking.booking_ref,
-                property_name=property_name,
-                refund=is_refunded,
-            )
+
 
     return booking
 
@@ -206,6 +201,7 @@ async def get_booking(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    await auto_cleanup_expired_bookings(db)
     booking = await db.get(Booking, booking_id)
     if not booking:
         raise HTTPException(status_code=404, detail="Booking not found")

@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Copy from '@/lib/copy'
+import { buildApiUrl } from '@/lib/api'
 
 export default function Hero() {
   const router = useRouter()
@@ -12,6 +13,8 @@ export default function Hero() {
   const [pets, setPets] = useState('0')
 
   const [todayValue, setTodayValue] = useState('')
+  const [availableLocations, setAvailableLocations] = useState<Array<{ city: string; state: string }>>([])
+  const [showDropdown, setShowDropdown] = useState(false)
 
   useEffect(() => {
     const today = new Date()
@@ -20,6 +23,21 @@ export default function Hero() {
     const month = String(today.getMonth() + 1).padStart(2, '0')
     const day = String(today.getDate()).padStart(2, '0')
     setTodayValue(`${year}-${month}-${day}`)
+  }, [])
+
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const res = await fetch(buildApiUrl('/properties/locations'))
+        if (res.ok) {
+          const data = await res.json()
+          setAvailableLocations(data.locations || [])
+        }
+      } catch (e) {
+        console.error('Failed to fetch destinations', e)
+      }
+    }
+    fetchLocations()
   }, [])
 
   const handleSearch = () => {
@@ -59,6 +77,10 @@ export default function Hero() {
     fontFamily: "'Figtree', sans-serif",
   }
 
+  const filteredLocations = availableLocations.filter(loc =>
+    loc.city.toLowerCase().includes(location.toLowerCase()) ||
+    loc.state.toLowerCase().includes(location.toLowerCase())
+  )
 
   return (
     <section style={{ position: 'relative', minHeight: 'min(75vh, 800px)', overflow: 'hidden' }}>
@@ -197,16 +219,62 @@ export default function Hero() {
           }}
           className="hero-search-container">
 
-          <div style={fieldStyle} className="hero-destination">
+          <div style={{ ...fieldStyle, position: 'relative' }} className="hero-destination">
             <label style={labelStyle}>Destination</label>
             <input
               type="text"
               placeholder="Where are you going?"
               value={location}
-              onChange={e => setLocation(e.target.value)}
+              onFocus={() => setShowDropdown(true)}
+              onBlur={() => setShowDropdown(false)}
+              onChange={e => {
+                setLocation(e.target.value)
+                setShowDropdown(true)
+              }}
               className="hero-search-input"
               style={inputStyle}
             />
+            {/* Floating Autocomplete Dropdown */}
+            {showDropdown && filteredLocations.length > 0 && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                width: '100%',
+                backgroundColor: '#ffffff',
+                border: '1px solid var(--color-border)',
+                borderRadius: '8px',
+                marginTop: '6px',
+                boxShadow: '0 8px 30px rgba(0,0,0,0.15)',
+                zIndex: 100,
+                maxHeight: '200px',
+                overflowY: 'auto'
+              }}>
+                {filteredLocations.map((loc, index) => (
+                  <div
+                    key={index}
+                    onMouseDown={(e) => {
+                      e.preventDefault()
+                      setLocation(loc.city)
+                      setShowDropdown(false)
+                    }}
+                    style={{
+                      padding: '12px 16px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      color: 'var(--color-text-primary)',
+                      borderBottom: '1px solid var(--color-bg-soft)',
+                      transition: 'background-color 0.2s',
+                      textAlign: 'left'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--color-bg-soft)'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    📍 <strong>{loc.city}</strong>, {loc.state}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div style={fieldStyle} className="hero-checkin">

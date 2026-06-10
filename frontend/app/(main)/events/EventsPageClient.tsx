@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import { createEventRequest } from '@/lib/api'
 
 export default function EventsPageClient() {
   const searchParams = useSearchParams()
@@ -42,13 +43,31 @@ export default function EventsPageClient() {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) return
     setLoading(true)
-    setTimeout(() => {
-      setLoading(false)
+    setErrors({})
+    try {
+      await createEventRequest({
+        destination: form.destination,
+        hotel: form.hotel,
+        nature_of_event: form.natureOfEvent,
+        event_start_date: form.eventStartDate,
+        event_end_date: form.eventEndDate,
+        no_of_guests: parseInt(form.noOfGuests, 10) || 0,
+        requires_rooms: form.requiresRooms,
+        no_of_rooms: form.requiresRooms ? (parseInt(form.noOfRooms, 10) || 0) : null,
+        additional_details: form.additionalDetails || null,
+        name: form.name,
+        phone: form.phone,
+        email: form.email,
+      })
       setSubmitted(true)
-    }, 1500)
+    } catch (err) {
+      setErrors({ submit: err instanceof Error ? err.message : 'Something went wrong' })
+    } finally {
+      setLoading(false)
+    }
   }
 
   const inputStyle = (field: string) => ({
@@ -285,7 +304,7 @@ export default function EventsPageClient() {
                 By submitting this request, I acknowledge and accept the website&apos;s <span style={{ color: 'var(--color-gold)', textDecoration: 'underline', cursor: 'pointer' }}>Privacy Policy</span> and <span style={{ color: 'var(--color-gold)', textDecoration: 'underline', cursor: 'pointer' }}>T&C</span>, and consent to my information being used for product and promotional offers.
               </label>
             </div>
-
+            {errors.submit && <p style={{ color: '#E53E3E', fontSize: '14px', marginBottom: '16px', fontWeight: '600' }}>{errors.submit}</p>}
             <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
               <button
                 onClick={handleSubmit}

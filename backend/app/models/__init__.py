@@ -6,6 +6,7 @@ from app.models.payment import Payment
 from app.models.review import Review
 from app.models.ical import ICalLink
 from app.models.password_reset import PasswordResetToken
+from app.models.event import EventRequest, EventStatus
 
 __all__ = [
 	"User",
@@ -18,4 +19,6 @@ __all__ = [
 	"Review",
 	"ICalLink",
 	"PasswordResetToken",
+	"EventRequest",
+	"EventStatus",
 ]

@@ -12,7 +12,9 @@ import {
   getAdminDashboard, listAdminBookings, updateAdminBookingStatus, updateAdminBookingWithRefund,
   createAdminReview, deleteAdminReview, fetchPropertyReviews,
   listICalLinks, createICalLink, deleteICalLink, getICalExportUrl,
+  listAdminEvents, updateAdminEventStatus,
   type PropertyGroup, type CreateReviewPayload, type AdminBooking, type AdminDashboard, type ICalLink,
+  type EventRequest, type EventStatus,
 } from '@/lib/api'
 import type { Property, Review } from '@/lib/types'
 
@@ -104,6 +106,13 @@ export default function AdminPage() {
   const [icalSaving, setIcalSaving] = useState<Record<string, boolean>>({})
   const [icalCopied, setIcalCopied] = useState<Record<string, boolean>>({})
 
+  // ── Events state ──────────────────────────────────────────────────────────
+  const [events, setEvents] = useState<EventRequest[]>([])
+  const [eventsLoading, setEventsLoading] = useState(false)
+  const [eventsSearch, setEventsSearch] = useState('')
+  const [eventsStatusFilter, setEventsStatusFilter] = useState('')
+  const eventsSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   // ── Load bookings ─────────────────────────────────────────────────────────
   const loadBookings = useCallback(async (page = 1, search = '', status = '') => {
     if (loading || !user) return
@@ -160,6 +169,17 @@ export default function AdminPage() {
     } catch { /* noop */ }
   }, [fetchWithAuth])
 
+  // ── Load event requests ───────────────────────────────────────────────────
+  const loadEvents = useCallback(async (search = '', status = '') => {
+    if (loading || !user) return
+    setEventsLoading(true)
+    try {
+      const data = await listAdminEvents(fetchWithAuth, status || undefined, search || undefined)
+      setEvents(data)
+    } catch { /* noop */ }
+    finally { setEventsLoading(false) }
+  }, [fetchWithAuth, loading, user])
+
   // ── Effects: load data when tab changes ──────────────────────────────────
   useEffect(() => {
     if (activeTab === 'overview') { void loadDashboard(); void loadBookings(1, '', '') }
@@ -173,6 +193,9 @@ export default function AdminPage() {
         setApiProperties(props)
         props.forEach(p => loadIcalLinks(p.id))
       }).catch(() => {})
+    }
+    if (activeTab === 'events') {
+      void loadEvents(eventsSearch, eventsStatusFilter)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab])
@@ -264,6 +287,25 @@ export default function AdminPage() {
   const handleStatusFilter = (value: string) => {
     setStatusFilter(value)
     void loadBookings(1, searchBooking, value)
+  }
+
+  // Debounced search for event requests
+  const handleEventsSearch = (value: string) => {
+    setEventsSearch(value)
+    if (eventsSearchTimer.current) clearTimeout(eventsSearchTimer.current)
+    eventsSearchTimer.current = setTimeout(() => loadEvents(value, eventsStatusFilter), 400)
+  }
+
+  const handleEventsStatusFilter = (value: string) => {
+    setEventsStatusFilter(value)
+    void loadEvents(eventsSearch, value)
+  }
+
+  const handleUpdateEventStatus = async (id: string, status: EventStatus) => {
+    try {
+      const updated = await updateAdminEventStatus(id, status, fetchWithAuth)
+      setEvents(prev => prev.map(ev => ev.id === id ? updated : ev))
+    } catch { alert('Failed to update event status') }
   }
 
   const getProperty = (id: string) => apiProperties.find(p => p.id === id)
@@ -452,6 +494,7 @@ export default function AdminPage() {
     { id: 'properties', label: 'Properties' },
     { id: 'groups', label: 'Groups' },
     { id: 'ical', label: 'iCal Sync' },
+    { id: 'events', label: 'Events' },
   ]
 
   const cardStyle = { backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '24px' }
@@ -1178,6 +1221,170 @@ export default function AdminPage() {
                 </div>
               )
             })}
+          </div>
+        )}
+
+        {/* Events Tab */}
+        {activeTab === 'events' && (
+          <div>
+            <div style={{ ...cardStyle, marginBottom: '24px' }}>
+              <h2 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '8px' }}>Event Inquiry Requests</h2>
+              <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--color-gold)', marginBottom: '16px' }} />
+              <p style={{ color: 'var(--color-text-secondary)', fontSize: '14px', lineHeight: '1.7', maxWidth: '760px' }}>
+                View and manage wedding, corporate, and private event requests submitted by guests.
+              </p>
+            </div>
+
+            {/* Filters */}
+            <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <input
+                placeholder="Search by name, email, hotel, city..."
+                value={eventsSearch}
+                onChange={e => handleEventsSearch(e.target.value)}
+                style={{
+                  padding: '12px 16px',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  outline: 'none',
+                  flex: 1,
+                  minWidth: '240px',
+                }}
+              />
+              <select
+                value={eventsStatusFilter}
+                onChange={e => handleEventsStatusFilter(e.target.value)}
+                style={{
+                  padding: '12px 16px',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: '8px',
+                  fontSize: '14px',
+                  backgroundColor: '#ffffff',
+                  outline: 'none',
+                  minWidth: '160px',
+                }}
+              >
+                <option value="">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="contacted">Contacted</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+
+            {/* List */}
+            {eventsLoading ? (
+              <div style={{ textAlign: 'center', padding: '48px 0' }}>
+                <div style={{ width: '32px', height: '32px', border: '3px solid var(--color-gold)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
+              </div>
+            ) : events.length === 0 ? (
+              <div style={{ ...cardStyle, textAlign: 'center', padding: '64px 24px', color: 'var(--color-text-muted)' }}>
+                <p style={{ fontSize: '16px' }}>No event inquiries found matching filters.</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {events.map(ev => (
+                  <div key={ev.id} style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: '16px', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+                      <div>
+                        <span style={{
+                          backgroundColor: ev.nature_of_event === 'Wedding' ? '#FCE4EC' : ev.nature_of_event === 'Corporate' ? '#E8EAF6' : '#F5F5F5',
+                          color: ev.nature_of_event === 'Wedding' ? '#C2185B' : ev.nature_of_event === 'Corporate' ? '#3F51B5' : '#616161',
+                          padding: '4px 10px',
+                          fontSize: '11px',
+                          fontWeight: '700',
+                          textTransform: 'uppercase',
+                          borderRadius: '4px',
+                          letterSpacing: '0.5px',
+                        }}>
+                          {ev.nature_of_event}
+                        </span>
+                        <h3 style={{ fontSize: '18px', fontWeight: '800', marginTop: '8px', color: 'var(--color-text-primary)' }}>
+                          {ev.name}
+                        </h3>
+                        <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
+                          ✉ {ev.email} &bull; 📞 {ev.phone}
+                        </p>
+                      </div>
+
+                      {/* Status badges & actions */}
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <span style={{
+                          backgroundColor:
+                            ev.status === 'confirmed' ? '#E8F5E9' :
+                            ev.status === 'contacted' ? '#E3F2FD' :
+                            ev.status === 'pending' ? '#FFF8E7' : '#FFEBEE',
+                          color:
+                            ev.status === 'confirmed' ? '#2E7D32' :
+                            ev.status === 'contacted' ? '#1565C0' :
+                            ev.status === 'pending' ? '#F57F17' : '#C62828',
+                          padding: '6px 12px',
+                          fontSize: '12px',
+                          fontWeight: '700',
+                          borderRadius: '6px',
+                          textTransform: 'capitalize',
+                        }}>
+                          {ev.status}
+                        </span>
+
+                        {ev.status !== 'confirmed' && ev.status !== 'cancelled' && (
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            {ev.status === 'pending' && (
+                              <button
+                                onClick={() => handleUpdateEventStatus(ev.id, 'contacted')}
+                                style={{ ...buttonStyle, padding: '6px 12px', fontSize: '12px', cursor: 'pointer' }}
+                              >
+                                Mark Contacted
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleUpdateEventStatus(ev.id, 'confirmed')}
+                              style={{ ...buttonStyle, padding: '6px 12px', fontSize: '12px', cursor: 'pointer', backgroundColor: 'var(--color-gold)', border: 'none', fontWeight: '700' }}
+                            >
+                              Confirm
+                            </button>
+                            <button
+                              onClick={() => handleUpdateEventStatus(ev.id, 'cancelled')}
+                              style={{ ...buttonStyle, padding: '6px 12px', fontSize: '12px', cursor: 'pointer', borderColor: '#C62828', color: '#C62828' }}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', borderTop: '1px solid var(--color-border)', paddingTop: '16px' }}>
+                      <div>
+                        <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '2px', fontWeight: '600' }}>Destination / Hotel</p>
+                        <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)', textTransform: 'capitalize' }}>{ev.destination} - {ev.hotel}</p>
+                      </div>
+                      <div>
+                        <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '2px', fontWeight: '600' }}>Dates</p>
+                        <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{formatDate(ev.event_start_date)} to {formatDate(ev.event_end_date)}</p>
+                      </div>
+                      <div>
+                        <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '2px', fontWeight: '600' }}>Guests / Rooms</p>
+                        <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)' }}>
+                          👤 {ev.no_of_guests} guests {ev.requires_rooms ? `& 🛌 ${ev.no_of_rooms} rooms` : '(No rooms)'}
+                        </p>
+                      </div>
+                      <div>
+                        <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '2px', fontWeight: '600' }}>Submitted On</p>
+                        <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)' }}>{formatDate(ev.created_at)}</p>
+                      </div>
+                    </div>
+
+                    {ev.additional_details && (
+                      <div style={{ backgroundColor: 'var(--color-bg-soft)', borderRadius: '8px', padding: '12px 16px', fontSize: '13px', color: 'var(--color-text-secondary)', borderLeft: '3px solid var(--color-gold)' }}>
+                        <p style={{ fontWeight: '600', marginBottom: '4px', fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>Additional Details</p>
+                        <p style={{ whiteSpace: 'pre-line' }}>{ev.additional_details}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

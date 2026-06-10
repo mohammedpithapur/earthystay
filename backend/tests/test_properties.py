@@ -87,3 +87,40 @@ async def test_availability_returns_booked_ranges(client, admin_headers, user_he
     assert availability.status_code == 200, availability.text
     ranges = availability.json()
     assert any(r["check_in"] == "2026-06-10" and r["check_out"] == "2026-06-12" for r in ranges)
+
+
+async def test_locations_endpoint(client, admin_headers):
+    from app.services.cache import get_redis
+    redis_client = get_redis()
+    if redis_client:
+        await redis_client.delete("properties:locations:list")
+
+    # 1. Check locations when empty (none published)
+    response = await client.get("/properties/locations")
+    assert response.status_code == 200, response.text
+    assert response.json() == {"locations": []}
+
+    # 2. Create published and unpublished properties
+    await client.post("/admin/properties", headers=admin_headers, json=_property_payload({"city": "Goa", "state": "Goa", "is_published": True}))
+    await client.post("/admin/properties", headers=admin_headers, json=_property_payload({"city": "Kolkata", "state": "West Bengal", "is_published": True}))
+    
+    # Another Goa property (should be deduplicated)
+    await client.post("/admin/properties", headers=admin_headers, json=_property_payload({"city": "Goa", "state": "Goa", "is_published": True}))
+    
+    # City Mumbai is NOT published
+    await client.post("/admin/properties", headers=admin_headers, json=_property_payload({"city": "Mumbai", "state": "Maharashtra", "is_published": False}))
+
+    # Clear cache before retrieving to ensure fresh query
+    if redis_client:
+        await redis_client.delete("properties:locations:list")
+
+    # 3. Retrieve locations and check
+    response = await client.get("/properties/locations")
+    assert response.status_code == 200, response.text
+    data = response.json()
+    assert "locations" in data
+    locs = data["locations"]
+    assert len(locs) == 2
+    cities = {loc["city"] for loc in locs}
+    assert cities == {"Goa", "Kolkata"}
+

@@ -8,9 +8,9 @@ export const metadata: Metadata = {
   title: 'Earthy Stays | Earthy Property Stays',
   description: 'Discover and book unique earthy properties across India',
   icons: {
-    icon: '/Untitled_design-removebg-preview.png',
-    shortcut: '/Untitled_design-removebg-preview.png',
-    apple: '/Untitled_design-removebg-preview.png',
+    icon: '/logo.svg',
+    shortcut: '/logo.svg',
+    apple: '/logo.svg',
   },
 }
 

@@ -152,6 +152,7 @@ export default function WhyChooseUs() {
                   alt={reason.alt}
                   loading="lazy"
                   decoding="async"
+                  suppressHydrationWarning
                   style={{
                     width: '100%',
                     height: '100%',

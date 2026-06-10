@@ -11,6 +11,7 @@ from app.models.property import Property
 from app.models.booking import Booking, BookingStatus
 from app.models.ical import ICalLink
 from app.schemas.ical import ICalLinkCreate, ICalLinkOut
+from app.services.booking import auto_cleanup_expired_bookings
 
 router = APIRouter(prefix="/ical", tags=["ical"])
 
@@ -83,6 +84,7 @@ async def export_ical(
     db: AsyncSession = Depends(get_db),
 ):
     """Public endpoint — returns a .ics file of all confirmed bookings."""
+    await auto_cleanup_expired_bookings(db)
     property = await db.get(Property, property_id)
     if not property:
         raise HTTPException(status_code=404, detail="Property not found")

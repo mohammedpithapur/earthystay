@@ -29,7 +29,7 @@ async def dashboard(user: User = Depends(get_current_user), db: AsyncSession = D
     spent = await db.execute(
         select(func.coalesce(func.sum(Booking.total), 0)).where(
             Booking.guest_id == user.id,
-            Booking.status != BookingStatus.cancelled,
+            Booking.status.in_([BookingStatus.confirmed, BookingStatus.completed]),
         )
     )
     return {

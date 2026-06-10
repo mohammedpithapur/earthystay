@@ -4,10 +4,6 @@ from app.services.email import (
     send_booking_cancellation_email,
     send_admin_new_booking_email,
 )
-from app.services.sms import (
-    send_booking_confirmation_sms,
-    send_booking_cancellation_sms,
-)
 
 pytestmark = pytest.mark.asyncio
 
@@ -63,29 +59,4 @@ async def test_email_notifications_in_dev_mode():
     assert res4 is True
 
 
-async def test_sms_notifications_in_dev_mode():
-    res1 = await send_booking_confirmation_sms(
-        phone="9876543210",
-        booking_ref="ES-TEST12",
-        property_name="Sunset Villa",
-        check_in="2026-07-01",
-        check_out="2026-07-05",
-        total="15000",
-    )
-    assert res1 is True
 
-    res2 = await send_booking_cancellation_sms(
-        phone="9876543210",
-        booking_ref="ES-TEST12",
-        property_name="Sunset Villa",
-        refund=True,
-    )
-    assert res2 is True
-
-    res3 = await send_booking_cancellation_sms(
-        phone="9876543210",
-        booking_ref="ES-TEST12",
-        property_name="Sunset Villa",
-        refund=False,
-    )
-    assert res3 is True

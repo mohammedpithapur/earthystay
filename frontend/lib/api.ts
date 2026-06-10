@@ -543,3 +543,85 @@ export async function updateAdminBookingWithRefund(
   }
   return updateAdminBookingStatus(bookingId, status, fetcher)
 }
+
+// ─── Events ───────────────────────────────────────────────────────────────────
+
+export type EventStatus = 'pending' | 'contacted' | 'confirmed' | 'cancelled'
+
+export type EventRequest = {
+  id: string
+  destination: string
+  hotel: string
+  nature_of_event: string
+  event_start_date: string
+  event_end_date: string
+  no_of_guests: number
+  requires_rooms: boolean
+  no_of_rooms: number | null
+  additional_details: string | null
+  name: string
+  phone: string
+  email: string
+  status: EventStatus
+  created_at: string
+}
+
+export type EventRequestCreate = {
+  destination: string
+  hotel: string
+  nature_of_event: string
+  event_start_date: string
+  event_end_date: string
+  no_of_guests: number
+  requires_rooms: boolean
+  no_of_rooms?: number | null
+  additional_details?: string | null
+  name: string
+  phone: string
+  email: string
+}
+
+export async function createEventRequest(data: EventRequestCreate): Promise<EventRequest> {
+  const response = await fetch(buildApiUrl('/events'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}))
+    throw new Error((err as { detail?: string }).detail || `Failed to submit request (${response.status})`)
+  }
+  return response.json()
+}
+
+export async function listAdminEvents(
+  fetcher: ApiFetcher,
+  status?: string,
+  search?: string,
+): Promise<EventRequest[]> {
+  let url = '/events/admin/all'
+  const params: string[] = []
+  if (status) params.push(`status=${encodeURIComponent(status)}`)
+  if (search) params.push(`search=${encodeURIComponent(search)}`)
+  if (params.length > 0) {
+    url += `?${params.join('&')}`
+  }
+
+  const response = await fetcher(buildApiUrl(url))
+  if (!response.ok) throw new Error(`Failed to load event requests (${response.status})`)
+  return response.json()
+}
+
+export async function updateAdminEventStatus(
+  eventId: string,
+  status: EventStatus,
+  fetcher: ApiFetcher,
+): Promise<EventRequest> {
+  const response = await fetcher(buildApiUrl(`/events/admin/${eventId}`), {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status }),
+  })
+  if (!response.ok) throw new Error(`Failed to update event request (${response.status})`)
+  return response.json()
+}

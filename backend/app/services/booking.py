@@ -86,3 +86,27 @@ async def remove_shadow_blocks(db: AsyncSession, booking: Booking, commit: bool 
     )
     if commit:
         await db.commit()
+
+
+async def auto_cleanup_expired_bookings(db: AsyncSession) -> None:
+    """
+    Finds and deletes any pending bookings that were created more than 15 minutes ago.
+    This releases any blocked dates automatically.
+    """
+    from datetime import timedelta
+    from app.database import utc_now
+
+    limit = utc_now() - timedelta(minutes=15)
+    result = await db.execute(
+        select(Booking).where(
+            Booking.status == BookingStatus.pending,
+            Booking.created_at < limit
+        )
+    )
+    expired = result.scalars().all()
+    for b in expired:
+        await remove_shadow_blocks(db, b, commit=False)
+        await db.delete(b)
+        
+    if expired:
+        await db.commit()

@@ -94,10 +94,14 @@ async def normalize_property_images(images: list[PropertyImageCreate] | None) ->
 
 @router.get("/dashboard")
 async def dashboard(admin: User = Depends(get_admin), db: AsyncSession = Depends(get_db)):
-    total_bookings = await db.scalar(select(func.count(Booking.id)))
+    total_bookings = await db.scalar(
+        select(func.count(Booking.id)).where(Booking.status.in_([BookingStatus.confirmed, BookingStatus.completed]))
+    )
     total_properties = await db.scalar(select(func.count(Property.id)))
     revenue = await db.scalar(
-        select(func.coalesce(func.sum(Booking.total), 0)).where(Booking.status != BookingStatus.cancelled)
+        select(func.coalesce(func.sum(Booking.total), 0)).where(
+            Booking.status.in_([BookingStatus.confirmed, BookingStatus.completed])
+        )
     )
     pending = await db.scalar(select(func.count(Booking.id)).where(Booking.status == BookingStatus.pending))
     return {

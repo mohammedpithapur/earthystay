@@ -47,7 +47,7 @@ from app.models.property import Property
 from app.schemas.booking import BookingOut
 from app.schemas.payment import PaymentOrderCreate, PaymentOrderOut, PaymentOut, PaymentVerifyIn
 from app.services.email import send_booking_confirmation_email, send_admin_new_booking_email
-from app.services.sms import send_booking_confirmation_sms
+from app.services.booking import remove_shadow_blocks
 
 
 router = APIRouter(prefix="/payments", tags=["payments"])
@@ -190,7 +190,8 @@ async def verify_payment(
         data.razorpay_payment_id,
         data.razorpay_signature,
     ):
-        payment.status = RazorpayPaymentStatus.failed
+        await remove_shadow_blocks(db, booking, commit=False)
+        await db.delete(booking)
         await db.commit()
         raise HTTPException(status_code=400, detail="Payment signature verification failed")
 
@@ -222,16 +223,7 @@ async def verify_payment(
         nights=str(booking.nights),
         total=str(booking.total),
     )
-    if booking.guest_phone:
-        background_tasks.add_task(
-            send_booking_confirmation_sms,
-            phone=booking.guest_phone,
-            booking_ref=booking.booking_ref,
-            property_name=property_name,
-            check_in=str(booking.check_in),
-            check_out=str(booking.check_out),
-            total=str(booking.total),
-        )
+
     admin_email = property_obj.contact_email if (property_obj and property_obj.contact_email) else "admin@earthystay.com"
     background_tasks.add_task(
         send_admin_new_booking_email,
@@ -326,16 +318,7 @@ async def razorpay_webhook(
                         nights=str(booking.nights),
                         total=str(booking.total),
                     )
-                    if booking.guest_phone:
-                        background_tasks.add_task(
-                            send_booking_confirmation_sms,
-                            phone=booking.guest_phone,
-                            booking_ref=booking.booking_ref,
-                            property_name=property_name,
-                            check_in=str(booking.check_in),
-                            check_out=str(booking.check_out),
-                            total=str(booking.total),
-                        )
+
                     admin_email = property_obj.contact_email if (property_obj and property_obj.contact_email) else "admin@earthystay.com"
                     background_tasks.add_task(
                         send_admin_new_booking_email,
@@ -364,8 +347,10 @@ async def razorpay_webhook(
                 select(Payment).where(Payment.razorpay_order_id == order_id)
             )
             if payment and payment.status == RazorpayPaymentStatus.created:
-                payment.status = RazorpayPaymentStatus.failed
-                payment.updated_at = utc_now()
+                booking = await db.get(Booking, payment.booking_id)
+                if booking:
+                    await remove_shadow_blocks(db, booking, commit=False)
+                    await db.delete(booking)
                 await db.commit()
 
     # ── refund.created ────────────────────────────────────────────────────────

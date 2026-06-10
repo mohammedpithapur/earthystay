@@ -14,6 +14,12 @@ if str(ROOT) not in sys.path:
 from app.database import Base, get_db
 from app.main import app
 from app.models.user import User, UserRole
+from app.config import settings
+
+# Override external API keys for testing to prevent real network calls
+settings.RESEND_API_KEY = None
+settings.FAST2SMS_API_KEY = None
+
 
 
 TEST_DB_ENV = "TEST_DATABASE_URL"

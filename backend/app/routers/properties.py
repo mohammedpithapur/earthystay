@@ -12,6 +12,7 @@ from app.models.property import Property
 from app.schemas.property import PropertyListOut, PropertyOut
 from app.services.property import get_property_filters
 from app.services.cache import cache_get_json, cache_set_json
+from app.services.booking import auto_cleanup_expired_bookings
 
 router = APIRouter(prefix="/properties", tags=["properties"])
 
@@ -29,6 +30,7 @@ async def list_properties(
     limit: int = Query(12, ge=1, le=200),
     db: AsyncSession = Depends(get_db),
 ):
+    await auto_cleanup_expired_bookings(db)
     cache_payload = {
         "city": city,
         "state": state,
@@ -57,6 +59,34 @@ async def list_properties(
     return response
 
 
+@router.get("/locations")
+async def get_unique_locations(db: AsyncSession = Depends(get_db)):
+    cache_key = "properties:locations:list"
+    cached = await cache_get_json(cache_key)
+    if cached:
+        return cached
+
+    query = select(Property.city, Property.state).where(Property.is_published == True).distinct()
+    result = await db.execute(query)
+    rows = result.all()
+    
+    locations = []
+    seen = set()
+    for row in rows:
+        city_str = (row.city or "").strip()
+        state_str = (row.state or "").strip()
+        if not city_str:
+            continue
+        key = (city_str.lower(), state_str.lower())
+        if key not in seen:
+            seen.add(key)
+            locations.append({"city": city_str, "state": state_str})
+            
+    response = {"locations": locations}
+    await cache_set_json(cache_key, response, ttl_seconds=3600)
+    return response
+
+
 @router.get("/{property_id}", response_model=PropertyOut)
 async def get_property(
     property_id: str,
@@ -80,6 +110,7 @@ async def get_property_availability(
     property_id: str,
     db: AsyncSession = Depends(get_db),
 ):
+    await auto_cleanup_expired_bookings(db)
     result = await db.execute(
         select(Property.id).where(Property.id == property_id, Property.is_published == True)
     )
