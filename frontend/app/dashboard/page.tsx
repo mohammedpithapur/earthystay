@@ -139,16 +139,17 @@ function BookingCard({ booking, property, expanded, onToggle, onVoucher }: {
     <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.04)', transition: 'box-shadow 0.2s ease' }}>
 
       {/* Main row */}
-      <div style={{ padding: '24px', display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+      <div className="p-6 flex flex-col md:flex-row gap-5 items-stretch md:items-start">
 
         {/* Property thumbnail */}
         {(() => {
           const src = property?.images?.find(i => i.is_primary)?.image_url || property?.images?.[0]?.image_url
           if (src) return (
-            <Image src={src} alt={property?.name || 'Property'} width={120} height={90}
-              style={{ width: '120px', height: '90px', objectFit: 'cover', flexShrink: 0, borderRadius: '10px' }} />
+            <div className="relative w-full h-48 md:w-[120px] md:h-[90px] flex-shrink-0 rounded-lg overflow-hidden">
+              <Image src={src} alt={property?.name || 'Property'} fill style={{ objectFit: 'cover' }} unoptimized />
+            </div>
           )
-          return <div style={{ width: 120, height: 90, borderRadius: 10, backgroundColor: 'var(--color-bg-card)', flexShrink: 0 }} />
+          return <div className="w-full h-48 md:w-[120px] md:h-[90px] rounded-lg bg-[var(--color-bg-card)] flex-shrink-0" />
         })()}
 
         {/* Info */}
@@ -174,7 +175,7 @@ function BookingCard({ booking, property, expanded, onToggle, onVoucher }: {
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', marginTop: '12px' }}>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
             {[
               { label: 'Check In',  value: formatDate(booking.check_in) },
               { label: 'Check Out', value: formatDate(booking.check_out) },
@@ -190,18 +191,22 @@ function BookingCard({ booking, property, expanded, onToggle, onVoucher }: {
         </div>
 
         {/* Right — total + actions */}
-        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <p style={{ fontSize: '24px', color: 'var(--color-text-primary)', fontWeight: '900', marginBottom: '2px' }}>
-            &#8377;{booking.total.toLocaleString('en-IN')}
-          </p>
-          <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginBottom: '14px', letterSpacing: '0.5px' }}>Total</p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div className="text-left md:text-right flex-shrink-0 mt-4 md:mt-0 flex flex-col items-start md:items-end justify-between">
+          <div>
+            <p style={{ fontSize: '24px', color: 'var(--color-text-primary)', fontWeight: '900', marginBottom: '2px' }}>
+              &#8377;{booking.total.toLocaleString('en-IN')}
+            </p>
+            <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginBottom: '14px', letterSpacing: '0.5px' }}>Total</p>
+          </div>
+          <div className="flex flex-row md:flex-col gap-2 w-full md:w-auto mt-2">
             <button onClick={onToggle}
-              style={{ padding: '8px 16px', border: '1px solid var(--color-border)', borderRadius: '8px', backgroundColor: 'transparent', fontSize: '13px', color: 'var(--color-text-secondary)', cursor: 'pointer', fontWeight: '600', transition: 'all 0.15s' }}>
+              style={{ padding: '8px 16px', border: '1px solid var(--color-border)', borderRadius: '8px', backgroundColor: 'transparent', fontSize: '13px', color: 'var(--color-text-secondary)', cursor: 'pointer', fontWeight: '600', transition: 'all 0.15s' }}
+              className="flex-1 md:flex-initial">
               {expanded ? 'Hide Details' : 'View Details'}
             </button>
             <button onClick={onVoucher}
-              style={{ padding: '8px 16px', border: 'none', borderRadius: '8px', backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', fontSize: '13px', fontWeight: '700', cursor: 'pointer', transition: 'opacity 0.15s' }}>
+              style={{ padding: '8px 16px', border: 'none', borderRadius: '8px', backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', fontSize: '13px', fontWeight: '700', cursor: 'pointer', transition: 'opacity 0.15s' }}
+              className="flex-1 md:flex-initial">
               Booking Voucher
             </button>
           </div>
@@ -495,16 +500,16 @@ export default function DashboardPage() {
 
       {/* ── Stats Bar ── */}
       <div style={{ backgroundColor: '#ffffff', borderBottom: '1px solid var(--color-border)' }}>
-        <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', flexWrap: 'wrap' }}>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 md:p-6" style={{ maxWidth: '1100px', margin: '0 auto' }}>
           {[
             { label: 'Total Bookings',  value: totalBookings },
             { label: 'Upcoming Stays', value: upcomingCount },
             { label: 'Past Stays',     value: pastCount },
             { label: 'Total Spent',    value: `&#8377;${totalSpent.toLocaleString('en-IN')}` },
-          ].map((stat, i, arr) => (
+          ].map((stat) => (
             <div key={stat.label}
-              style={{ flex: '1 1 150px', padding: '24px', borderRight: i < arr.length - 1 ? '1px solid var(--color-border)' : 'none', textAlign: 'center' }}>
-              <p style={{ fontSize: '30px', color: 'var(--color-text-primary)', fontWeight: '900', marginBottom: '4px' }}
+              style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '20px 16px', textAlign: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
+              <p style={{ fontSize: '28px', color: 'var(--color-text-primary)', fontWeight: '900', marginBottom: '4px' }}
                 dangerouslySetInnerHTML={{ __html: String(stat.value) }} />
               <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', letterSpacing: '1.5px', textTransform: 'uppercase', fontWeight: '600' }}>
                 {stat.label}

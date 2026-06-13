@@ -218,19 +218,79 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
 
   return (
     <div
-      style={{
-        position: 'fixed', inset: 0, zIndex: 1000,
-        background: 'rgba(0,0,0,0.82)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
-      }}
+      className="cal-wrapper"
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div style={{
-        background: '#1a1611', border: '1px solid #3d3425', borderRadius: 16,
-        width: '100%', maxWidth: 1060, maxHeight: '92vh',
-        display: 'flex', flexDirection: 'column',
-        boxShadow: '0 30px 80px rgba(0,0,0,0.75)', overflow: 'hidden',
-      }}>
+      <style>{`
+        .cal-wrapper {
+          position: fixed;
+          inset: 0;
+          z-index: 1000;
+          background: rgba(0,0,0,0.82);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 16px;
+        }
+        .cal-dialog {
+          background: #1a1611;
+          border: 1px solid #3d3425;
+          border-radius: 16px;
+          width: 100%;
+          max-width: 1060px;
+          max-height: 92vh;
+          display: flex;
+          flex-direction: column;
+          box-shadow: 0 30px 80px rgba(0,0,0,0.75);
+          overflow: hidden;
+        }
+        .cal-modal-body {
+          display: flex;
+          flex: 1;
+          overflow: hidden;
+          min-height: 0;
+        }
+        .cal-area {
+          flex: 1;
+          padding: 20px 24px;
+          overflow-y: auto;
+        }
+        .cal-sidebar {
+          width: 285px;
+          border-left: 1px solid #2e2618;
+          display: flex;
+          flex-direction: column;
+          background: #130f0a;
+          overflow-y: auto;
+          flex-shrink: 0;
+        }
+
+        @media (max-width: 768px) {
+          .cal-wrapper {
+            padding: 8px;
+          }
+          .cal-dialog {
+            max-height: 96vh;
+          }
+          .cal-modal-body {
+            flex-direction: column;
+            overflow-y: auto;
+          }
+          .cal-area {
+            flex: none;
+            padding: 16px 14px;
+            overflow-y: visible;
+          }
+          .cal-sidebar {
+            width: 100%;
+            border-left: none;
+            border-top: 1px solid #2e2618;
+            flex: none;
+            overflow-y: visible;
+          }
+        }
+      `}</style>
+      <div className="cal-dialog">
 
         {/* Header */}
         <div style={{
@@ -253,10 +313,10 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
         </div>
 
         {/* Body */}
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
+        <div className="cal-modal-body">
 
           {/* Calendar area */}
-          <div style={{ flex: 1, padding: '20px 24px', overflowY: 'auto' }}>
+          <div className="cal-area">
 
             {/* Month nav */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
@@ -356,11 +416,7 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
           </div>
 
           {/* Side panel */}
-          <div style={{
-            width: 285, borderLeft: '1px solid #2e2618',
-            display: 'flex', flexDirection: 'column',
-            background: '#130f0a', overflowY: 'auto', flexShrink: 0,
-          }}>
+          <div className="cal-sidebar">
             {/* Block form */}
             <div style={{ padding: 20, borderBottom: '1px solid #1f1a10' }}>
               <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#8a7a5a', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>

@@ -331,7 +331,7 @@ export default function PropertyDetailPage() {
       </div>
 
       {/* Main Content */}
-      <div className="content-shell-lg" style={{ padding: '48px 24px 72px' }}>
+      <div className="content-shell-lg" style={{ padding: '48px var(--page-padding) 72px' }}>
       <div className="responsive-grid-detail md:grid-cols-2">
 
         {/* Left Column */}
@@ -695,7 +695,7 @@ export default function PropertyDetailPage() {
         </div>
 
         {/* Booking Widget */}
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: 'clamp(20px, 5vw, 32px)' }} className="sticky-desktop md:sticky">
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px' }} className="sticky-desktop md:sticky p-4 sm:p-6 md:p-8">
           <div style={{ marginBottom: '24px' }}>
             <span style={{ fontSize: '32px', fontWeight: '800', color: 'var(--color-text-primary)' }}>&#8377;{property.price_per_night.toLocaleString('en-IN')}</span>
             <span style={{ fontSize: '14px', color: 'var(--color-text-muted)', marginLeft: '6px' }}>/ night</span>
@@ -720,7 +720,7 @@ export default function PropertyDetailPage() {
                 <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{formatDateLabel(range?.to)}</p>
               </div>
             </div>
-            <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--color-border)' }}>
+            <div style={{ padding: '12px 8px', borderBottom: '1px solid var(--color-border)' }} className="sm:!px-4">
               <div className="earthy-day-picker">
                 <DayPicker
                   mode="range"

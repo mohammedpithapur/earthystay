@@ -431,6 +431,14 @@ select:disabled {
     padding: 10px 12px;
   }
 
+  /* Shrink calendar cell sizing on small screens to prevent booking card overflow */
+  .earthy-day-picker {
+    padding: 8px !important;
+  }
+  .earthy-day-picker .rdp {
+    --rdp-cell-size: clamp(28px, 8.5vw, 36px) !important;
+  }
+
   .why-cta-banner {
     flex-direction: column;
     align-items: stretch;

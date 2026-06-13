@@ -387,7 +387,7 @@ export default function AdminPage() {
                 Complete
               </button>
             )}
-            <button style={{ padding: '9px 12px', backgroundColor: 'var(--color-bg-soft)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)', fontSize: '12px', cursor: 'pointer', borderRadius: '8px', fontWeight: '700' }}>
+            <button onClick={() => setVoucherBooking(booking)} style={{ padding: '9px 12px', backgroundColor: 'var(--color-bg-soft)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)', fontSize: '12px', cursor: 'pointer', borderRadius: '8px', fontWeight: '700' }}>
               Voucher
             </button>
           </div>
@@ -755,7 +755,8 @@ export default function AdminPage() {
                 <div style={{ textAlign: 'center', padding: '48px', color: 'var(--color-text-muted)' }}>Loading bookings…</div>
               ) : (
                 <>
-                  <div style={{ overflowX: 'auto' }}>
+                  {/* Desktop Booking Table */}
+                  <div className="hidden md:block" style={{ overflowX: 'auto' }}>
                     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                       <thead>
                         <tr style={{ backgroundColor: 'var(--color-navbar)' }}>
@@ -807,6 +808,11 @@ export default function AdminPage() {
                         })}
                       </tbody>
                     </table>
+                  </div>
+
+                  {/* Mobile Booking Cards */}
+                  <div className="md:hidden" style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px 12px' }}>
+                    {bookings.map(booking => renderBookingCard(booking, true))}
                   </div>
 
                   {bookings.length === 0 && (
@@ -864,11 +870,14 @@ export default function AdminPage() {
               {propertiesForDisplay.map(property => {
                 const thumbSrc = property.images?.find(i => i.is_primary)?.image_url || property.images?.[0]?.image_url
                 return (
-                  <div key={property.id} style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '24px', display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
-                    {thumbSrc
-                      ? <Image src={thumbSrc} alt={property.name} width={120} height={90} style={{ width: '120px', height: '90px', objectFit: 'cover', flexShrink: 0, borderRadius: '8px' }} />
-                      : <div style={{ width: 120, height: 90, borderRadius: 8, backgroundColor: 'var(--color-bg-card)', flexShrink: 0 }} />
-                    }
+                  <div key={property.id} style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '24px' }} className="flex flex-col md:flex-row gap-5 items-stretch md:items-center">
+                    {thumbSrc ? (
+                      <div className="relative w-full h-48 md:w-[120px] md:h-[90px] flex-shrink-0 rounded-lg overflow-hidden">
+                        <Image src={thumbSrc} alt={property.name} fill style={{ objectFit: 'cover' }} unoptimized />
+                      </div>
+                    ) : (
+                      <div className="w-full h-48 md:w-[120px] md:h-[90px] rounded-lg bg-[var(--color-bg-card)] flex-shrink-0" />
+                    )}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap' }}>
                         <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{property.name}</h3>
@@ -890,10 +899,10 @@ export default function AdminPage() {
                       </div>
                     </div>
 
-                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div className="text-left md:text-right flex-shrink-0 mt-4 md:mt-0">
                       <p style={{ fontSize: '22px', color: 'var(--color-text-primary)', fontWeight: '800', marginBottom: '4px' }}>&#8377;{property.price_per_night.toLocaleString('en-IN')}</p>
                       <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '16px' }}>per night</p>
-                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                      <div className="flex gap-2 flex-wrap justify-start md:justify-end">
                         <button
                           onClick={() => setCalendarProperty({ id: property.id, name: property.name })}
                           title="View & manage calendar"
