@@ -346,12 +346,12 @@
 //   }
 
 //   return <PropertyEditor key={property?.id ?? 'new'} property={property} backHref="/admin" />
-// }
 'use client'
 import Image from 'next/image'
 import { Suspense, useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { addPropertyGroupMember, createPropertyGroup, deleteAdminPropertyImage, listAdminProperties, listPropertyGroups, saveProperty, updateAdminPropertyImage, updatePropertyGroupMember, type ApiFetcher } from '@/lib/api'
+import { addPropertyGroupMember, createPropertyGroup, deleteAdminProperty, deleteAdminPropertyImage, listAdminProperties, listPropertyGroups, saveProperty, updateAdminPropertyImage, updatePropertyGroupMember, type ApiFetcher } from '@/lib/api'
+import CalendarModal from './CalendarModal'
 import { useAuth } from '@/lib/auth/AuthContext'
 import { useRequireAuth } from '@/lib/auth/useRequireAuth'
 import { uploadPropertyImage } from '@/lib/supabase/storage'

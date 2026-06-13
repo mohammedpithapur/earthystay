@@ -5,7 +5,7 @@ import secrets
 import string
 from datetime import datetime, date
 
-from sqlalchemy import String, Integer, Date, DateTime, Enum as SAEnum, ForeignKey, Boolean, Index
+from sqlalchemy import String, Integer, Text, Date, DateTime, Enum as SAEnum, ForeignKey, Boolean, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -56,6 +56,8 @@ class Booking(Base):
     status: Mapped[BookingStatus] = mapped_column(SAEnum(BookingStatus), default=BookingStatus.pending, nullable=False)
     payment_status: Mapped[PaymentStatus] = mapped_column(SAEnum(PaymentStatus), default=PaymentStatus.unpaid, nullable=False)
     is_shadow_block: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_admin_block: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)  # optional admin reason for the block
     parent_booking_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("bookings.id", ondelete="CASCADE"), nullable=True)
     booking_ref: Mapped[str] = mapped_column(String(20), default=_generate_booking_ref, nullable=False, index=True)
     guest_name: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -71,4 +73,4 @@ class Booking(Base):
         back_populates="shadow_blocks",
     )
     shadow_blocks: Mapped[list["Booking"]] = relationship("Booking", back_populates="parent_booking", cascade="all, delete-orphan")
-    payment: Mapped["Payment | None"] = relationship("Payment", back_populates="booking", uselist=False)  # type: ignore[name-defined]
+    payment: Mapped["Payment | None"] = relationship("Payment", back_populates="booking", uselist=False, cascade="all, delete-orphan")  # type: ignore[name-defined]

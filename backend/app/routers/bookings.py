@@ -102,6 +102,7 @@ async def my_bookings(
     base_query = select(Booking).where(
         Booking.guest_id == user.id,
         Booking.is_shadow_block == False,
+        Booking.is_admin_block == False,  # Admin blocks must not appear in guest booking history
     )
     if status:
         base_query = base_query.where(Booking.status == status)
@@ -130,7 +131,10 @@ async def admin_list_bookings(
     db: AsyncSession = Depends(get_db),
 ):
     await auto_cleanup_expired_bookings(db)
-    base_query = select(Booking).where(Booking.is_shadow_block == False)
+    base_query = select(Booking).where(
+        Booking.is_shadow_block == False,
+        Booking.is_admin_block == False,  # Exclude admin blocks from bookings management tab
+    )
     if search:
         base_query = base_query.where(
             or_(

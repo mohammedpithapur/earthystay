@@ -17,6 +17,7 @@ import {
   type EventRequest, type EventStatus,
 } from '@/lib/api'
 import type { Property, Review } from '@/lib/types'
+import CalendarModal from './properties/CalendarModal'
 
 const BOOKINGS_PER_PAGE = 15
 const E2E_SKIP_AUTH = process.env.NEXT_PUBLIC_E2E_SKIP_AUTH === '1'
@@ -112,6 +113,9 @@ export default function AdminPage() {
   const [eventsSearch, setEventsSearch] = useState('')
   const [eventsStatusFilter, setEventsStatusFilter] = useState('')
   const eventsSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // ── Calendar / date-blocking state ───────────────────────────────────────
+  const [calendarProperty, setCalendarProperty] = useState<{ id: string; name: string } | null>(null)
 
   // ── Load bookings ─────────────────────────────────────────────────────────
   const loadBookings = useCallback(async (page = 1, search = '', status = '') => {
@@ -890,6 +894,11 @@ export default function AdminPage() {
                       <p style={{ fontSize: '22px', color: 'var(--color-text-primary)', fontWeight: '800', marginBottom: '4px' }}>&#8377;{property.price_per_night.toLocaleString('en-IN')}</p>
                       <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '16px' }}>per night</p>
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                        <button
+                          onClick={() => setCalendarProperty({ id: property.id, name: property.name })}
+                          title="View & manage calendar"
+                          style={{ padding: '8px 14px', border: '1px solid #3d3425', borderRadius: '8px', backgroundColor: '#1a1611', color: '#c9a84c', fontSize: '14px', cursor: 'pointer' }}
+                        >📅 Calendar</button>
                         <button onClick={() => router.push(`/admin/properties?id=${property.id}`)} style={buttonStyle}>Edit</button>
                         <Link href={`/properties/${property.id}`} style={{ ...buttonStyle, display: 'inline-block', textDecoration: 'none', textAlign: 'center' }}>View</Link>
                         <button onClick={() => handleDeleteProperty(property.id, property.name)} style={{ padding: '8px 16px', border: '1px solid #FFCDD2', borderRadius: '8px', backgroundColor: '#FFEBEE', color: '#C62828', fontSize: '13px', cursor: 'pointer', fontWeight: '700' }}>Delete</button>
@@ -1388,6 +1397,15 @@ export default function AdminPage() {
           </div>
         )}
       </div>
+      {/* Admin Calendar Modal — opened by clicking 📅 Calendar on any property card */}
+      {calendarProperty && (
+        <CalendarModal
+          propertyId={calendarProperty.id}
+          propertyName={calendarProperty.name}
+          onClose={() => setCalendarProperty(null)}
+          fetchWithAuth={fetchWithAuth}
+        />
+      )}
     </div>
   )
 }

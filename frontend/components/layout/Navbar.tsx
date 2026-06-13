@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth/AuthContext'
 
@@ -62,12 +63,17 @@ export default function Navbar() {
               transform: mounted && logoHover ? 'scale(1.08)' : 'scale(1)',
               transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
             }}>
-              <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: '100%', height: '100%' }}>
-                <path d="M50 12C28 26 15 48 15 72C15 82 23 88 35 88C44 88 48 83 50 78C52 83 56 88 65 88C77 88 85 82 85 72C85 48 72 26 50 12Z" fill="currentColor" fillOpacity="0.2" />
-                <path d="M50 28L28 46V72H42V60H58V72H72V46L50 28Z" stroke="var(--color-navbar-text)" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M50 12C50 12 57 32 57 50C57 66 43 76 43 76" stroke="var(--color-navbar-text)" strokeWidth="2.5" strokeLinecap="round" />
-                <circle cx="50" cy="68" r="4.5" fill="var(--color-gold)" />
-              </svg>
+              {mounted ? (
+                <img
+                  src="/Untitled_design-removebg-preview.png?v=2"
+                  alt="Earthy Stays Logo"
+                  width="42"
+                  height="42"
+                  style={{ objectFit: 'contain' }}
+                />
+              ) : (
+                <div style={{ width: '42px', height: '42px' }} />
+              )}
             </div>
             <span style={{ color: 'var(--color-navbar-text)', fontSize: '14px', letterSpacing: '2px', fontWeight: '700', fontFamily: "'Figtree', sans-serif" }}>
               EARTHY STAYS

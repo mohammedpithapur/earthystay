@@ -1,6 +1,9 @@
+import uuid
+from datetime import date, timedelta
+
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, and_
 from sqlalchemy.orm import selectinload
 
 from app.database import get_db
@@ -8,10 +11,12 @@ from app.dependencies import get_admin
 from app.models.user import User
 from app.models.property import Property
 from app.models.property_group import PropertyGroup, PropertyGroupMember
-from app.models.booking import Booking, BookingStatus
+from app.models.booking import Booking, BookingStatus, PaymentStatus
 from app.models.review import Review
+from app.schemas.booking import AdminBlockCreate, CalendarEventOut, CalendarOut
 from app.schemas.property import PropertyCreate, PropertyUpdate, PropertyOut, PropertyImageCreate, PropertyImageUpdate, PropertyImageOut
 from app.schemas.property_group import PropertyGroupCreate, PropertyGroupMemberCreate, PropertyGroupMemberUpdate, PropertyGroupOut
+from app.services.booking import apply_group_blocking, remove_shadow_blocks
 from app.models.property import PropertyImage
 from app.services.upload import (
     delete_property_image_from_url,
@@ -435,3 +440,156 @@ async def delete_group(
     await db.delete(group)
     await db.commit()
     return {"message": "Group deleted"}
+
+
+# ── Admin Calendar & Date Blocking ────────────────────────────────────────────
+
+@router.get("/properties/{property_id}/calendar", response_model=CalendarOut)
+async def get_property_calendar(
+    property_id: str,
+    from_date: date = Query(default=None),
+    to_date: date = Query(default=None),
+    admin: User = Depends(get_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Return all calendar events (bookings, admin blocks, shadow blocks) for a property."""
+    # Default to a 3-month window centred on today
+    if from_date is None:
+        from_date = date.today().replace(day=1) - timedelta(days=1)
+        from_date = from_date.replace(day=1)  # first of previous month
+    if to_date is None:
+        to_date = (date.today().replace(day=1) + timedelta(days=62)).replace(day=1) - timedelta(days=1)
+
+    result = await db.execute(
+        select(Booking).where(
+            Booking.property_id == property_id,
+            Booking.status.in_([BookingStatus.confirmed, BookingStatus.pending, BookingStatus.completed]),
+            Booking.check_in < to_date,
+            Booking.check_out > from_date,
+        )
+    )
+    bookings = result.scalars().all()
+
+    events: list[CalendarEventOut] = []
+    for b in bookings:
+        if b.is_admin_block:
+            event_type = "admin_block"
+        elif b.is_shadow_block:
+            event_type = "shadow_block"
+        else:
+            event_type = "guest_booking"
+
+        # For shadow blocks, resolve the parent booking ref
+        parent_ref: str | None = None
+        if b.is_shadow_block and b.parent_booking_id:
+            parent = await db.get(Booking, b.parent_booking_id)
+            parent_ref = parent.booking_ref if parent else None
+
+        events.append(CalendarEventOut(
+            id=b.id,
+            type=event_type,
+            check_in=b.check_in,
+            check_out=b.check_out,
+            guest_name=b.guest_name if not b.is_admin_block else None,
+            guest_email=b.guest_email if not b.is_admin_block else None,
+            booking_ref=b.booking_ref if not b.is_admin_block else None,
+            total=b.total if not b.is_admin_block else None,
+            status=b.status.value if not b.is_admin_block else None,
+            payment_status=b.payment_status.value if not b.is_admin_block else None,
+            note=b.note,
+            parent_booking_ref=parent_ref,
+        ))
+
+    return CalendarOut(events=events)
+
+
+@router.post("/properties/{property_id}/blocks", response_model=CalendarEventOut, status_code=201)
+async def create_admin_block(
+    property_id: str,
+    data: AdminBlockCreate,
+    admin: User = Depends(get_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Create an admin date block. Automatically shadow-blocks grouped sibling properties."""
+    property_obj = await db.get(Property, property_id)
+    if not property_obj:
+        raise HTTPException(status_code=404, detail="Property not found")
+
+    # Check for overlap with real guest bookings on this property
+    overlap_result = await db.execute(
+        select(Booking).where(
+            Booking.property_id == property_id,
+            Booking.status.in_([BookingStatus.confirmed, BookingStatus.pending]),
+            Booking.is_admin_block == False,  # Only check real guest bookings
+            Booking.check_in < data.check_out,
+            Booking.check_out > data.check_in,
+        )
+    )
+    conflicting = overlap_result.scalar_one_or_none()
+    if conflicting:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Dates overlap with an existing guest booking: {conflicting.booking_ref}",
+        )
+
+    nights = (data.check_out - data.check_in).days
+
+    block = Booking(
+        id=uuid.uuid4(),
+        property_id=uuid.UUID(property_id),
+        guest_id=admin.id,
+        check_in=data.check_in,
+        check_out=data.check_out,
+        guests=1,
+        pets=0,
+        nights=nights,
+        base_price=0,
+        cleaning_fee=0,
+        pet_charge=0,
+        total=0,
+        status=BookingStatus.confirmed,
+        payment_status=PaymentStatus.unpaid,
+        is_admin_block=True,
+        is_shadow_block=False,
+        note=data.note,
+        guest_name="Admin Block",
+        guest_email="admin@earthystay.com",
+    )
+    db.add(block)
+    await db.flush()  # Populate block.id before group blocking
+    await apply_group_blocking(db, block, commit=False)
+    await db.commit()
+    await db.refresh(block)
+
+    return CalendarEventOut(
+        id=block.id,
+        type="admin_block",
+        check_in=block.check_in,
+        check_out=block.check_out,
+        note=block.note,
+    )
+
+
+@router.delete("/properties/{property_id}/blocks/{block_id}")
+async def delete_admin_block(
+    property_id: str,
+    block_id: str,
+    admin: User = Depends(get_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete an admin date block and remove all associated group shadow blocks."""
+    block = await db.get(Booking, block_id)
+    if not block:
+        raise HTTPException(status_code=404, detail="Block not found")
+    if str(block.property_id) != property_id:
+        raise HTTPException(status_code=404, detail="Block not found for this property")
+    if not block.is_admin_block:
+        raise HTTPException(
+            status_code=403,
+            detail="Cannot delete a guest booking through this endpoint",
+        )
+
+    await remove_shadow_blocks(db, block, commit=False)
+    await db.delete(block)
+    await db.commit()
+    return {"message": "Block removed"}

@@ -1,6 +1,7 @@
 from pydantic import BaseModel, model_validator
 from uuid import UUID
 from datetime import datetime, date
+from typing import Literal
 
 
 class BookingCreate(BaseModel):
@@ -36,6 +37,9 @@ class BookingOut(BaseModel):
     total: int
     status: str
     payment_status: str
+    is_shadow_block: bool
+    is_admin_block: bool
+    note: str | None
     booking_ref: str
     guest_name: str
     guest_email: str
@@ -54,3 +58,41 @@ class BookingListOut(BaseModel):
     total: int
     page: int
     limit: int
+
+
+# ── Admin Calendar / Date Blocking ──────────────────────────────────────────
+
+class AdminBlockCreate(BaseModel):
+    check_in: date
+    check_out: date
+    note: str | None = None
+
+    @model_validator(mode="after")
+    def validate_dates(self):
+        if self.check_out <= self.check_in:
+            raise ValueError("check_out must be after check_in")
+        return self
+
+
+class CalendarEventOut(BaseModel):
+    id: UUID
+    type: Literal["guest_booking", "admin_block", "shadow_block"]
+    check_in: date
+    check_out: date
+    # Guest booking fields
+    guest_name: str | None = None
+    guest_email: str | None = None
+    booking_ref: str | None = None
+    total: int | None = None
+    status: str | None = None
+    payment_status: str | None = None
+    # Admin block fields
+    note: str | None = None
+    # Shadow block fields
+    parent_booking_ref: str | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class CalendarOut(BaseModel):
+    events: list[CalendarEventOut]

@@ -88,25 +88,35 @@ async def remove_shadow_blocks(db: AsyncSession, booking: Booking, commit: bool 
         await db.commit()
 
 
+import time
+
+_last_cleanup_time = 0.0
+CLEANUP_INTERVAL = 60.0  # seconds (run at most once per minute)
+
+
 async def auto_cleanup_expired_bookings(db: AsyncSession) -> None:
     """
     Finds and deletes any pending bookings that were created more than 15 minutes ago.
-    This releases any blocked dates automatically.
+    Uses database-level ON DELETE CASCADE to clean up shadow blocks and payments in one roundtrip.
+    Throttled to run at most once every 60 seconds to avoid DB query overhead on every request.
     """
+    global _last_cleanup_time
+    now = time.time()
+    if now - _last_cleanup_time < CLEANUP_INTERVAL:
+        return
+
+    _last_cleanup_time = now
+
     from datetime import timedelta
     from app.database import utc_now
 
     limit = utc_now() - timedelta(minutes=15)
     result = await db.execute(
-        select(Booking).where(
+        delete(Booking).where(
             Booking.status == BookingStatus.pending,
-            Booking.created_at < limit
+            Booking.created_at < limit,
+            Booking.is_admin_block == False,  # Never auto-expire admin blocks
         )
     )
-    expired = result.scalars().all()
-    for b in expired:
-        await remove_shadow_blocks(db, b, commit=False)
-        await db.delete(b)
-        
-    if expired:
+    if result.rowcount > 0:
         await db.commit()

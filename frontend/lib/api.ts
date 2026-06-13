@@ -70,6 +70,8 @@ export type AdminBooking = {
   status: string
   created_at: string
   is_shadow_block: boolean
+  is_admin_block: boolean
+  note: string | null
 }
 
 export type AdminBookingList = {
@@ -78,6 +80,35 @@ export type AdminBookingList = {
   page: number
   limit: number
 }
+
+// ─── Calendar / Date Blocking ─────────────────────────────────────────────────
+
+export type CalendarEventType = "guest_booking" | "admin_block" | "shadow_block"
+
+export type CalendarEvent = {
+  id: string
+  type: CalendarEventType
+  check_in: string   // "YYYY-MM-DD"
+  check_out: string  // "YYYY-MM-DD"
+  // guest_booking fields
+  guest_name: string | null
+  guest_email: string | null
+  booking_ref: string | null
+  total: number | null
+  status: string | null
+  payment_status: string | null
+  // admin_block fields
+  note: string | null
+  // shadow_block fields
+  parent_booking_ref: string | null
+}
+
+export type AdminBlockCreate = {
+  check_in: string   // "YYYY-MM-DD"
+  check_out: string  // "YYYY-MM-DD"
+  note?: string | null
+}
+
 
 export type ListAdminBookingsParams = {
   search?: string
@@ -347,6 +378,52 @@ export async function deletePropertyGroup(groupId: string, fetcher: ApiFetcher):
   const response = await fetcher(buildApiUrl(`/admin/groups/${groupId}`), { method: "DELETE" })
   if (!response.ok) throw new Error(`Failed to delete group (${response.status})`)
 }
+
+// ─── Admin Calendar / Date Blocking ──────────────────────────────────────────
+
+export async function getPropertyCalendar(
+  propertyId: string,
+  fromDate: string | null,
+  toDate: string | null,
+  fetcher: ApiFetcher,
+): Promise<CalendarEvent[]> {
+  const qs = new URLSearchParams()
+  if (fromDate) qs.set("from_date", fromDate)
+  if (toDate) qs.set("to_date", toDate)
+  const query = qs.toString()
+  const response = await fetcher(buildApiUrl(`/admin/properties/${propertyId}/calendar${query ? `?${query}` : ""}`))
+  if (!response.ok) throw new Error(`Failed to load calendar (${response.status})`)
+  const data = await response.json()
+  return data.events as CalendarEvent[]
+}
+
+export async function createAdminBlock(
+  propertyId: string,
+  data: AdminBlockCreate,
+  fetcher: ApiFetcher,
+): Promise<CalendarEvent> {
+  const response = await fetcher(buildApiUrl(`/admin/properties/${propertyId}/blocks`), {
+    method: "POST",
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}))
+    throw new Error((err as { detail?: string }).detail || `Failed to create block (${response.status})`)
+  }
+  return response.json()
+}
+
+export async function deleteAdminBlock(
+  propertyId: string,
+  blockId: string,
+  fetcher: ApiFetcher,
+): Promise<void> {
+  const response = await fetcher(buildApiUrl(`/admin/properties/${propertyId}/blocks/${blockId}`), {
+    method: "DELETE",
+  })
+  if (!response.ok) throw new Error(`Failed to delete block (${response.status})`)
+}
+
 
 // ─── Reviews ──────────────────────────────────────────────────────────────────
 

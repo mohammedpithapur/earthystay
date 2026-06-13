@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test'
+import type { Page, Route } from '@playwright/test'
 
-async function mockAdminApi(page) {
-  await page.route('**/admin/dashboard', route => {
+async function mockAdminApi(page: Page) {
+  await page.route('**/admin/dashboard', (route: Route) => {
     route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -14,7 +15,7 @@ async function mockAdminApi(page) {
     })
   })
 
-  await page.route('**/bookings/admin/all**', route => {
+  await page.route('**/bookings/admin/all**', (route: Route) => {
     route.fulfill({
       status: 200,
       contentType: 'application/json',
@@ -22,7 +23,7 @@ async function mockAdminApi(page) {
     })
   })
 
-  await page.route('**/admin/properties', route => {
+  await page.route('**/admin/properties', (route: Route) => {
     route.fulfill({
       status: 200,
       contentType: 'application/json',
