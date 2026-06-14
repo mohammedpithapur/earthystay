@@ -57,6 +57,7 @@ export default function Hero() {
     display: 'flex',
     flexDirection: 'column' as const,
     gap: '4px',
+    position: 'relative' as const,
   }
 
   const labelStyle = {
@@ -89,6 +90,17 @@ export default function Hero() {
           grid-template-columns: repeat(2, 1fr) !important;
         }
         
+        .hero-search-field {
+          background-color: #ffffff !important;
+          border: 1px solid var(--color-border) !important;
+          border-radius: 8px !important;
+          transition: all 0.2s ease !important;
+        }
+        .hero-search-field:focus-within {
+          border-color: var(--color-beige) !important;
+          box-shadow: 0 0 0 3px rgba(183, 137, 95, 0.12) !important;
+        }
+        
         @media (max-width: 768px) {
           .hero-destination {
             grid-column: 1 / -1 !important;
@@ -113,6 +125,19 @@ export default function Hero() {
         @media (min-width: 769px) {
           .hero-search-container {
             grid-template-columns: repeat(6, 1fr) !important;
+          }
+          .hero-search-field {
+            border: none !important;
+            border-radius: 0 !important;
+            border-right: 1px solid var(--color-border) !important;
+            background-color: transparent !important;
+            box-shadow: none !important;
+          }
+          .hero-pets {
+            border-right: none !important;
+          }
+          .hero-search-field:focus-within {
+            box-shadow: none !important;
           }
           .hero-destination,
           .hero-checkin,
@@ -219,7 +244,7 @@ export default function Hero() {
           }}
           className="hero-search-container">
 
-          <div style={{ ...fieldStyle, position: 'relative' }} className="hero-destination">
+          <div style={{ ...fieldStyle, position: 'relative' }} className="hero-destination hero-search-field">
             <label style={labelStyle}>Destination</label>
             <input
               type="text"
@@ -277,8 +302,11 @@ export default function Hero() {
             )}
           </div>
 
-          <div style={fieldStyle} className="hero-checkin">
+          <div style={fieldStyle} className="hero-checkin hero-search-field cursor-pointer">
             <label style={labelStyle}>Check In</label>
+            <span style={{ fontSize: '14px', color: checkIn ? 'var(--color-text-primary)' : '#8c8c8c', whiteSpace: 'nowrap' }}>
+              {checkIn ? new Date(checkIn).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Select Date'}
+            </span>
             <input
               type="date"
               value={checkIn}
@@ -290,24 +318,49 @@ export default function Hero() {
                   setCheckOut('')
                 }
               }}
-              className="hero-search-input"
-              style={inputStyle}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                opacity: 0,
+                cursor: 'pointer',
+                zIndex: 2,
+              }}
+              onClick={e => {
+                try { e.currentTarget.showPicker() } catch {}
+              }}
             />
           </div>
 
-          <div style={fieldStyle} className="hero-checkout">
+          <div style={fieldStyle} className="hero-checkout hero-search-field cursor-pointer">
             <label style={labelStyle}>Check Out</label>
+            <span style={{ fontSize: '14px', color: checkOut ? 'var(--color-text-primary)' : '#8c8c8c', whiteSpace: 'nowrap' }}>
+              {checkOut ? new Date(checkOut).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Select Date'}
+            </span>
             <input
               type="date"
               value={checkOut}
               min={checkIn || todayValue || undefined}
               onChange={e => setCheckOut(e.target.value)}
-              className="hero-search-input"
-              style={inputStyle}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                opacity: 0,
+                cursor: 'pointer',
+                zIndex: 2,
+              }}
+              onClick={e => {
+                try { e.currentTarget.showPicker() } catch {}
+              }}
             />
           </div>
 
-          <div style={fieldStyle} className="hero-guests">
+          <div style={fieldStyle} className="hero-guests hero-search-field">
             <label style={labelStyle}>Guests</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
               <button onClick={() => setGuests(Math.max(1, Number(guests) - 1).toString())} style={{ border: '1px solid var(--color-border)', backgroundColor: '#ffffff', width: '32px', height: '32px', fontSize: '16px', cursor: 'pointer', borderRadius: '4px', fontWeight: '700' }}>−</button>
@@ -316,7 +369,7 @@ export default function Hero() {
             </div>
           </div>
 
-          <div style={fieldStyle} className="hero-pets">
+          <div style={fieldStyle} className="hero-pets hero-search-field">
             <label style={labelStyle}>Pets</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
               <button onClick={() => setPets(Math.max(0, Number(pets) - 1).toString())} style={{ border: '1px solid var(--color-border)', backgroundColor: '#ffffff', width: '32px', height: '32px', fontSize: '16px', cursor: 'pointer', borderRadius: '4px', fontWeight: '700' }}>−</button>
