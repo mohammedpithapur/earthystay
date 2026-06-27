@@ -232,6 +232,78 @@ async def delete_property(
     return {"message": "Property deleted"}
 
 
+@router.post("/properties/{property_id}/duplicate", response_model=PropertyOut)
+async def duplicate_property(
+    property_id: str,
+    admin: User = Depends(get_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Clone a property as a new unpublished draft (images re-used, bookings/reviews not copied)."""
+    result = await db.execute(
+        select(Property)
+        .options(selectinload(Property.images))
+        .where(Property.id == property_id)
+    )
+    source = result.scalar_one_or_none()
+    if not source:
+        raise HTTPException(status_code=404, detail="Property not found")
+
+    new_property = Property(
+        owner_id=source.owner_id,
+        name=f"Copy of {source.name}",
+        description=source.description,
+        address=source.address,
+        city=source.city,
+        state=source.state,
+        country=source.country,
+        latitude=source.latitude,
+        longitude=source.longitude,
+        contact_phone=source.contact_phone,
+        contact_email=source.contact_email,
+        check_in_time=source.check_in_time,
+        check_out_time=source.check_out_time,
+        house_rules=list(source.house_rules) if source.house_rules else [],
+        price_per_night=source.price_per_night,
+        cleaning_fee=source.cleaning_fee,
+        max_guests=source.max_guests,
+        bedrooms=source.bedrooms,
+        bathrooms=source.bathrooms,
+        bathrooms_detail=list(source.bathrooms_detail) if source.bathrooms_detail else [],
+        min_nights=source.min_nights,
+        pets_allowed=source.pets_allowed,
+        pet_charge_per_night=source.pet_charge_per_night,
+        amenities=list(source.amenities) if source.amenities else [],
+        is_published=False,
+        override_house_rules=source.override_house_rules,
+        override_amenities=source.override_amenities,
+        override_details=source.override_details,
+        avg_rating=0.0,
+        review_count=0,
+    )
+    db.add(new_property)
+    await db.flush()
+
+    # Copy images (reuse same URLs — no file copy needed)
+    for img in source.images:
+        new_img = PropertyImage(
+            property_id=new_property.id,
+            image_url=img.image_url,
+            is_primary=img.is_primary,
+            display_order=img.display_order,
+        )
+        db.add(new_img)
+
+    await db.commit()
+
+    result = await db.execute(
+        select(Property)
+        .options(selectinload(Property.images))
+        .where(Property.id == new_property.id)
+    )
+    return result.scalar_one()
+
+
+
 # ── Property Images ──
 
 @router.post("/properties/{property_id}/images", response_model=PropertyImageOut)

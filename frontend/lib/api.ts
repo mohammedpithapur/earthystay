@@ -247,6 +247,14 @@ export async function deleteAdminProperty(propertyId: string, fetcher: ApiFetche
   if (!response.ok) throw new Error(`Failed to delete property (${response.status})`)
 }
 
+export async function duplicateAdminProperty(propertyId: string, fetcher: ApiFetcher): Promise<Property> {
+  const response = await fetcher(buildApiUrl(`/admin/properties/${propertyId}/duplicate`), {
+    method: "POST",
+  })
+  if (!response.ok) throw new Error(`Failed to duplicate property (${response.status})`)
+  return response.json()
+}
+
 // ─── Admin Dashboard ──────────────────────────────────────────────────────────
 
 export async function getAdminDashboard(fetcher: ApiFetcher): Promise<AdminDashboard> {
@@ -448,6 +456,19 @@ export async function createAdminReview(
 export async function deleteAdminReview(reviewId: string, fetcher: ApiFetcher): Promise<void> {
   const response = await fetcher(buildApiUrl(`/admin/reviews/${reviewId}`), { method: "DELETE" })
   if (!response.ok) throw new Error(`Failed to delete review (${response.status})`)
+}
+
+export async function updateAdminReview(
+  reviewId: string,
+  payload: { guest_name: string; rating: number; comment: string; platform: string },
+  fetcher: ApiFetcher,
+): Promise<Review> {
+  const response = await fetcher(buildApiUrl(`/admin/reviews/${reviewId}`), {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  })
+  if (!response.ok) throw new Error(`Failed to update review (${response.status})`)
+  return response.json()
 }
 
 // ─── iCal ─────────────────────────────────────────────────────────────────────

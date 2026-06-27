@@ -128,3 +128,26 @@ async def delete_admin_review(
     # Recalculate ratings
     await recalculate_property_ratings(db, property_id)
     return {"message": "Review deleted successfully"}
+
+
+@router.patch("/admin/reviews/{review_id}", response_model=ReviewOut)
+async def update_admin_review(
+    review_id: UUID,
+    data: dict,
+    admin: User = Depends(get_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    review = await db.get(Review, review_id)
+    if not review:
+        raise HTTPException(status_code=404, detail="Review not found")
+
+    allowed_fields = {"guest_name", "rating", "comment", "platform"}
+    for field, value in data.items():
+        if field in allowed_fields:
+            setattr(review, field, value)
+
+    await db.commit()
+    await db.refresh(review)
+    await recalculate_property_ratings(db, review.property_id)
+    await db.refresh(review)
+    return review

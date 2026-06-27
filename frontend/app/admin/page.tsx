@@ -98,6 +98,8 @@ export default function AdminPage() {
   const [reviewsGroupId, setReviewsGroupId] = useState<string | null>(null)
   const [groupReviews, setGroupReviews] = useState<Review[]>([])
   const [reviewsLoading, setReviewsLoading] = useState(false)
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null)
+  const [editReviewForm, setEditReviewForm] = useState<{ guest_name: string; rating: number; comment: string; platform: string }>({ guest_name: '', rating: 5, comment: '', platform: '' })
   const [newReview, setNewReview] = useState({ guest_name: '', rating: 5, comment: '', platform: '' })
   const [addingReview, setAddingReview] = useState(false)
 
@@ -191,6 +193,7 @@ export default function AdminPage() {
     if (activeTab === 'groups')   { void loadGroups() }
     if (activeTab === 'properties') {
       listAdminProperties(fetchWithAuth).then(setApiProperties).catch(() => {})
+      listPropertyGroups(fetchWithAuth).then(setGroups).catch(() => {})
     }
     if (activeTab === 'ical') {
       listAdminProperties(fetchWithAuth).then(props => {
@@ -486,10 +489,34 @@ export default function AdminPage() {
   }
 
   const handleDeleteReview = async (reviewId: string, propertyId: string) => {
+    if (!confirm('Delete this review? This cannot be undone.')) return
     try {
       await deleteAdminReview(reviewId, fetchWithAuth)
       await loadGroupReviews(propertyId)
     } catch { setGroupError('Failed to delete review') }
+  }
+
+  const handleUpdateReview = async (reviewId: string, propertyId: string) => {
+    try {
+      await fetchWithAuth(`/admin/reviews/${reviewId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editReviewForm),
+      })
+      setEditingReviewId(null)
+      await loadGroupReviews(propertyId)
+    } catch { setGroupError('Failed to update review') }
+  }
+
+  const handleDuplicateProperty = async (propertyId: string, name: string) => {
+    if (!confirm(`Create a copy of "${name}"?`)) return
+    try {
+      const res = await fetchWithAuth(`/admin/properties/${propertyId}/duplicate`, { method: 'POST' })
+      if (!res.ok) throw new Error()
+      const newProp = await res.json()
+      setApiProperties(prev => [newProp, ...prev])
+      router.push(`/admin/properties?id=${newProp.id}`)
+    } catch { alert('Failed to duplicate property') }
   }
 
   const tabs = [
@@ -691,8 +718,30 @@ export default function AdminPage() {
             {/* Voucher Modal */}
             {voucherBooking && (
               <div onClick={() => setVoucherBooking(null)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-                <div onClick={e => e.stopPropagation()} style={{ backgroundColor: '#fff', borderRadius: '16px', padding: '36px', maxWidth: '520px', width: '100%', boxShadow: '0 24px 64px rgba(0,0,0,0.18)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+                <div id="admin-voucher-content" onClick={e => e.stopPropagation()} style={{ backgroundColor: '#fff', borderRadius: '16px', padding: '0', maxWidth: '520px', width: '100%', boxShadow: '0 24px 64px rgba(0,0,0,0.18)', overflow: 'hidden' }}>
+                  {/* Property Hero Image */}
+                  {(() => {
+                    const vProp = getProperty(voucherBooking.property_id)
+                    const heroImg = vProp?.images?.find(i => i.is_primary)?.image_url || vProp?.images?.[0]?.image_url
+                    return heroImg ? (
+                      <div style={{ position: 'relative', height: '160px', width: '100%' }}>
+                        <Image src={heroImg} alt={vProp?.name ?? ''} fill style={{ objectFit: 'cover' }} unoptimized />
+                        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 55%)' }}>
+                          <div style={{ position: 'absolute', bottom: '16px', left: '20px', right: '52px' }}>
+                            <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase', fontWeight: '700', marginBottom: '4px' }}>{vProp?.city}, {vProp?.state}</p>
+                            <h3 style={{ color: '#ffffff', fontSize: '18px', fontWeight: '800', lineHeight: '1.2' }}>{vProp?.name}</h3>
+                          </div>
+                        </div>
+                      </div>
+                    ) : vProp ? (
+                      <div style={{ padding: '24px 28px 0', backgroundColor: 'var(--color-navbar)' }}>
+                        <p style={{ fontSize: '18px', fontWeight: '800', color: 'var(--color-text-primary)' }}>{vProp.name}</p>
+                        <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>{vProp.city}, {vProp.state}</p>
+                      </div>
+                    ) : null
+                  })()}
+                  <div style={{ padding: '28px 28px 28px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
                     <div>
                       <p style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700', marginBottom: '6px' }}>Booking Voucher</p>
                       <p style={{ fontSize: '22px', fontWeight: '800', color: 'var(--color-gold)' }}>{voucherBooking.booking_ref}</p>
@@ -724,6 +773,7 @@ export default function AdminPage() {
                       <p style={{ fontSize: '28px', fontWeight: '800', color: 'var(--color-text-primary)' }}>&#8377;{voucherBooking.total.toLocaleString('en-IN')}</p>
                     </div>
                     <button onClick={() => window.print()} style={{ padding: '10px 20px', backgroundColor: 'var(--color-gold)', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>🖨 Print</button>
+                  </div>
                   </div>
                 </div>
               </div>
@@ -910,6 +960,26 @@ export default function AdminPage() {
                         >📅 Calendar</button>
                         <button onClick={() => router.push(`/admin/properties?id=${property.id}`)} style={buttonStyle}>Edit</button>
                         <Link href={`/properties/${property.id}`} style={{ ...buttonStyle, display: 'inline-block', textDecoration: 'none', textAlign: 'center' }}>View</Link>
+                        <button onClick={() => handleDuplicateProperty(property.id, property.name)} style={{ padding: '8px 16px', border: '1px solid var(--color-border)', borderRadius: '8px', backgroundColor: '#ffffff', color: 'var(--color-text-primary)', fontSize: '13px', cursor: 'pointer', fontWeight: '700' }}>Duplicate</button>
+                        <button
+                          onClick={() => {
+                            const group = groups.find(g => g.members.some(m => m.property_id === property.id))
+                            if (group) {
+                              setExpandedGroup(group.id)
+                              setReviewsGroupId(group.id)
+                              const masterMember = group.members.find(m => m.is_whole_property)
+                              if (masterMember) {
+                                loadGroupReviews(masterMember.property_id)
+                              }
+                              setActiveTab('groups')
+                            } else {
+                              alert('This property is not part of any group. Please assign it to a group in the Groups tab to manage its reviews.')
+                            }
+                          }}
+                          style={{ padding: '8px 16px', border: '1px solid var(--color-border)', borderRadius: '8px', backgroundColor: '#ffffff', color: 'var(--color-text-primary)', fontSize: '13px', cursor: 'pointer', fontWeight: '700' }}
+                        >
+                          ★ Reviews
+                        </button>
                         <button onClick={() => handleDeleteProperty(property.id, property.name)} style={{ padding: '8px 16px', border: '1px solid #FFCDD2', borderRadius: '8px', backgroundColor: '#FFEBEE', color: '#C62828', fontSize: '13px', cursor: 'pointer', fontWeight: '700' }}>Delete</button>
                       </div>
                     </div>
@@ -1116,17 +1186,39 @@ export default function AdminPage() {
                                 ) : (
                                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                                     {groupReviews.map(review => (
-                                      <div key={review.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', padding: '14px 16px', backgroundColor: '#ffffff', borderRadius: '10px', border: '1px solid var(--color-border)', flexWrap: 'wrap' }}>
-                                        <div style={{ flex: 1, minWidth: 0 }}>
-                                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
-                                            <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{review.guest_name}</p>
-                                            {review.platform && <span style={{ fontSize: '11px', backgroundColor: '#E3F2FD', color: '#1565C0', padding: '2px 8px', borderRadius: '999px', fontWeight: '700' }}>{review.platform}</span>}
-                                            <span style={{ color: 'var(--color-gold)', fontSize: '14px' }}>{'★'.repeat(review.rating)}</span>
+                                      <div key={review.id} style={{ padding: '14px 16px', backgroundColor: '#ffffff', borderRadius: '10px', border: '1px solid var(--color-border)' }}>
+                                        {editingReviewId === review.id ? (
+                                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                                              <input value={editReviewForm.guest_name} onChange={e => setEditReviewForm(f => ({ ...f, guest_name: e.target.value }))} placeholder="Guest name" style={{ padding: '8px 12px', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '13px', outline: 'none' }} />
+                                              <input value={editReviewForm.platform} onChange={e => setEditReviewForm(f => ({ ...f, platform: e.target.value }))} placeholder="Platform" style={{ padding: '8px 12px', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '13px', outline: 'none' }} />
+                                            </div>
+                                            <select value={editReviewForm.rating} onChange={e => setEditReviewForm(f => ({ ...f, rating: parseInt(e.target.value) }))} style={{ padding: '8px 12px', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '13px', outline: 'none', backgroundColor: '#fff', cursor: 'pointer' }}>
+                                              {[5,4,3,2,1].map(n => <option key={n} value={n}>{'★'.repeat(n)} ({n}/5)</option>)}
+                                            </select>
+                                            <textarea value={editReviewForm.comment} onChange={e => setEditReviewForm(f => ({ ...f, comment: e.target.value }))} rows={3} placeholder="Comment" style={{ padding: '8px 12px', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '13px', resize: 'vertical', outline: 'none', fontFamily: 'inherit' }} />
+                                            <div style={{ display: 'flex', gap: '8px' }}>
+                                              <button onClick={() => masterMember && handleUpdateReview(review.id, masterMember!.property_id)} style={{ padding: '7px 14px', backgroundColor: 'var(--color-gold)', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: '800', cursor: 'pointer' }}>Save</button>
+                                              <button onClick={() => setEditingReviewId(null)} style={{ padding: '7px 14px', backgroundColor: 'var(--color-bg-soft)', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>Cancel</button>
+                                            </div>
                                           </div>
-                                          {review.comment && <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.5' }}>{review.comment}</p>}
-                                          <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '4px' }}>{new Date(review.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-                                        </div>
-                                        <button onClick={() => masterMember && handleDeleteReview(review.id, masterMember!.property_id)} style={{ padding: '6px 12px', backgroundColor: '#FFEBEE', border: '1px solid #FFCDD2', borderRadius: '6px', fontSize: '11px', fontWeight: '700', cursor: 'pointer', color: '#C62828', flexShrink: 0 }}>Delete</button>
+                                        ) : (
+                                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap' }}>
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                                                <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{review.guest_name}</p>
+                                                {review.platform && <span style={{ fontSize: '11px', backgroundColor: '#E3F2FD', color: '#1565C0', padding: '2px 8px', borderRadius: '999px', fontWeight: '700' }}>{review.platform}</span>}
+                                                <span style={{ color: 'var(--color-gold)', fontSize: '14px' }}>{'★'.repeat(review.rating)}</span>
+                                              </div>
+                                              {review.comment && <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.5' }}>{review.comment}</p>}
+                                              <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '4px' }}>{new Date(review.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+                                              <button onClick={() => { setEditingReviewId(review.id); setEditReviewForm({ guest_name: review.guest_name, rating: review.rating, comment: review.comment ?? '', platform: review.platform ?? '' }) }} style={{ padding: '6px 12px', backgroundColor: '#E3F2FD', border: '1px solid #BBDEFB', borderRadius: '6px', fontSize: '11px', fontWeight: '700', cursor: 'pointer', color: '#1565C0' }}>Edit</button>
+                                              <button onClick={() => masterMember && handleDeleteReview(review.id, masterMember!.property_id)} style={{ padding: '6px 12px', backgroundColor: '#FFEBEE', border: '1px solid #FFCDD2', borderRadius: '6px', fontSize: '11px', fontWeight: '700', cursor: 'pointer', color: '#C62828' }}>Delete</button>
+                                            </div>
+                                          </div>
+                                        )}
                                       </div>
                                     ))}
                                   </div>

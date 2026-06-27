@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -34,17 +34,71 @@ function VoucherModal({ booking, property, onClose }: {
   onClose: () => void
 }) {
   const formatDate = (d: string) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
+  const [isPdfGenerating, setIsPdfGenerating] = React.useState(false)
+
+  const handleDownloadPDF = async () => {
+    setIsPdfGenerating(true)
+    try {
+      const element = document.getElementById('voucher-content')
+      if (!element) return
+      // Hide buttons during capture
+      const btns = element.querySelectorAll<HTMLElement>('button')
+      btns.forEach(b => { b.style.display = 'none' })
+      try {
+        const html2canvas = (await import('html2canvas')).default
+        const jsPDF = (await import('jspdf')).default
+        const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
+        const imgData = canvas.toDataURL('image/png')
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a5' })
+        const pageWidth = pdf.internal.pageSize.getWidth()
+        const pageHeight = (canvas.height * pageWidth) / canvas.width
+        pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight)
+        const fileName = `voucher-${booking.booking_ref}.pdf`
+        // Try native share on mobile, fallback to download
+        const blob = pdf.output('blob')
+        const file = new File([blob], fileName, { type: 'application/pdf' })
+        if (typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], title: `Booking Voucher ${booking.booking_ref}` })
+        } else {
+          pdf.save(fileName)
+        }
+      } finally {
+        btns.forEach(b => { b.style.display = '' })
+      }
+    } catch (err) {
+      console.error('PDF generation failed:', err)
+    } finally {
+      setIsPdfGenerating(false)
+    }
+  }
+
+  // Hero image from property
+  const heroImage = property?.images?.find(i => i.is_primary)?.image_url || property?.images?.[0]?.image_url
 
   return (
     <div
       onClick={onClose}
-      style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
+      style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', overflowY: 'auto' }}
     >
       <div
         id="voucher-print"
         onClick={e => e.stopPropagation()}
-        style={{ backgroundColor: '#ffffff', borderRadius: '16px', padding: '40px', maxWidth: '520px', width: '100%', boxShadow: '0 24px 60px rgba(0,0,0,0.2)' }}
+        style={{ backgroundColor: '#ffffff', borderRadius: '16px', maxWidth: '520px', width: '100%', boxShadow: '0 24px 60px rgba(0,0,0,0.2)', overflow: 'hidden' }}
       >
+        {/* Property Hero Image */}
+        {heroImage && (
+          <div style={{ position: 'relative', height: '160px', width: '100%' }}>
+            <Image src={heroImage} alt={property?.name ?? ''} fill style={{ objectFit: 'cover' }} unoptimized />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 55%)' }}>
+              <div style={{ position: 'absolute', bottom: '16px', left: '20px', right: '20px' }}>
+                <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase', fontWeight: '700', marginBottom: '4px' }}>{property?.city}, {property?.state}</p>
+                <h3 style={{ color: '#ffffff', fontSize: '20px', fontWeight: '800', lineHeight: '1.2' }}>{property?.name}</h3>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div id="voucher-content" style={{ padding: '32px 40px 40px' }}>
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '28px', paddingBottom: '24px', borderBottom: '1px solid var(--color-border)' }}>
           <p style={{ fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--color-gold)', fontWeight: '700', marginBottom: '6px' }}>Booking Confirmation</p>
@@ -54,12 +108,17 @@ function VoucherModal({ booking, property, onClose }: {
           </span>
         </div>
 
-        {/* Property */}
-        {property && (
+        {/* Property address (no image shown in content area since hero is above) */}
+        {property && !heroImage && (
           <div style={{ marginBottom: '24px' }}>
             <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700', marginBottom: '4px' }}>Property</p>
             <p style={{ fontSize: '18px', fontWeight: '800', color: 'var(--color-text-primary)' }}>{property.name}</p>
             <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '2px' }}>{property.address}, {property.city}</p>
+          </div>
+        )}
+        {property && heroImage && (
+          <div style={{ marginBottom: '24px' }}>
+            <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>{property.address}, {property.city}</p>
           </div>
         )}
 
@@ -115,9 +174,17 @@ function VoucherModal({ booking, property, onClose }: {
           <button onClick={onClose} style={{ padding: '10px 20px', border: '1px solid var(--color-border)', borderRadius: '8px', backgroundColor: 'transparent', fontSize: '13px', cursor: 'pointer', fontWeight: '600', color: 'var(--color-text-secondary)' }}>
             Close
           </button>
-          <button onClick={() => window.print()} style={{ padding: '10px 20px', border: 'none', borderRadius: '8px', backgroundColor: 'var(--color-gold)', fontSize: '13px', cursor: 'pointer', fontWeight: '700', color: 'var(--color-text-primary)' }}>
-            Print Voucher
+          <button
+            onClick={handleDownloadPDF}
+            disabled={isPdfGenerating}
+            style={{ padding: '10px 20px', border: 'none', borderRadius: '8px', backgroundColor: 'var(--color-gold)', fontSize: '13px', cursor: isPdfGenerating ? 'not-allowed' : 'pointer', fontWeight: '700', color: 'var(--color-text-primary)', opacity: isPdfGenerating ? 0.7 : 1 }}
+          >
+            {isPdfGenerating ? 'Generating…' : '⬇ Download PDF'}
           </button>
+          <button onClick={() => window.print()} style={{ padding: '10px 20px', border: '1px solid var(--color-border)', borderRadius: '8px', backgroundColor: 'transparent', fontSize: '13px', cursor: 'pointer', fontWeight: '600', color: 'var(--color-text-secondary)' }}>
+            🖨 Print
+          </button>
+        </div>
         </div>
       </div>
     </div>

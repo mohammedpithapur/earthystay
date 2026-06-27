@@ -63,6 +63,12 @@ async def create_booking(
     if overlapping.scalar_one_or_none():
         raise HTTPException(status_code=409, detail="Property is not available for these dates")
 
+    if data.pets > 0:
+        if not property.pets_allowed:
+            raise HTTPException(status_code=400, detail="Pets are not allowed at this property")
+        if data.pets > property.max_pets:
+            raise HTTPException(status_code=400, detail=f"Maximum allowed pets is {property.max_pets}")
+
     pricing = calculate_pricing(property, data.check_in, data.check_out, data.pets)
 
     booking = Booking(

@@ -51,6 +51,7 @@ class PropertyOut(BaseModel):
     bathrooms_detail: list[dict]
     min_nights: int
     pets_allowed: bool
+    max_pets: int
     pet_charge_per_night: int
     amenities: list[str]
     is_published: bool
@@ -88,6 +89,7 @@ class PropertyCreate(BaseModel):
     bathrooms_detail: list[dict] = []
     min_nights: int = 1
     pets_allowed: bool = False
+    max_pets: int = 0
     pet_charge_per_night: int = 0
     amenities: list[str] = []
     is_published: bool = False
@@ -119,6 +121,7 @@ class PropertyUpdate(BaseModel):
     bathrooms_detail: list[dict] | None = None
     min_nights: int | None = None
     pets_allowed: bool | None = None
+    max_pets: int | None = None
     pet_charge_per_night: int | None = None
     amenities: list[str] | None = None
     is_published: bool | None = None

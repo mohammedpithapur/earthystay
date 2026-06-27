@@ -32,6 +32,7 @@ export interface Property {
   min_nights: number
   pets_allowed: boolean
   pet_charge_per_night: number
+  max_pets?: number
   images: PropertyImage[]
   amenities: string[]
   avg_rating: number

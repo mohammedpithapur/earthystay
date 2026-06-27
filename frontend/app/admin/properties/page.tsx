@@ -348,7 +348,7 @@
 //   return <PropertyEditor key={property?.id ?? 'new'} property={property} backHref="/admin" />
 'use client'
 import Image from 'next/image'
-import { Suspense, useState, useEffect, useRef } from 'react'
+import React, { Suspense, useState, useEffect, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { addPropertyGroupMember, createPropertyGroup, deleteAdminProperty, deleteAdminPropertyImage, listAdminProperties, listPropertyGroups, saveProperty, updateAdminPropertyImage, updatePropertyGroupMember, type ApiFetcher } from '@/lib/api'
 import CalendarModal from './CalendarModal'
@@ -391,19 +391,20 @@ const SECTIONS: Section[] = [
   { id: 'rules',     label: 'House Rules',  icon: '◌', fields: ['house_rules'] },
 ]
 
-const AMENITY_OPTIONS = [
-  'WiFi', 'Pool', 'Kitchen', 'Parking', 'Air Conditioning', 'Heating',
-  'Washer', 'Dryer', 'TV', 'Fireplace', 'Garden', 'BBQ Grill',
-  'Beach Access', 'Mountain View', 'Lake View', 'River View',
-  'Hot Tub', 'Gym', 'Workspace', 'Pet Friendly',
-  'Hiking Trails', 'Bonfire', 'Camel Ride', 'Star Gazing',
-  'Desert Safari', 'Restaurant', 'Spa', 'Yoga Deck',
-  'Adventure Activities', 'Balcony', 'Terrace', 'Library',
-]
+const AMENITY_GROUPS: Record<string, string[]> = {
+  '✨ Essentials': ['WiFi', 'Air Conditioning', 'Heating', 'Washer', 'Dryer', 'Iron', 'Workspace'],
+  '🍳 Kitchen': ['Kitchen', 'Refrigerator', 'Microwave', 'Coffee Maker', 'Dishwasher', 'BBQ Grill'],
+  '🛏 Bedroom & Living': ['TV', 'Fireplace', 'Balcony', 'Terrace', 'Library', 'Extra Pillows & Blankets'],
+  '🏊 Outdoor & Recreation': ['Pool', 'Hot Tub', 'Garden', 'Parking', 'Beach Access', 'Hiking Trails', 'Gym', 'Bonfire'],
+  '🌿 Views & Nature': ['Mountain View', 'Lake View', 'River View', 'Star Gazing'],
+  '🎒 Experiences': ['Desert Safari', 'Camel Ride', 'Adventure Activities', 'Yoga Deck', 'Spa', 'Restaurant'],
+  '🐾 Guest Policies': ['Pet Friendly', 'Long-term Stays Allowed', 'Self Check-in', 'Luggage Dropoff'],
+}
+const AMENITY_OPTIONS = Object.values(AMENITY_GROUPS).flat()
 
 const PREDEFINED_RULES = [
   'No smoking inside the property',
-  'No loud music after 9:00 PM',
+  'No loud music after 10:00 PM',
   'No parties or events',
   'Pets must be leashed in common areas',
   'No smoking or alcohol on the property',
@@ -446,6 +447,7 @@ type PropertyFormState = {
   pet_charge_per_night: number
   min_nights: number
   pets_allowed: boolean
+  max_pets: number
   is_published: boolean
   house_rules: string[]
 }
@@ -474,7 +476,7 @@ const EMPTY_FORM: PropertyFormState = {
   images: [] as { id: string; property_id: string; image_url: string; is_primary: boolean; display_order: number }[],
   amenities: [] as string[],
   price_per_night: 5000, cleaning_fee: 800, pet_charge_per_night: 300,
-  min_nights: 1, pets_allowed: false, is_published: true,
+  min_nights: 1, pets_allowed: false, max_pets: 0, is_published: true,
   house_rules: [] as string[],
 }
 
@@ -507,6 +509,7 @@ function createFormFromProperty(property?: Property | null): PropertyFormState {
     pet_charge_per_night: property.pet_charge_per_night,
     min_nights: property.min_nights,
     pets_allowed: property.pets_allowed,
+    max_pets: (property as { max_pets?: number }).max_pets ?? 0,
     is_published: property.is_published,
     house_rules: [...property.house_rules],
   }
@@ -637,8 +640,59 @@ function BasicInfoSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm:
         <FieldLabel>Space Details</FieldLabel>
         <div style={{ border: '1px solid var(--color-border)', borderRadius: '12px', padding: '0 20px' }}>
           <Stepper label="Bedrooms" value={form.bedrooms} onChange={v => setForm({ ...form, bedrooms: v })} min={1} max={20} />
-          <Stepper label="Bathrooms" value={form.bathrooms} onChange={v => setForm({ ...form, bathrooms: v })} min={1} max={20} />
           <Stepper label="Max Guests" value={form.max_guests} onChange={v => setForm({ ...form, max_guests: v })} min={1} max={30} />
+        </div>
+      </div>
+
+      {/* Bathroom Detail Section */}
+      <div>
+        <FieldLabel>Bathrooms ({form.bathrooms_detail.reduce((s, b) => s + b.count, 0)})</FieldLabel>
+        <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '16px' }}>Describe each bathroom type at your property</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '14px' }}>
+          {form.bathrooms_detail.map((bd, idx) => (
+            <div key={idx} style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <select
+                value={bd.type}
+                onChange={e => {
+                  const updated = [...form.bathrooms_detail]
+                  updated[idx] = { ...updated[idx], type: e.target.value as BathroomDetail['type'] }
+                  setForm({ ...form, bathrooms_detail: updated, bathrooms: updated.reduce((s, b) => s + b.count, 0) })
+                }}
+                style={{ ...selectStyle, flex: '1 1 140px', minWidth: '120px' }}
+              >
+                <option value="ensuite">Private Attached</option>
+                <option value="detached_private">Private Detached</option>
+                <option value="shared">Shared</option>
+              </select>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: '0 0 auto' }}>
+                <button onClick={() => {
+                  const updated = [...form.bathrooms_detail]
+                  updated[idx] = { ...updated[idx], count: Math.max(1, bd.count - 1) }
+                  setForm({ ...form, bathrooms_detail: updated, bathrooms: updated.reduce((s, b) => s + b.count, 0) })
+                }} disabled={bd.count <= 1} style={{ width: '28px', height: '28px', border: '1px solid var(--color-border)', borderRadius: '50%', backgroundColor: 'transparent', cursor: bd.count <= 1 ? 'not-allowed' : 'pointer', fontSize: '14px' }}>−</button>
+                <span style={{ fontSize: '14px', fontWeight: '700', minWidth: '20px', textAlign: 'center' as const }}>{bd.count}</span>
+                <button onClick={() => {
+                  const updated = [...form.bathrooms_detail]
+                  updated[idx] = { ...updated[idx], count: Math.min(10, bd.count + 1) }
+                  setForm({ ...form, bathrooms_detail: updated, bathrooms: updated.reduce((s, b) => s + b.count, 0) })
+                }} style={{ width: '28px', height: '28px', border: '1px solid var(--color-border)', borderRadius: '50%', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '14px' }}>+</button>
+              </div>
+              {form.bathrooms_detail.length > 1 && (
+                <button onClick={() => {
+                  const updated = form.bathrooms_detail.filter((_, i) => i !== idx)
+                  setForm({ ...form, bathrooms_detail: updated, bathrooms: updated.reduce((s, b) => s + b.count, 0) })
+                }} style={{ width: '28px', height: '28px', border: '1px solid #FFCDD2', borderRadius: '50%', backgroundColor: '#FFEBEE', color: '#C62828', cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>×</button>
+              )}
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          {([['ensuite', '+ Private Attached'], ['detached_private', '+ Private Detached'], ['shared', '+ Shared']] as const).map(([type, label]) => (
+            <button key={type} onClick={() => {
+              const updated = [...form.bathrooms_detail, { type, count: 1 }]
+              setForm({ ...form, bathrooms_detail: updated, bathrooms: updated.reduce((s, b) => s + b.count, 0) })
+            }} style={{ padding: '7px 14px', border: '1px dashed var(--color-border)', borderRadius: '8px', backgroundColor: 'transparent', fontSize: '12px', cursor: 'pointer', color: 'var(--color-text-muted)', fontWeight: '600' }}>{label}</button>
+          ))}
         </div>
       </div>
 
@@ -731,6 +785,19 @@ function PhotosSection({
   setIsUploading,
 }: PhotosSectionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const dragIndexRef = React.useRef<number>(0)
+
+  const handleReorder = (dropIdx: number) => {
+    const dragIdx = dragIndexRef.current
+    if (dragIdx === dropIdx) return
+    setForm(prev => {
+      const imgs = [...prev.images]
+      const [moved] = imgs.splice(dragIdx, 1)
+      imgs.splice(dropIdx, 0, moved)
+      // Ensure first image is always primary
+      return { ...prev, images: imgs.map((img, i) => ({ ...img, is_primary: i === 0 })) }
+    })
+  }
   const uploadFilesRef = useRef<Record<string, File>>({})
 
   const appendFiles = async (files: File[]) => {
@@ -911,85 +978,99 @@ function PhotosSection({
         <p style={{ fontSize: '12px', color: '#C62828' }}>{uploadNotice}</p>
       )}
 
-      {/* Image Grid */}
+      {/* Airbnb-style Photo Grid */}
       {form.images.length > 0 && (
         <div>
-          <FieldLabel>Uploaded Photos ({form.images.length})</FieldLabel>
-          <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '16px' }}>Click a photo to set it as primary cover image</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px' }}>
-            {form.images.map(img => (
-              <div key={img.id} style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', aspectRatio: '4/3', cursor: 'pointer' }} onClick={() => { void setPrimary(img.id) }}>
-                {img.image_url ? (
-                  <Image src={img.image_url} alt="" fill sizes="(max-width: 768px) 100vw, 150px" style={{ objectFit: 'cover' }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <FieldLabel>Photos ({form.images.length} / 20)</FieldLabel>
+            <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>Click a photo to set it as cover · Drag to reorder</p>
+          </div>
+          {/* Hero + grid layout (Airbnb style) */}
+          <div style={{ display: 'grid', gridTemplateColumns: form.images.length === 1 ? '1fr' : '3fr 2fr', gridTemplateRows: '240px 240px', gap: '8px', borderRadius: '16px', overflow: 'hidden', marginBottom: '12px' }}>
+            {/* Cover photo — spans 2 rows */}
+            {form.images[0] && (
+              <div
+                style={{ gridRow: '1 / 3', position: 'relative', cursor: 'pointer', backgroundColor: 'var(--color-bg-card)' }}
+                draggable
+                onDragStart={() => form.images[0] && dragIndexRef.current !== undefined && (dragIndexRef.current = 0)}
+                onDrop={e => { e.preventDefault(); void handleReorder(0) }}
+                onDragOver={e => e.preventDefault()}
+                onClick={() => { void setPrimary(form.images[0].id) }}
+              >
+                {form.images[0].image_url ? (
+                  <Image src={form.images[0].image_url} alt="" fill sizes="60vw" style={{ objectFit: 'cover' }} />
                 ) : (
-                  <div style={{ width: '100%', height: '100%', backgroundColor: 'var(--color-bg-card)' }} />
+                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--color-bg-card)', color: 'var(--color-text-muted)', fontSize: '32px' }}>📸</div>
                 )}
-                {img.is_primary && (
-                  <div style={{ position: 'absolute', top: '8px', left: '8px', backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', fontSize: '10px', fontWeight: '800', padding: '3px 8px', borderRadius: '4px', letterSpacing: '0.5px' }}>
-                    COVER
-                  </div>
-                )}
-                <button
-                  onClick={e => { e.stopPropagation(); void removeImage(img.id) }}
-                  style={{
-                    position: 'absolute', top: '8px', right: '8px', zIndex: 2,
-                    width: '24px', height: '24px', borderRadius: '50%',
-                    backgroundColor: 'rgba(0,0,0,0.6)', border: 'none',
-                    color: '#fff', fontSize: '14px', cursor: 'pointer',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}
-                >×</button>
-                <div style={{
-                  position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 1,
-                  border: img.is_primary ? '2px solid var(--color-gold)' : '2px solid transparent',
-                  borderRadius: '10px', transition: 'border-color 0.2s',
-                }} />
-                {uploadProgress[img.id] !== undefined && uploadProgress[img.id] < 100 && (
-                  <div style={{
-                    position: 'absolute', left: '0', right: '0', bottom: '0',
-                    height: '6px', backgroundColor: 'rgba(0, 0, 0, 0.18)',
-                  }}>
-                    <div style={{
-                      height: '100%',
-                      width: `${uploadProgress[img.id]}%`,
-                      backgroundColor: 'var(--color-gold)',
-                      transition: 'width 0.15s ease',
-                    }} />
-                  </div>
-                )}
-                {uploadErrors[img.id] && (
-                  <div style={{
-                    position: 'absolute', left: '0', right: '0', bottom: '0',
-                    padding: '6px 8px', backgroundColor: 'rgba(198, 40, 40, 0.9)',
-                    color: '#fff', fontSize: '10px', fontWeight: '700', display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'space-between'
-                  }}>
-                    <span style={{ flex: 1, paddingRight: '8px' }}>{uploadErrors[img.id]}</span>
-                    <button
-                      onClick={e => { e.stopPropagation(); void (async () => {
-                        const id = img.id
-                        const file = uploadFilesRef.current[id]
-                        if (!file) return
-                        // clear prior error and restart progress
-                        setUploadErrors(prev => { const next = { ...prev }; delete next[id]; return next })
-                        setUploadProgress(prev => ({ ...prev, [id]: 0 }))
-                        try {
-                          const publicUrl = await uploadPropertyImage(file, percent => setUploadProgress(prev => ({ ...prev, [id]: percent })), fetchWithAuth)
-                          setForm(prev => ({ ...prev, images: prev.images.map(i => i.id === id ? { ...i, image_url: publicUrl } : i) }))
-                          delete uploadFilesRef.current[id]
-                        } catch (err) {
-                          const msg = err instanceof Error ? err.message : 'Image upload failed'
-                          setUploadErrors(prev => ({ ...prev, [id]: msg }))
-                        }
-                      }) }}
-                      style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', padding: '4px 8px', borderRadius: '6px', cursor: 'pointer', fontSize: '11px' }}
-                    >
-                      Retry
-                    </button>
-                  </div>
+                {/* COVER badge */}
+                <div style={{ position: 'absolute', top: '12px', left: '12px', backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', fontSize: '10px', fontWeight: '800', padding: '4px 10px', borderRadius: '4px', letterSpacing: '0.5px' }}>COVER</div>
+                {/* Remove button */}
+                <button onClick={e => { e.stopPropagation(); void removeImage(form.images[0].id) }} style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 2, width: '28px', height: '28px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.65)', border: 'none', color: '#fff', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+                {/* Progress bar */}
+                {uploadProgress[form.images[0].id] !== undefined && uploadProgress[form.images[0].id] < 100 && (
+                  <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '6px', backgroundColor: 'rgba(0,0,0,0.18)' }}><div style={{ height: '100%', width: `${uploadProgress[form.images[0].id]}%`, backgroundColor: 'var(--color-gold)', transition: 'width 0.15s ease' }} /></div>
                 )}
               </div>
-            ))}
+            )}
+            {/* Secondary slots 1–4 */}
+            {[1, 2, 3, 4].map(slotIdx => {
+              const img = form.images[slotIdx]
+              return (
+                <div
+                  key={slotIdx}
+                  style={{ position: 'relative', cursor: img ? 'pointer' : 'default', backgroundColor: 'var(--color-bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  draggable={!!img}
+                  onDragStart={() => { dragIndexRef.current = slotIdx }}
+                  onDrop={e => { e.preventDefault(); void handleReorder(slotIdx) }}
+                  onDragOver={e => e.preventDefault()}
+                  onClick={() => img && void setPrimary(img.id)}
+                >
+                  {img ? (
+                    <>
+                      {img.image_url ? (
+                        <Image src={img.image_url} alt="" fill sizes="30vw" style={{ objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', backgroundColor: 'var(--color-bg-card)' }} />
+                      )}
+                      <button onClick={e => { e.stopPropagation(); void removeImage(img.id) }} style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 2, width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.65)', border: 'none', color: '#fff', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+                      {uploadProgress[img.id] !== undefined && uploadProgress[img.id] < 100 && (
+                        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '6px', backgroundColor: 'rgba(0,0,0,0.18)' }}><div style={{ height: '100%', width: `${uploadProgress[img.id]}%`, backgroundColor: 'var(--color-gold)', transition: 'width 0.15s ease' }} /></div>
+                      )}
+                    </>
+                  ) : (
+                    <div style={{ textAlign: 'center', color: 'var(--color-border)' }}>
+                      <div style={{ fontSize: '24px' }}>+</div>
+                      <p style={{ fontSize: '11px', marginTop: '4px' }}>Add photo</p>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
+          {/* Remaining photos (5+) in a small grid */}
+          {form.images.length > 5 && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '8px', marginBottom: '12px' }}>
+              {form.images.slice(5).map((img, relIdx) => {
+                const absIdx = relIdx + 5
+                return (
+                  <div key={img.id} style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', aspectRatio: '4/3', cursor: 'pointer' }}
+                    draggable
+                    onDragStart={() => { dragIndexRef.current = absIdx }}
+                    onDrop={e => { e.preventDefault(); void handleReorder(absIdx) }}
+                    onDragOver={e => e.preventDefault()}
+                    onClick={() => { void setPrimary(img.id) }}
+                  >
+                    {img.image_url ? <Image src={img.image_url} alt="" fill sizes="120px" style={{ objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', backgroundColor: 'var(--color-bg-card)' }} />}
+                    <button onClick={e => { e.stopPropagation(); void removeImage(img.id) }} style={{ position: 'absolute', top: '6px', right: '6px', zIndex: 2, width: '22px', height: '22px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.65)', border: 'none', color: '#fff', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+                    {uploadProgress[img.id] !== undefined && uploadProgress[img.id] < 100 && (
+                      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '5px', backgroundColor: 'rgba(0,0,0,0.18)' }}><div style={{ height: '100%', width: `${uploadProgress[img.id]}%`, backgroundColor: 'var(--color-gold)' }} /></div>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+          <button onClick={() => fileInputRef.current?.click()} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', border: '1.5px dashed var(--color-border)', borderRadius: '8px', backgroundColor: 'transparent', fontSize: '13px', cursor: 'pointer', color: 'var(--color-text-muted)', fontFamily: "'Figtree', sans-serif", fontWeight: '600' }}>+ Add more photos</button>
         </div>
       )}
     </div>
@@ -997,6 +1078,8 @@ function PhotosSection({
 }
 
 function AmenitiesSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: (f: typeof EMPTY_FORM) => void }) {
+  const [customInput, setCustomInput] = useState('')
+
   const toggle = (amenity: string) => {
     const next = form.amenities.includes(amenity)
       ? form.amenities.filter(a => a !== amenity)
@@ -1004,36 +1087,76 @@ function AmenitiesSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm:
     setForm({ ...form, amenities: next })
   }
 
+  const addCustom = () => {
+    const trimmed = customInput.trim()
+    if (trimmed && !form.amenities.includes(trimmed)) {
+      setForm({ ...form, amenities: [...form.amenities, trimmed] })
+      setCustomInput('')
+    }
+  }
+
   return (
-    <div>
-      <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', marginBottom: '24px', lineHeight: '1.6' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+      <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', lineHeight: '1.6', margin: 0 }}>
         Select all amenities available at your property. The more you add, the better guests can find your listing.
       </p>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-        {AMENITY_OPTIONS.map(amenity => {
-          const active = form.amenities.includes(amenity)
-          return (
-            <button
-              key={amenity}
-              onClick={() => toggle(amenity)}
-              style={{
-                padding: '10px 16px',
-                border: `1.5px solid ${active ? 'var(--color-text-primary)' : 'var(--color-border)'}`,
-                borderRadius: '100px',
-                backgroundColor: active ? 'var(--color-text-primary)' : '#ffffff',
-                color: active ? '#ffffff' : 'var(--color-text-secondary)',
-                fontSize: '13px', fontWeight: active ? '700' : '500',
-                cursor: 'pointer', transition: 'all 0.15s ease',
-                fontFamily: "'Figtree', sans-serif",
-              }}
-            >
-              {amenity}
-            </button>
-          )
-        })}
+      {Object.entries(AMENITY_GROUPS).map(([groupName, amenities]) => (
+        <div key={groupName}>
+          <p style={{ fontSize: '12px', letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700', marginBottom: '12px' }}>{groupName}</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {amenities.map(amenity => {
+              const active = form.amenities.includes(amenity)
+              return (
+                <button
+                  key={amenity}
+                  onClick={() => toggle(amenity)}
+                  style={{
+                    padding: '8px 14px',
+                    border: `1.5px solid ${active ? 'var(--color-gold)' : 'var(--color-border)'}`,
+                    borderRadius: '100px',
+                    backgroundColor: active ? 'rgba(201,168,76,0.12)' : '#ffffff',
+                    color: active ? 'var(--color-text-primary)' : 'var(--color-text-secondary)',
+                    fontSize: '13px', fontWeight: active ? '700' : '400',
+                    cursor: 'pointer', transition: 'all 0.15s ease',
+                    fontFamily: "'Figtree', sans-serif",
+                  }}
+                >
+                  {active ? '✓ ' : ''}{amenity}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      ))}
+
+      {/* Custom amenity */}
+      <div>
+        <FieldLabel>Add Custom Amenity</FieldLabel>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <input
+            style={{ ...inputStyle, flex: 1 }}
+            value={customInput}
+            placeholder="e.g. Telescope, Bonfire pit, Private chef"
+            onChange={e => setCustomInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && addCustom()}
+          />
+          <button
+            onClick={addCustom}
+            disabled={!customInput.trim()}
+            style={{
+              padding: '12px 20px',
+              backgroundColor: customInput.trim() ? 'var(--color-text-primary)' : 'var(--color-border)',
+              color: customInput.trim() ? '#ffffff' : 'var(--color-text-muted)',
+              border: 'none', borderRadius: '8px', fontSize: '13px',
+              fontWeight: '700', cursor: customInput.trim() ? 'pointer' : 'not-allowed',
+              fontFamily: "'Figtree', sans-serif", whiteSpace: 'nowrap' as const,
+            }}
+          >+ Add</button>
+        </div>
       </div>
+
       {form.amenities.length > 0 && (
-        <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '20px' }}>
+        <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', margin: 0 }}>
           {form.amenities.length} amenit{form.amenities.length === 1 ? 'y' : 'ies'} selected
         </p>
       )}
@@ -1074,7 +1197,19 @@ function PricingSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: (
       </div>
 
       {form.pets_allowed && (
-        <div style={{ animation: 'fadeIn 0.2s ease' }}>
+        <div style={{ animation: 'fadeIn 0.2s ease', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <FieldLabel>Maximum Number of Pets</FieldLabel>
+            <input
+              style={inputStyle}
+              type="number"
+              min={1}
+              max={10}
+              value={form.max_pets || 1}
+              onChange={e => setForm({ ...form, max_pets: Math.max(1, parseInt(e.target.value) || 1) })}
+            />
+            <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '6px' }}>How many pets can guests bring (max 10)</p>
+          </div>
           {priceInput('Pet Charge (per pet/night)', form.pet_charge_per_night, 'pet_charge_per_night', 'Additional charge per pet per night')}
         </div>
       )}
@@ -1462,6 +1597,7 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
       pet_charge_per_night: form.pet_charge_per_night,
       min_nights: form.min_nights,
       pets_allowed: form.pets_allowed,
+      max_pets: form.pets_allowed ? form.max_pets : 0,
       is_published: form.is_published,
       house_rules: form.house_rules,
       avg_rating: property?.avg_rating ?? 0,

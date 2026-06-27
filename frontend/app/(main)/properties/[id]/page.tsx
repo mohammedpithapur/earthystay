@@ -347,7 +347,7 @@ export default function PropertyDetailPage() {
             </span>
             {property.pets_allowed && (
               <span style={{ backgroundColor: '#E8F5E9', color: '#2E7D32', padding: '5px 12px', fontSize: '12px', borderRadius: '6px', fontWeight: '600' }}>
-                Pets Welcome
+                Pets Welcome{(property as { max_pets?: number }).max_pets ? ` · up to ${(property as { max_pets?: number }).max_pets}` : ''}
               </span>
             )}
           </div>
@@ -362,7 +362,14 @@ export default function PropertyDetailPage() {
               { icon: '👥', label: `${property.max_guests} Guests` },
               { icon: '🛏️', label: `${property.bedrooms} Bedroom${property.bedrooms !== 1 ? 's' : ''}` },
               { icon: '🌙', label: `Min ${property.min_nights} Night${property.min_nights !== 1 ? 's' : ''}` },
-              { icon: '🚿', label: `${property.bathrooms} Bath${property.bathrooms !== 1 ? 's' : ''}` },
+              { icon: '🚿', label: (() => {
+                const detail = property.bathrooms_detail
+                if (detail && detail.length > 0) {
+                  const typeLabels: Record<string, string> = { ensuite: 'Private Attached', detached_private: 'Private Detached', shared: 'Shared' }
+                  return detail.map(d => `${d.count} ${typeLabels[d.type] || d.type}`).join(', ')
+                }
+                return `${property.bathrooms} Bath${property.bathrooms !== 1 ? 's' : ''}`
+              })() },
             ].map(stat => (
               <div key={stat.label} style={{
                 display: 'flex', alignItems: 'center', gap: '6px',
@@ -774,7 +781,7 @@ export default function PropertyDetailPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
                   <button onClick={() => setPets(Math.max(0, pets - 1))} style={{ border: '1px solid var(--color-border)', backgroundColor: '#ffffff', width: '36px', height: '36px', fontSize: '16px', cursor: 'pointer', borderRadius: '4px', fontWeight: '700' }}>−</button>
                   <span style={{ minWidth: '45px', textAlign: 'center', fontSize: '16px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{pets}</span>
-                  <button onClick={() => setPets(Math.min(4, pets + 1))} style={{ border: '1px solid var(--color-border)', backgroundColor: '#ffffff', width: '36px', height: '36px', fontSize: '16px', cursor: 'pointer', borderRadius: '4px', fontWeight: '700' }}>+</button>
+                  <button onClick={() => setPets(Math.min(property.max_pets || 0, pets + 1))} style={{ border: '1px solid var(--color-border)', backgroundColor: '#ffffff', width: '36px', height: '36px', fontSize: '16px', cursor: 'pointer', borderRadius: '4px', fontWeight: '700' }}>+</button>
                 </div>
               </div>
             )}
