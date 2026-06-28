@@ -27,13 +27,20 @@ _COOKIE_MAX_AGE = settings.JWT_REFRESH_EXPIRE_DAYS * 24 * 60 * 60  # seconds
 
 
 def _set_refresh_cookie(response: Response, refresh_token: str) -> None:
-    """Set the httpOnly refresh-token cookie — JS cannot read this."""
+    """Set the httpOnly refresh-token cookie — JS cannot read this.
+
+    In production the frontend (Vercel) and backend (Railway/Render) are on
+    different origins, so we MUST use SameSite=None + Secure so the browser
+    includes the cookie on cross-origin /auth/refresh calls.
+    In development we use SameSite=Lax (same-origin, no HTTPS needed).
+    """
+    is_production = settings.COOKIE_SECURE  # COOKIE_SECURE is True only in prod
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
-        secure=settings.COOKIE_SECURE,   # True in production (HTTPS)
-        samesite="lax",
+        secure=is_production,
+        samesite="none" if is_production else "lax",
         max_age=_COOKIE_MAX_AGE,
         domain=settings.COOKIE_DOMAIN,  # None → current domain only
         path="/auth",                    # Cookie is only sent to /auth/* routes

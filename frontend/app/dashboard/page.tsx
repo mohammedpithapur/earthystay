@@ -35,6 +35,7 @@ function VoucherModal({ booking, property: propFromCache, onClose }: {
 }) {
   const formatDate = (d: string) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
   const [isPdfGenerating, setIsPdfGenerating] = React.useState(false)
+  const [isDownloading, setIsDownloading] = React.useState(false)
   const [property, setProperty] = React.useState<Property | null>(propFromCache)
 
   // Self-fetch property if not in cache yet
@@ -48,35 +49,54 @@ function VoucherModal({ booking, property: propFromCache, onClose }: {
       .catch(() => {})
   }, [booking.property_id, propFromCache])
 
+  /** Capture the voucher card as a PDF. Returns the jsPDF instance or null. */
+  const buildPdf = async () => {
+    const element = document.getElementById('voucher-print')
+    if (!element) return null
+    const btns = element.querySelectorAll<HTMLElement>('button')
+    btns.forEach(b => { b.style.display = 'none' })
+    try {
+      const html2canvas = (await import('html2canvas')).default
+      const jsPDF = (await import('jspdf')).default
+      const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
+      const imgData = canvas.toDataURL('image/png')
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a5' })
+      const pageWidth = pdf.internal.pageSize.getWidth()
+      const pageHeight = (canvas.height * pageWidth) / canvas.width
+      pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight)
+      return pdf
+    } finally {
+      btns.forEach(b => { b.style.display = '' })
+    }
+  }
+
+  /** Download the voucher as a PDF file directly. */
+  const handleDownloadPDF = async () => {
+    setIsDownloading(true)
+    try {
+      const pdf = await buildPdf()
+      if (!pdf) return
+      pdf.save(`voucher-${booking.booking_ref}.pdf`)
+    } catch (err) {
+      console.error('PDF download failed:', err)
+    } finally {
+      setIsDownloading(false)
+    }
+  }
+
+  /** Share the voucher PDF via native share sheet (mobile) or fallback to download. */
   const handleSharePDF = async () => {
     setIsPdfGenerating(true)
     try {
-      const element = document.getElementById('voucher-print')
-      if (!element) return
-      // Hide buttons during capture
-      const btns = element.querySelectorAll<HTMLElement>('button')
-      btns.forEach(b => { b.style.display = 'none' })
-      try {
-        const html2canvas = (await import('html2canvas')).default
-        const jsPDF = (await import('jspdf')).default
-        const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
-        const imgData = canvas.toDataURL('image/png')
-        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a5' })
-        const pageWidth = pdf.internal.pageSize.getWidth()
-        const pageHeight = (canvas.height * pageWidth) / canvas.width
-        pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight)
-        const fileName = `voucher-${booking.booking_ref}.pdf`
-        
-        // Try native share on mobile, fallback to download
-        const blob = pdf.output('blob')
-        const file = new File([blob], fileName, { type: 'application/pdf' })
-        if (typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({ files: [file], title: `Booking Voucher ${booking.booking_ref}` })
-        } else {
-          pdf.save(fileName)
-        }
-      } finally {
-        btns.forEach(b => { b.style.display = '' })
+      const pdf = await buildPdf()
+      if (!pdf) return
+      const fileName = `voucher-${booking.booking_ref}.pdf`
+      const blob = pdf.output('blob')
+      const file = new File([blob], fileName, { type: 'application/pdf' })
+      if (typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: `Booking Voucher ${booking.booking_ref}` })
+      } else {
+        pdf.save(fileName)
       }
     } catch (err) {
       console.error('PDF generation / sharing failed:', err)
@@ -196,14 +216,18 @@ function VoucherModal({ booking, property: propFromCache, onClose }: {
                 Close
               </button>
               <button
+                onClick={handleDownloadPDF}
+                disabled={isDownloading}
+                style={{ padding: '10px 20px', border: '1px solid var(--color-border)', borderRadius: '8px', backgroundColor: 'transparent', fontSize: '13px', cursor: isDownloading ? 'not-allowed' : 'pointer', fontWeight: '600', color: 'var(--color-text-secondary)', opacity: isDownloading ? 0.7 : 1 }}
+              >
+                {isDownloading ? 'Downloading…' : 'Download PDF'}
+              </button>
+              <button
                 onClick={handleSharePDF}
                 disabled={isPdfGenerating}
                 style={{ padding: '10px 20px', border: 'none', borderRadius: '8px', backgroundColor: 'var(--color-gold)', fontSize: '13px', cursor: isPdfGenerating ? 'not-allowed' : 'pointer', fontWeight: '700', color: 'var(--color-text-primary)', opacity: isPdfGenerating ? 0.7 : 1 }}
               >
                 {isPdfGenerating ? 'Sharing…' : 'Share Voucher'}
-              </button>
-              <button onClick={() => window.print()} style={{ padding: '10px 20px', border: '1px solid var(--color-border)', borderRadius: '8px', backgroundColor: 'transparent', fontSize: '13px', cursor: 'pointer', fontWeight: '600', color: 'var(--color-text-secondary)' }}>
-                Print
               </button>
             </div>
           </div>
