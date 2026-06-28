@@ -89,118 +89,127 @@ function VoucherModal({ booking, property: propFromCache, onClose }: {
   const heroImage = property?.images?.find(i => i.is_primary)?.image_url || property?.images?.[0]?.image_url
 
   return (
-    <div
-      onClick={onClose}
-      style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', overflowY: 'auto' }}
-    >
+    <>
+      {/* Backdrop — hidden when printing */}
       <div
-        id="voucher-print"
-        onClick={e => e.stopPropagation()}
-        style={{ backgroundColor: '#ffffff', borderRadius: '16px', maxWidth: '520px', width: '100%', boxShadow: '0 24px 60px rgba(0,0,0,0.2)', overflow: 'hidden' }}
+        className="voucher-backdrop"
+        onClick={onClose}
+        style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', overflowY: 'auto' }}
       >
-        {/* Property Hero Image */}
-        {heroImage && (
-          <div style={{ position: 'relative', height: '160px', width: '100%' }}>
-            <img
-              src={heroImage}
-              alt={property?.name ?? ''}
-              crossOrigin="anonymous"
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 55%)' }}>
-              <div style={{ position: 'absolute', bottom: '16px', left: '20px', right: '20px' }}>
-                <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase', fontWeight: '700', marginBottom: '4px' }}>{property?.city}, {property?.state}</p>
-                <h3 style={{ color: '#ffffff', fontSize: '20px', fontWeight: '800', lineHeight: '1.2' }}>{property?.name}</h3>
+        {/* Voucher card */}
+        <div
+          id="voucher-print"
+          onClick={e => e.stopPropagation()}
+          style={{ backgroundColor: '#ffffff', borderRadius: '16px', maxWidth: '520px', width: '100%', boxShadow: '0 24px 60px rgba(0,0,0,0.2)', overflow: 'hidden' }}
+        >
+          {/* Property Hero Image */}
+          {property === null ? (
+            <div style={{ height: '80px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--color-bg-card)' }}>
+              <div style={{ width: '28px', height: '28px', border: '3px solid var(--color-gold)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+            </div>
+          ) : heroImage ? (
+            <div style={{ position: 'relative', height: '160px', width: '100%' }}>
+              <img
+                src={heroImage}
+                alt={property?.name ?? ''}
+                crossOrigin="anonymous"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+              />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 55%)' }}>
+                <div style={{ position: 'absolute', bottom: '16px', left: '20px', right: '20px' }}>
+                  <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase', fontWeight: '700', marginBottom: '4px' }}>{property.city}, {property.state}</p>
+                  <h3 style={{ color: '#ffffff', fontSize: '20px', fontWeight: '800', lineHeight: '1.2', margin: 0 }}>{property.name}</h3>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          ) : null}
 
-        <div id="voucher-content" style={{ padding: '32px 40px 40px' }}>
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '28px', paddingBottom: '24px', borderBottom: '1px solid var(--color-border)' }}>
-          <p style={{ fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--color-gold)', fontWeight: '700', marginBottom: '6px' }}>Booking Confirmation</p>
-          <h2 style={{ fontSize: '28px', fontWeight: '900', color: 'var(--color-text-primary)', letterSpacing: '3px' }}>{booking.booking_ref}</h2>
-          <span style={{ ...STATUS_COLORS[booking.status], padding: '4px 14px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', borderRadius: '999px', letterSpacing: '0.8px', display: 'inline-block', marginTop: '8px' }}>
-            {booking.status}
-          </span>
-        </div>
-
-        {/* Property name and address (always visible in text area) */}
-        {property && (
-          <div style={{ marginBottom: '24px' }}>
-            <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700', marginBottom: '4px' }}>Property</p>
-            <p style={{ fontSize: '18px', fontWeight: '800', color: 'var(--color-text-primary)' }}>{property.name}</p>
-            <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '2px' }}>{property.address}, {property.city}, {property.state}</p>
-          </div>
-        )}
-
-        {/* Dates grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
-          {[
-            { label: 'Check In', value: formatDate(booking.check_in) },
-            { label: 'Check Out', value: formatDate(booking.check_out) },
-            { label: 'Nights', value: `${booking.nights} night${booking.nights !== 1 ? 's' : ''}` },
-            { label: 'Guests', value: `${booking.guests}${(booking.pets || 0) > 0 ? ` + ${booking.pets} pet${booking.pets > 1 ? 's' : ''}` : ''}` },
-          ].map(item => (
-            <div key={item.label} style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: '10px', padding: '12px 14px' }}>
-              <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700', marginBottom: '4px' }}>{item.label}</p>
-              <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{item.value}</p>
+          <div style={{ padding: '32px 40px 40px' }}>
+            {/* Header */}
+            <div style={{ textAlign: 'center', marginBottom: '28px', paddingBottom: '24px', borderBottom: '1px solid var(--color-border)' }}>
+              <p style={{ fontSize: '11px', letterSpacing: '3px', textTransform: 'uppercase', color: 'var(--color-gold)', fontWeight: '700', marginBottom: '6px' }}>Booking Confirmation</p>
+              <h2 style={{ fontSize: '28px', fontWeight: '900', color: 'var(--color-text-primary)', letterSpacing: '3px', margin: '0 0 8px' }}>{booking.booking_ref}</h2>
+              <span style={{ ...STATUS_COLORS[booking.status], padding: '4px 14px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', borderRadius: '999px', letterSpacing: '0.8px', display: 'inline-block' }}>
+                {booking.status}
+              </span>
             </div>
-          ))}
-        </div>
 
-        {/* Price breakdown */}
-        <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '18px', marginBottom: '24px' }}>
-          {[
-            { label: `Base price (${booking.nights} nights)`, amount: booking.base_price },
-            ...(booking.pet_charge > 0 ? [{ label: 'Pet charge', amount: booking.pet_charge }] : []),
-            { label: 'Cleaning fee', amount: booking.cleaning_fee },
-          ].map(row => (
-            <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '6px' }}>
-              <span>{row.label}</span>
-              <span>&#8377;{row.amount.toLocaleString('en-IN')}</span>
+            {/* Property name and address */}
+            {property && (
+              <div style={{ marginBottom: '24px' }}>
+                <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700', marginBottom: '4px' }}>Property</p>
+                <p style={{ fontSize: '18px', fontWeight: '800', color: 'var(--color-text-primary)', margin: '0 0 2px' }}>{property.name}</p>
+                <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', margin: 0 }}>{property.address}, {property.city}, {property.state}</p>
+              </div>
+            )}
+
+            {/* Dates grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px' }}>
+              {[
+                { label: 'Check In', value: formatDate(booking.check_in) },
+                { label: 'Check Out', value: formatDate(booking.check_out) },
+                { label: 'Nights', value: `${booking.nights} night${booking.nights !== 1 ? 's' : ''}` },
+                { label: 'Guests', value: `${booking.guests}${(booking.pets || 0) > 0 ? ` + ${booking.pets} pet${booking.pets > 1 ? 's' : ''}` : ''}` },
+              ].map(item => (
+                <div key={item.label} style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: '10px', padding: '12px 14px' }}>
+                  <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700', marginBottom: '4px' }}>{item.label}</p>
+                  <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)', margin: 0 }}>{item.value}</p>
+                </div>
+              ))}
             </div>
-          ))}
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: '800', color: 'var(--color-text-primary)', borderTop: '1px solid var(--color-border)', paddingTop: '10px', marginTop: '8px' }}>
-            <span>Total</span>
-            <span>&#8377;{booking.total.toLocaleString('en-IN')}</span>
+
+            {/* Price breakdown */}
+            <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '18px', marginBottom: '24px' }}>
+              {[
+                { label: `Base price (${booking.nights} nights)`, amount: booking.base_price },
+                ...(booking.pet_charge > 0 ? [{ label: 'Pet charge', amount: booking.pet_charge }] : []),
+                { label: 'Cleaning fee', amount: booking.cleaning_fee },
+              ].map(row => (
+                <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--color-text-secondary)', marginBottom: '6px' }}>
+                  <span>{row.label}</span>
+                  <span>&#8377;{row.amount.toLocaleString('en-IN')}</span>
+                </div>
+              ))}
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: '800', color: 'var(--color-text-primary)', borderTop: '1px solid var(--color-border)', paddingTop: '10px', marginTop: '8px' }}>
+                <span>Total</span>
+                <span>&#8377;{booking.total.toLocaleString('en-IN')}</span>
+              </div>
+            </div>
+
+            {/* Check-in/out times */}
+            {property && (property.check_in_time || property.check_out_time) && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px' }}>
+                <div>
+                  <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700', marginBottom: '4px' }}>Check-in time</p>
+                  <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)', margin: 0 }}>{property.check_in_time || '—'}</p>
+                </div>
+                <div>
+                  <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700', marginBottom: '4px' }}>Check-out time</p>
+                  <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)', margin: 0 }}>{property.check_out_time || '—'}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Footer buttons — hidden when printing */}
+            <div className="no-print" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', flexWrap: 'wrap', paddingTop: '8px' }}>
+              <button onClick={onClose} style={{ padding: '10px 20px', border: '1px solid var(--color-border)', borderRadius: '8px', backgroundColor: 'transparent', fontSize: '13px', cursor: 'pointer', fontWeight: '600', color: 'var(--color-text-secondary)' }}>
+                Close
+              </button>
+              <button
+                onClick={handleSharePDF}
+                disabled={isPdfGenerating}
+                style={{ padding: '10px 20px', border: 'none', borderRadius: '8px', backgroundColor: 'var(--color-gold)', fontSize: '13px', cursor: isPdfGenerating ? 'not-allowed' : 'pointer', fontWeight: '700', color: 'var(--color-text-primary)', opacity: isPdfGenerating ? 0.7 : 1 }}
+              >
+                {isPdfGenerating ? 'Sharing…' : 'Share Voucher'}
+              </button>
+              <button onClick={() => window.print()} style={{ padding: '10px 20px', border: '1px solid var(--color-border)', borderRadius: '8px', backgroundColor: 'transparent', fontSize: '13px', cursor: 'pointer', fontWeight: '600', color: 'var(--color-text-secondary)' }}>
+                Print
+              </button>
+            </div>
           </div>
-        </div>
-
-        {/* Check-in/out times */}
-        {property && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '24px' }}>
-            <div>
-              <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700', marginBottom: '4px' }}>Check-in time</p>
-              <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{property.check_in_time || '—'}</p>
-            </div>
-            <div>
-              <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700', marginBottom: '4px' }}>Check-out time</p>
-              <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{property.check_out_time || '—'}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Footer */}
-        <div className="no-print" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-          <button onClick={onClose} style={{ padding: '10px 20px', border: '1px solid var(--color-border)', borderRadius: '8px', backgroundColor: 'transparent', fontSize: '13px', cursor: 'pointer', fontWeight: '600', color: 'var(--color-text-secondary)' }}>
-            Close
-          </button>
-          <button
-            onClick={handleSharePDF}
-            disabled={isPdfGenerating}
-            style={{ padding: '10px 20px', border: 'none', borderRadius: '8px', backgroundColor: 'var(--color-gold)', fontSize: '13px', cursor: isPdfGenerating ? 'not-allowed' : 'pointer', fontWeight: '700', color: 'var(--color-text-primary)', opacity: isPdfGenerating ? 0.7 : 1 }}
-          >
-            {isPdfGenerating ? 'Sharing…' : '📤 Share Voucher'}
-          </button>
-          <button onClick={() => window.print()} style={{ padding: '10px 20px', border: '1px solid var(--color-border)', borderRadius: '8px', backgroundColor: 'transparent', fontSize: '13px', cursor: 'pointer', fontWeight: '600', color: 'var(--color-text-secondary)' }}>
-            🖨 Print
-          </button>
-        </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
 
@@ -554,22 +563,29 @@ export default function DashboardPage() {
         @keyframes fadeDown { from { opacity:0; transform:translateY(-8px) } to { opacity:1; transform:translateY(0) } }
         @keyframes pulse   { 0%,100%{opacity:1} 50%{opacity:0.45} }
         @media print {
-          body * {
-            visibility: hidden !important;
+          .voucher-backdrop {
+            position: static !important;
+            background: none !important;
+            padding: 0 !important;
+            display: block !important;
+            overflow: visible !important;
           }
-          #voucher-print, #voucher-print * {
-            visibility: visible !important;
+          .voucher-backdrop > * {
+            display: none !important;
           }
           #voucher-print {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
+            display: block !important;
+            position: static !important;
             width: 100% !important;
             max-width: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
             box-shadow: none !important;
-            border: none !important;
+            border-radius: 0 !important;
+            margin: 0 !important;
+            page-break-after: avoid !important;
+          }
+          #voucher-print * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
           .no-print {
             display: none !important;
