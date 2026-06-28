@@ -36,10 +36,10 @@ function VoucherModal({ booking, property, onClose }: {
   const formatDate = (d: string) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
   const [isPdfGenerating, setIsPdfGenerating] = React.useState(false)
 
-  const handleDownloadPDF = async () => {
+  const handleSharePDF = async () => {
     setIsPdfGenerating(true)
     try {
-      const element = document.getElementById('voucher-content')
+      const element = document.getElementById('voucher-print')
       if (!element) return
       // Hide buttons during capture
       const btns = element.querySelectorAll<HTMLElement>('button')
@@ -54,6 +54,7 @@ function VoucherModal({ booking, property, onClose }: {
         const pageHeight = (canvas.height * pageWidth) / canvas.width
         pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight)
         const fileName = `voucher-${booking.booking_ref}.pdf`
+        
         // Try native share on mobile, fallback to download
         const blob = pdf.output('blob')
         const file = new File([blob], fileName, { type: 'application/pdf' })
@@ -66,7 +67,7 @@ function VoucherModal({ booking, property, onClose }: {
         btns.forEach(b => { b.style.display = '' })
       }
     } catch (err) {
-      console.error('PDF generation failed:', err)
+      console.error('PDF generation / sharing failed:', err)
     } finally {
       setIsPdfGenerating(false)
     }
@@ -88,7 +89,12 @@ function VoucherModal({ booking, property, onClose }: {
         {/* Property Hero Image */}
         {heroImage && (
           <div style={{ position: 'relative', height: '160px', width: '100%' }}>
-            <Image src={heroImage} alt={property?.name ?? ''} fill style={{ objectFit: 'cover' }} unoptimized />
+            <img
+              src={heroImage}
+              alt={property?.name ?? ''}
+              crossOrigin="anonymous"
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 55%)' }}>
               <div style={{ position: 'absolute', bottom: '16px', left: '20px', right: '20px' }}>
                 <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase', fontWeight: '700', marginBottom: '4px' }}>{property?.city}, {property?.state}</p>
@@ -108,17 +114,12 @@ function VoucherModal({ booking, property, onClose }: {
           </span>
         </div>
 
-        {/* Property address (no image shown in content area since hero is above) */}
-        {property && !heroImage && (
+        {/* Property name and address (always visible in text area) */}
+        {property && (
           <div style={{ marginBottom: '24px' }}>
             <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700', marginBottom: '4px' }}>Property</p>
             <p style={{ fontSize: '18px', fontWeight: '800', color: 'var(--color-text-primary)' }}>{property.name}</p>
-            <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '2px' }}>{property.address}, {property.city}</p>
-          </div>
-        )}
-        {property && heroImage && (
-          <div style={{ marginBottom: '24px' }}>
-            <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>{property.address}, {property.city}</p>
+            <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginTop: '2px' }}>{property.address}, {property.city}, {property.state}</p>
           </div>
         )}
 
@@ -170,16 +171,16 @@ function VoucherModal({ booking, property, onClose }: {
         )}
 
         {/* Footer */}
-        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+        <div className="no-print" style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
           <button onClick={onClose} style={{ padding: '10px 20px', border: '1px solid var(--color-border)', borderRadius: '8px', backgroundColor: 'transparent', fontSize: '13px', cursor: 'pointer', fontWeight: '600', color: 'var(--color-text-secondary)' }}>
             Close
           </button>
           <button
-            onClick={handleDownloadPDF}
+            onClick={handleSharePDF}
             disabled={isPdfGenerating}
             style={{ padding: '10px 20px', border: 'none', borderRadius: '8px', backgroundColor: 'var(--color-gold)', fontSize: '13px', cursor: isPdfGenerating ? 'not-allowed' : 'pointer', fontWeight: '700', color: 'var(--color-text-primary)', opacity: isPdfGenerating ? 0.7 : 1 }}
           >
-            {isPdfGenerating ? 'Generating…' : '⬇ Download PDF'}
+            {isPdfGenerating ? 'Sharing…' : '📤 Share Voucher'}
           </button>
           <button onClick={() => window.print()} style={{ padding: '10px 20px', border: '1px solid var(--color-border)', borderRadius: '8px', backgroundColor: 'transparent', fontSize: '13px', cursor: 'pointer', fontWeight: '600', color: 'var(--color-text-secondary)' }}>
             🖨 Print
@@ -267,12 +268,12 @@ function BookingCard({ booking, property, expanded, onToggle, onVoucher }: {
           </div>
           <div className="flex flex-row md:flex-col gap-2 w-full md:w-auto mt-2">
             <button onClick={onToggle}
-              style={{ padding: '8px 16px', border: '1px solid var(--color-border)', borderRadius: '8px', backgroundColor: 'transparent', fontSize: '13px', color: 'var(--color-text-secondary)', cursor: 'pointer', fontWeight: '600', transition: 'all 0.15s' }}
+              style={{ padding: '8px 16px', border: '1px solid var(--color-border)', borderRadius: '8px', backgroundColor: 'transparent', fontSize: '13px', color: 'var(--color-text-secondary)', cursor: 'pointer', fontWeight: '600', transition: 'all 0.15s', minWidth: '150px', textAlign: 'center' }}
               className="flex-1 md:flex-initial">
               {expanded ? 'Hide Details' : 'View Details'}
             </button>
             <button onClick={onVoucher}
-              style={{ padding: '8px 16px', border: 'none', borderRadius: '8px', backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', fontSize: '13px', fontWeight: '700', cursor: 'pointer', transition: 'opacity 0.15s' }}
+              style={{ padding: '8px 16px', border: 'none', borderRadius: '8px', backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', fontSize: '13px', fontWeight: '700', cursor: 'pointer', transition: 'opacity 0.15s', minWidth: '150px', textAlign: 'center' }}
               className="flex-1 md:flex-initial">
               Booking Voucher
             </button>
@@ -536,7 +537,28 @@ export default function DashboardPage() {
         @keyframes spin    { to { transform: rotate(360deg); } }
         @keyframes fadeDown { from { opacity:0; transform:translateY(-8px) } to { opacity:1; transform:translateY(0) } }
         @keyframes pulse   { 0%,100%{opacity:1} 50%{opacity:0.45} }
-        @media print { body > *:not(#voucher-print) { display: none !important; } }
+        @media print {
+          body * {
+            visibility: hidden !important;
+          }
+          #voucher-print, #voucher-print * {
+            visibility: visible !important;
+          }
+          #voucher-print {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
+          }
+          .no-print {
+            display: none !important;
+          }
+        }
       `}</style>
 
       {/* Voucher Modal */}
