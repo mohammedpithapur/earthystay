@@ -28,13 +28,25 @@ const PAYMENT_STATUS_COLORS: Record<string, { bg: string; color: string; label: 
 
 // ─── Voucher Modal ────────────────────────────────────────────────────────────
 
-function VoucherModal({ booking, property, onClose }: {
+function VoucherModal({ booking, property: propFromCache, onClose }: {
   booking: MyBooking
   property: Property | null
   onClose: () => void
 }) {
   const formatDate = (d: string) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
   const [isPdfGenerating, setIsPdfGenerating] = React.useState(false)
+  const [property, setProperty] = React.useState<Property | null>(propFromCache)
+
+  // Self-fetch property if not in cache yet
+  React.useEffect(() => {
+    if (propFromCache) {
+      setProperty(propFromCache)
+      return
+    }
+    getPublicProperty(booking.property_id)
+      .then(p => setProperty(p))
+      .catch(() => {})
+  }, [booking.property_id, propFromCache])
 
   const handleSharePDF = async () => {
     setIsPdfGenerating(true)
@@ -204,46 +216,47 @@ function BookingCard({ booking, property, expanded, onToggle, onVoucher }: {
   const formatDate = (d: string) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
 
   return (
-    <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.04)', transition: 'box-shadow 0.2s ease' }}>
+    <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '14px', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', transition: 'box-shadow 0.2s ease' }}>
 
       {/* Main row */}
-      <div className="p-6 flex flex-col md:flex-row gap-5 items-stretch md:items-start">
+      <div style={{ padding: '20px 24px', display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
 
-        {/* Property thumbnail */}
+        {/* Property thumbnail — fixed size, never stretches */}
         {(() => {
           const src = property?.images?.find(i => i.is_primary)?.image_url || property?.images?.[0]?.image_url
-          if (src) return (
-            <div className="relative w-full h-48 md:w-[120px] md:h-[90px] flex-shrink-0 rounded-lg overflow-hidden">
-              <Image src={src} alt={property?.name || 'Property'} fill style={{ objectFit: 'cover' }} unoptimized />
+          return (
+            <div style={{ width: '100px', height: '75px', flexShrink: 0, borderRadius: '10px', overflow: 'hidden', backgroundColor: 'var(--color-bg-card)' }}>
+              {src && <img src={src} alt={property?.name || 'Property'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
             </div>
           )
-          return <div className="w-full h-48 md:w-[120px] md:h-[90px] rounded-lg bg-[var(--color-bg-card)] flex-shrink-0" />
         })()}
 
-        {/* Info */}
+        {/* Info — grows to fill space */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px', marginBottom: '6px' }}>
-            <div>
-              <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '2px' }}>
-                {property?.name || 'Loading…'}
-              </h3>
-              {property && (
-                <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>{property.city}, {property.state}</p>
-              )}
-            </div>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-              <span style={{ backgroundColor: STATUS_COLORS[booking.status]?.bg, color: STATUS_COLORS[booking.status]?.color, padding: '4px 12px', fontSize: '12px', fontWeight: '700', textTransform: 'uppercase', borderRadius: '6px', flexShrink: 0 }}>
-                {booking.status}
-              </span>
-              {booking.payment_status && PAYMENT_STATUS_COLORS[booking.payment_status] && (
-                <span style={{ backgroundColor: PAYMENT_STATUS_COLORS[booking.payment_status].bg, color: PAYMENT_STATUS_COLORS[booking.payment_status].color, padding: '4px 12px', fontSize: '11px', fontWeight: '700', borderRadius: '6px', flexShrink: 0 }}>
-                  {PAYMENT_STATUS_COLORS[booking.payment_status].label}
-                </span>
-              )}
-            </div>
+          {/* Title row */}
+          <div style={{ marginBottom: '8px' }}>
+            <h3 style={{ fontSize: '17px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {property?.name || 'Loading…'}
+            </h3>
+            {property && (
+              <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>{property.city}, {property.state}</p>
+            )}
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-4">
+          {/* Status badges */}
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '14px' }}>
+            <span style={{ backgroundColor: STATUS_COLORS[booking.status]?.bg, color: STATUS_COLORS[booking.status]?.color, padding: '3px 10px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', borderRadius: '6px' }}>
+              {booking.status}
+            </span>
+            {booking.payment_status && PAYMENT_STATUS_COLORS[booking.payment_status] && (
+              <span style={{ backgroundColor: PAYMENT_STATUS_COLORS[booking.payment_status].bg, color: PAYMENT_STATUS_COLORS[booking.payment_status].color, padding: '3px 10px', fontSize: '11px', fontWeight: '700', borderRadius: '6px' }}>
+                {PAYMENT_STATUS_COLORS[booking.payment_status].label}
+              </span>
+            )}
+          </div>
+
+          {/* Date/nights/guests grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, auto)', gap: '16px 24px' }}>
             {[
               { label: 'Check In',  value: formatDate(booking.check_in) },
               { label: 'Check Out', value: formatDate(booking.check_out) },
@@ -258,23 +271,23 @@ function BookingCard({ booking, property, expanded, onToggle, onVoucher }: {
           </div>
         </div>
 
-        {/* Right — total + actions */}
-        <div className="text-left md:text-right flex-shrink-0 mt-4 md:mt-0 flex flex-col items-start md:items-end justify-between">
-          <div>
-            <p style={{ fontSize: '24px', color: 'var(--color-text-primary)', fontWeight: '900', marginBottom: '2px' }}>
+        {/* Right — price + action buttons */}
+        <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '12px', minWidth: '150px' }}>
+          {/* Price */}
+          <div style={{ textAlign: 'right' }}>
+            <p style={{ fontSize: '22px', color: 'var(--color-text-primary)', fontWeight: '900', lineHeight: 1 }}>
               &#8377;{booking.total.toLocaleString('en-IN')}
             </p>
-            <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginBottom: '14px', letterSpacing: '0.5px' }}>Total</p>
+            <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '2px', letterSpacing: '0.5px' }}>Total</p>
           </div>
-          <div className="flex flex-row md:flex-col gap-2 w-full md:w-auto mt-2">
+          {/* Buttons */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '150px' }}>
             <button onClick={onToggle}
-              style={{ padding: '8px 16px', border: '1px solid var(--color-border)', borderRadius: '8px', backgroundColor: 'transparent', fontSize: '13px', color: 'var(--color-text-secondary)', cursor: 'pointer', fontWeight: '600', transition: 'all 0.15s', minWidth: '150px', textAlign: 'center' }}
-              className="flex-1 md:flex-initial">
+              style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--color-border)', borderRadius: '8px', backgroundColor: 'transparent', fontSize: '13px', color: 'var(--color-text-secondary)', cursor: 'pointer', fontWeight: '600', textAlign: 'center' }}>
               {expanded ? 'Hide Details' : 'View Details'}
             </button>
             <button onClick={onVoucher}
-              style={{ padding: '8px 16px', border: 'none', borderRadius: '8px', backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', fontSize: '13px', fontWeight: '700', cursor: 'pointer', transition: 'opacity 0.15s', minWidth: '150px', textAlign: 'center' }}
-              className="flex-1 md:flex-initial">
+              style={{ width: '100%', padding: '8px 12px', border: 'none', borderRadius: '8px', backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', fontSize: '13px', fontWeight: '700', cursor: 'pointer', textAlign: 'center' }}>
               Booking Voucher
             </button>
           </div>
@@ -390,13 +403,16 @@ export default function DashboardPage() {
   }, [user])
 
   // ── Fetch property from cache or API ──
+  // Use a ref to avoid stale closure issues with the cache check
+  const propertiesCacheRef = useRef(propertiesCache)
+  propertiesCacheRef.current = propertiesCache
   const fetchProperty = useCallback(async (propertyId: string) => {
-    if (propertiesCache[propertyId]) return
+    if (propertiesCacheRef.current[propertyId]) return
     try {
       const p = await getPublicProperty(propertyId)
       setPropertiesCache(prev => ({ ...prev, [propertyId]: p }))
     } catch { /* property might be unpublished */ }
-  }, [propertiesCache])
+  }, [])
 
   // ── Load stats + bookings ──
   const loadAll = useCallback(async () => {
