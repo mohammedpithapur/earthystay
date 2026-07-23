@@ -33,6 +33,8 @@ class Property(Base):
     house_rules: Mapped[dict] = mapped_column(JSONB, default=list, nullable=False)
     price_per_night: Mapped[int] = mapped_column(Integer, nullable=False)
     cleaning_fee: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    extra_guest_charge_per_night: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    base_guests: Mapped[int] = mapped_column(Integer, default=2, nullable=False)
     max_guests: Mapped[int] = mapped_column(Integer, nullable=False)
     bedrooms: Mapped[int] = mapped_column(Integer, nullable=False)
     bathrooms: Mapped[int] = mapped_column(Integer, nullable=False)

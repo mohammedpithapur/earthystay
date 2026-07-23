@@ -45,6 +45,8 @@ class PropertyOut(BaseModel):
     house_rules: list[str]
     price_per_night: int
     cleaning_fee: int
+    extra_guest_charge_per_night: int = 0
+    base_guests: int = 2
     max_guests: int
     bedrooms: int
     bathrooms: int
@@ -83,6 +85,8 @@ class PropertyCreate(BaseModel):
     house_rules: list[str] = []
     price_per_night: int
     cleaning_fee: int = 0
+    extra_guest_charge_per_night: int = 0
+    base_guests: int = 2
     max_guests: int
     bedrooms: int
     bathrooms: int
@@ -115,6 +119,8 @@ class PropertyUpdate(BaseModel):
     house_rules: list[str] | None = None
     price_per_night: int | None = None
     cleaning_fee: int | None = None
+    extra_guest_charge_per_night: int | None = None
+    base_guests: int | None = None
     max_guests: int | None = None
     bedrooms: int | None = None
     bathrooms: int | None = None

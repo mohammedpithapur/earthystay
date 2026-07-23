@@ -8,15 +8,20 @@ from app.models.property import Property
 from app.models.property_group import PropertyGroupMember
 
 
-def calculate_pricing(property: Property, check_in: date, check_out: date, pets: int) -> dict:
+def calculate_pricing(property: Property, check_in: date, check_out: date, pets: int, guests: int = 1) -> dict:
     nights_diff = check_out - check_in
     nights = max(0, nights_diff.days)
     base_price = property.price_per_night * nights
+    base_guests = getattr(property, "base_guests", 2) or 2
+    extra_guest_rate = getattr(property, "extra_guest_charge_per_night", 0) or 0
+    extra_guests = max(0, guests - base_guests)
+    extra_guest_charge = extra_guests * nights * extra_guest_rate
     pet_charge = pets * nights * property.pet_charge_per_night
-    total = base_price + property.cleaning_fee + pet_charge
+    total = base_price + extra_guest_charge + property.cleaning_fee + pet_charge
     return {
         "nights": nights,
         "base_price": base_price,
+        "extra_guest_charge": extra_guest_charge,
         "cleaning_fee": property.cleaning_fee,
         "pet_charge": pet_charge,
         "total": total,

@@ -33,8 +33,8 @@ except ImportError:
 
 import razorpay
 
-from fastapi import APIRouter, Depends, HTTPException, Request, BackgroundTasks
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, BackgroundTasks
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
@@ -446,3 +446,202 @@ async def get_payment_for_booking(
     if not payment:
         raise HTTPException(status_code=404, detail="No payment record for this booking")
     return payment
+
+
+# ── GET /payments/admin/all ──────────────────────────────────────────────────
+
+@router.get("/admin/all")
+async def list_admin_payments(
+    status: str | None = Query(None),
+    search: str | None = Query(None),
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
+    admin: User = Depends(get_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Admin-only: list all Razorpay transactions with guest, property, and booking details.
+    """
+    query = (
+        select(Payment, Booking, Property)
+        .join(Booking, Payment.booking_id == Booking.id)
+        .join(Property, Booking.property_id == Property.id)
+        .order_by(Payment.created_at.desc())
+    )
+
+    if status:
+        query = query.where(Payment.status == status)
+
+    if search:
+        search_pattern = f"%{search}%"
+        query = query.where(
+            (Payment.razorpay_order_id.ilike(search_pattern)) |
+            (Payment.razorpay_payment_id.ilike(search_pattern)) |
+            (Booking.booking_ref.ilike(search_pattern)) |
+            (Booking.guest_name.ilike(search_pattern)) |
+            (Booking.guest_email.ilike(search_pattern))
+        )
+
+    count_query = select(func.count()).select_from(query.subquery())
+    total_count = await db.scalar(count_query) or 0
+
+    offset = (page - 1) * limit
+    results = await db.execute(query.offset(offset).limit(limit))
+    rows = results.all()
+
+    items = []
+    for payment, booking, prop in rows:
+        items.append({
+            "id": str(payment.id),
+            "booking_id": str(payment.booking_id),
+            "booking_ref": booking.booking_ref,
+            "guest_name": booking.guest_name,
+            "guest_email": booking.guest_email,
+            "property_name": prop.name,
+            "razorpay_order_id": payment.razorpay_order_id,
+            "razorpay_payment_id": payment.razorpay_payment_id,
+            "amount_rupees": round(payment.amount / 100, 2),
+            "currency": payment.currency,
+            "status": payment.status.value if hasattr(payment.status, 'value') else str(payment.status),
+            "created_at": payment.created_at.isoformat() if payment.created_at else None,
+        })
+
+    return {
+        "items": items,
+        "total": total_count,
+        "page": page,
+        "limit": limit,
+    }
+
+
+# ── GET /payments/admin/settlements ─────────────────────────────────────────
+# Fetches actual settlement batches from Razorpay API.
+# Each settlement = one bank transfer (Razorpay pays you in batches every T+2 days).
+# This is the ONLY accurate way to know what money has landed in your bank account.
+
+@router.get("/admin/settlements")
+async def list_admin_settlements(
+    admin: User = Depends(get_admin),
+):
+    """
+    Admin-only: fetch Razorpay settlement batches.
+    Each settlement record = one actual bank transfer from Razorpay to your account.
+    Returns settlement ID, date, amount settled, and UTR number for bank reconciliation.
+    """
+    if not settings.RAZORPAY_KEY_ID or not settings.RAZORPAY_KEY_SECRET:
+        return {
+            "settlements": [],
+            "total_settled_rupees": 0,
+            "error": "Razorpay not configured — add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to .env",
+        }
+
+    try:
+        client = _get_razorpay_client()
+        # Fetch last 100 settlements (most recent first)
+        rz_response = client.settlement.all({"count": 100})
+        rz_items = rz_response.get("items", [])
+
+        settlements = []
+        total_settled_paise = 0
+
+        for s in rz_items:
+            amount_paise = s.get("amount", 0)
+            total_settled_paise += amount_paise
+            settled_at_ts = s.get("settled_at")
+            settled_at_str = None
+            if settled_at_ts:
+                from datetime import datetime, timezone
+                settled_at_str = datetime.fromtimestamp(settled_at_ts, tz=timezone.utc).isoformat()
+
+            settlements.append({
+                "settlement_id": s.get("id"),
+                "status": s.get("status"),
+                "amount_rupees": round(amount_paise / 100, 2),
+                "fees_rupees": round(s.get("fees", 0) / 100, 2),
+                "tax_rupees": round(s.get("tax", 0) / 100, 2),
+                "utr": s.get("utr"),                    # Bank UTR — for reconciliation
+                "settled_at": settled_at_str,
+                "transaction_count": s.get("payment_count", 0),
+            })
+
+        return {
+            "settlements": settlements,
+            "total_settled_rupees": round(total_settled_paise / 100, 2),
+            "count": len(settlements),
+        }
+
+    except Exception as exc:
+        return {
+            "settlements": [],
+            "total_settled_rupees": 0,
+            "error": f"Razorpay API error: {str(exc)}",
+        }
+
+
+# ── GET /payments/admin/summary ──────────────────────────────────────────────
+# Returns a financial summary comparing: collected (in our DB) vs settled (from Razorpay).
+# This is the key "Collected vs Bank" breakdown the admin needs.
+
+@router.get("/admin/summary")
+async def get_payments_summary(
+    admin: User = Depends(get_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Admin-only: compare total collected vs total settled to bank.
+    - total_collected: sum of all paid payments in our DB (captured by Razorpay)
+    - total_settled:   sum of all settlement batches from Razorpay API (in bank)
+    - pending_with_razorpay: collected - settled (still being processed)
+    """
+    # Sum from our local DB — all payments we know are paid
+    paid_result = await db.execute(
+        select(
+            func.count(Payment.id).label("count"),
+            func.coalesce(func.sum(Payment.amount), 0).label("total_paise"),
+        ).where(Payment.status == RazorpayPaymentStatus.paid)
+    )
+    paid_row = paid_result.one()
+    total_collected_paise = int(paid_row.total_paise)
+    paid_count = int(paid_row.count)
+
+    # Refunded amounts
+    refund_result = await db.execute(
+        select(func.coalesce(func.sum(Payment.amount), 0)).where(
+            Payment.status == RazorpayPaymentStatus.refunded
+        )
+    )
+    total_refunded_paise = int(refund_result.scalar() or 0)
+
+    # Created (pending payment — not yet paid)
+    pending_result = await db.execute(
+        select(func.count(Payment.id)).where(Payment.status == RazorpayPaymentStatus.created)
+    )
+    pending_count = int(pending_result.scalar() or 0)
+
+    # Now fetch settlements from Razorpay API
+    total_settled_paise = 0
+    settlement_count = 0
+    razorpay_error = None
+
+    if settings.RAZORPAY_KEY_ID and settings.RAZORPAY_KEY_SECRET:
+        try:
+            client = _get_razorpay_client()
+            rz_response = client.settlement.all({"count": 100})
+            rz_items = rz_response.get("items", [])
+            settlement_count = len(rz_items)
+            total_settled_paise = sum(s.get("amount", 0) for s in rz_items)
+        except Exception as exc:
+            razorpay_error = str(exc)
+
+    pending_with_razorpay_paise = max(0, total_collected_paise - total_settled_paise)
+
+    return {
+        "total_collected_rupees": round(total_collected_paise / 100, 2),
+        "total_settled_rupees": round(total_settled_paise / 100, 2),
+        "pending_with_razorpay_rupees": round(pending_with_razorpay_paise / 100, 2),
+        "total_refunded_rupees": round(total_refunded_paise / 100, 2),
+        "paid_transactions": paid_count,
+        "pending_payment_count": pending_count,
+        "settlement_batches": settlement_count,
+        "razorpay_error": razorpay_error,
+    }
