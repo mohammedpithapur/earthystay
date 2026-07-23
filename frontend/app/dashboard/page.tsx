@@ -655,8 +655,8 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Stats Bar ── */}
-      <div style={{ backgroundColor: '#ffffff', borderBottom: '1px solid var(--color-border)' }}>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 md:p-6" style={{ maxWidth: '1100px', margin: '0 auto' }}>
+      <div style={{ backgroundColor: '#ffffff', borderBottom: '1px solid var(--color-border)', padding: '32px 0' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
           {[
             { label: 'Total Bookings',  value: totalBookings },
             { label: 'Upcoming Stays', value: upcomingCount },
@@ -664,10 +664,10 @@ export default function DashboardPage() {
             { label: 'Total Spent',    value: `&#8377;${totalSpent.toLocaleString('en-IN')}` },
           ].map((stat) => (
             <div key={stat.label}
-              style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '20px 16px', textAlign: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
-              <p style={{ fontSize: '28px', color: 'var(--color-text-primary)', fontWeight: '900', marginBottom: '4px' }}
+              style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '14px', padding: '24px 20px', textAlign: 'center', boxShadow: '0 6px 20px rgba(0,0,0,0.03)' }}>
+              <p style={{ fontSize: '28px', color: 'var(--color-text-primary)', fontWeight: '900', marginBottom: '6px' }}
                 dangerouslySetInnerHTML={{ __html: String(stat.value) }} />
-              <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', letterSpacing: '1.5px', textTransform: 'uppercase', fontWeight: '600' }}>
+              <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', letterSpacing: '1.5px', textTransform: 'uppercase', fontWeight: '700' }}>
                 {stat.label}
               </p>
             </div>

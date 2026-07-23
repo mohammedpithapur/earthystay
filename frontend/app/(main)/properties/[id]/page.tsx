@@ -717,16 +717,17 @@ export default function PropertyDetailPage() {
         </div>
 
         {/* Booking Widget */}
-        <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px' }} className="sticky-desktop md:sticky p-4 sm:p-6 md:p-8">
-          <div style={{ marginBottom: '24px' }}>
-            <span style={{ fontSize: '32px', fontWeight: '800', color: 'var(--color-text-primary)' }}>&#8377;{property.price_per_night.toLocaleString('en-IN')}</span>
+        <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '16px', padding: '24px', boxShadow: '0 12px 36px rgba(0,0,0,0.06)' }} className="sticky-desktop md:sticky">
+          <div style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--color-bg-soft)' }}>
+            <span style={{ fontSize: '30px', fontWeight: '900', color: 'var(--color-text-primary)' }}>&#8377;{property.price_per_night.toLocaleString('en-IN')}</span>
             <span style={{ fontSize: '14px', color: 'var(--color-text-muted)', marginLeft: '6px' }}>/ night</span>
           </div>
 
-          <div style={{ border: '1px solid var(--color-border)', borderRadius: '8px', marginBottom: '12px' }}>
+          <div style={{ border: '1px solid var(--color-border)', borderRadius: '12px', overflow: 'hidden', marginBottom: '20px' }}>
             <div
               style={{
                 padding: '14px 16px',
+                backgroundColor: 'var(--color-bg-card)',
                 borderBottom: '1px solid var(--color-border)',
                 display: 'grid',
                 gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
@@ -734,15 +735,15 @@ export default function PropertyDetailPage() {
               }}
             >
               <div>
-                <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '6px', fontWeight: '600' }}>Check In</p>
+                <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '4px', fontWeight: '700' }}>Check In</p>
                 <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{formatDateLabel(range?.from)}</p>
               </div>
               <div>
-                <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '6px', fontWeight: '600' }}>Check Out</p>
+                <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '4px', fontWeight: '700' }}>Check Out</p>
                 <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{formatDateLabel(range?.to)}</p>
               </div>
             </div>
-            <div style={{ padding: '12px 8px', borderBottom: '1px solid var(--color-border)' }} className="sm:!px-4">
+            <div style={{ padding: '12px 8px', borderBottom: '1px solid var(--color-border)', backgroundColor: '#ffffff' }}>
               <div className="earthy-day-picker">
                 <DayPicker
                   mode="range"
@@ -754,49 +755,53 @@ export default function PropertyDetailPage() {
                 />
               </div>
               {(range?.from || range?.to) && (
-                <button
-                  onClick={() => {
-                    setRange(undefined)
-                    setCheckIn('')
-                    setCheckOut('')
-                    setBookingError(null)
-                  }}
-                  style={{
-                    marginTop: '10px',
-                    background: 'none',
-                    border: '1px solid var(--color-border)',
-                    color: 'var(--color-text-primary)',
-                    padding: '8px 12px',
-                    borderRadius: '999px',
-                    fontSize: '12px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Clear dates
-                </button>
+                <div style={{ textAlign: 'center', marginTop: '8px' }}>
+                  <button
+                    onClick={() => {
+                      setRange(undefined)
+                      setCheckIn('')
+                      setCheckOut('')
+                      setBookingError(null)
+                    }}
+                    style={{
+                      background: 'none',
+                      border: '1px solid var(--color-border)',
+                      color: 'var(--color-text-primary)',
+                      padding: '6px 14px',
+                      borderRadius: '999px',
+                      fontSize: '11px',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Clear dates
+                  </button>
+                </div>
               )}
             </div>
             {bookingError && (
-              <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-border)' }}>
-                <p style={{ color: '#C62828', fontSize: '12px', margin: 0 }}>{bookingError}</p>
+              <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--color-border)', backgroundColor: '#FFF5F5' }}>
+                <p style={{ color: '#C62828', fontSize: '12px', margin: 0, fontWeight: '600' }}>{bookingError}</p>
               </div>
             )}
-            <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--color-border)' }}>
-              <label style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '8px', fontWeight: '600' }}>Guests</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
-                <button onClick={() => setGuests(Math.max(1, guests - 1))} style={{ border: '1px solid var(--color-border)', backgroundColor: '#ffffff', width: '36px', height: '36px', fontSize: '16px', cursor: 'pointer', borderRadius: '4px', fontWeight: '700' }}>−</button>
-                <span style={{ minWidth: '45px', textAlign: 'center', fontSize: '16px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{guests}</span>
-                <button onClick={() => setGuests(Math.min(property.max_guests || 20, guests + 1))} style={{ border: '1px solid var(--color-border)', backgroundColor: '#ffffff', width: '36px', height: '36px', fontSize: '16px', cursor: 'pointer', borderRadius: '4px', fontWeight: '700' }}>+</button>
+            <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: property.pets_allowed ? '1px solid var(--color-border)' : 'none', backgroundColor: '#ffffff' }}>
+              <label style={{ fontSize: '11px', letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700' }}>Guests</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <button onClick={() => setGuests(Math.max(1, guests - 1))} style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg-card)', width: '34px', height: '34px', fontSize: '16px', cursor: 'pointer', borderRadius: '6px', fontWeight: '700' }}>−</button>
+                <span style={{ minWidth: '32px', textAlign: 'center', fontSize: '15px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{guests}</span>
+                <button onClick={() => setGuests(Math.min(property.max_guests || 20, guests + 1))} style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg-card)', width: '34px', height: '34px', fontSize: '16px', cursor: 'pointer', borderRadius: '6px', fontWeight: '700' }}>+</button>
               </div>
             </div>
             {property.pets_allowed && (
-              <div style={{ padding: '12px 16px' }}>
-                <label style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '8px', fontWeight: '600' }}>Pets (+&#8377;{property.pet_charge_per_night}/pet/night)</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
-                  <button onClick={() => setPets(Math.max(0, pets - 1))} style={{ border: '1px solid var(--color-border)', backgroundColor: '#ffffff', width: '36px', height: '36px', fontSize: '16px', cursor: 'pointer', borderRadius: '4px', fontWeight: '700' }}>−</button>
-                  <span style={{ minWidth: '45px', textAlign: 'center', fontSize: '16px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{pets}</span>
-                  <button onClick={() => setPets(Math.min(property.max_pets || 0, pets + 1))} style={{ border: '1px solid var(--color-border)', backgroundColor: '#ffffff', width: '36px', height: '36px', fontSize: '16px', cursor: 'pointer', borderRadius: '4px', fontWeight: '700' }}>+</button>
+              <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#ffffff' }}>
+                <div>
+                  <label style={{ fontSize: '11px', letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', fontWeight: '700' }}>Pets</label>
+                  <span style={{ fontSize: '10px', color: 'var(--color-text-muted)' }}>+&#8377;{property.pet_charge_per_night}/pet/night</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <button onClick={() => setPets(Math.max(0, pets - 1))} style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg-card)', width: '34px', height: '34px', fontSize: '16px', cursor: 'pointer', borderRadius: '6px', fontWeight: '700' }}>−</button>
+                  <span style={{ minWidth: '32px', textAlign: 'center', fontSize: '15px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{pets}</span>
+                  <button onClick={() => setPets(Math.min(property.max_pets || 0, pets + 1))} style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg-card)', width: '34px', height: '34px', fontSize: '16px', cursor: 'pointer', borderRadius: '6px', fontWeight: '700' }}>+</button>
                 </div>
               </div>
             )}
