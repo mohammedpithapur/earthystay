@@ -27,7 +27,6 @@ export default function Footer() {
           <h2 style={{ color: 'var(--color-navbar-text)', fontSize: '22px', letterSpacing: '3px', marginBottom: '16px', fontWeight: '800' }}>
             EARTHY STAYS
           </h2>
-          <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--color-navbar-text)', marginBottom: '20px' }} />
           <p style={{ color: 'rgba(255,255,255,0.82)', fontSize: '18px', lineHeight: '1.8', marginBottom: '28px' }}>
             {Copy.footerDescription}
           </p>
@@ -82,7 +81,7 @@ export default function Footer() {
           </h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {[
-              { label: 'Our Properties', href: '/properties' },
+              { label: 'Our Hotels', href: '/properties' },
               { label: 'About Us', href: '/about' },
               { label: 'Contact Us', href: '/contact' },
             ].map(link => (
