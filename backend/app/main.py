@@ -24,7 +24,10 @@ if settings.SENTRY_DSN:
     sentry_sdk.init(dsn=settings.SENTRY_DSN, traces_sample_rate=0.1)
 
 
+from fastapi.middleware.gzip import GZipMiddleware
+
 app = FastAPI(title="Earthy Stays API")
+app.add_middleware(GZipMiddleware, minimum_size=500)
 app.state.limiter = limiter
 app.add_exception_handler(
     RateLimitExceeded,
@@ -92,3 +95,13 @@ async def health(db: AsyncSession = Depends(get_db)):
     except Exception:
         return JSONResponse(status_code=503, content={"status": "error"})
     return {"status": "ok"}
+
+
+# ── AWS Lambda handler ────────────────────────────────────────────────────────
+# Mangum wraps the FastAPI ASGI app so AWS Lambda + API Gateway can invoke it.
+# When running locally with uvicorn this is simply ignored.
+try:
+    from mangum import Mangum
+    handler = Mangum(app, lifespan="off")
+except ImportError:
+    pass  # mangum not installed in local dev — that's fine

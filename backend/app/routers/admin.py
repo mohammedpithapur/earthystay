@@ -25,6 +25,7 @@ from app.services.upload import (
     UploadStorageError,
     UploadValidationError,
 )
+from app.services.cache import cache_get_json, cache_set_json
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -99,6 +100,11 @@ async def normalize_property_images(images: list[PropertyImageCreate] | None) ->
 
 @router.get("/dashboard")
 async def dashboard(admin: User = Depends(get_admin), db: AsyncSession = Depends(get_db)):
+    cache_key = "admin:dashboard"
+    cached = await cache_get_json(cache_key)
+    if cached:
+        return cached
+
     total_bookings = await db.scalar(
         select(func.count(Booking.id)).where(Booking.status.in_([BookingStatus.confirmed, BookingStatus.completed]))
     )
@@ -109,12 +115,171 @@ async def dashboard(admin: User = Depends(get_admin), db: AsyncSession = Depends
         )
     )
     pending = await db.scalar(select(func.count(Booking.id)).where(Booking.status == BookingStatus.pending))
-    return {
+
+    today = date.today()
+    monthly_stats = []
+    
+    result = await db.execute(
+        select(Booking.created_at, Booking.total)
+        .where(Booking.status.in_([BookingStatus.confirmed, BookingStatus.completed]))
+    )
+    bookings_data = result.all()
+
+    for i in range(5, -1, -1):
+        target_month_year = today.year
+        target_month = today.month - i
+        while target_month <= 0:
+            target_month += 12
+            target_month_year -= 1
+
+        month_label = date(target_month_year, target_month, 1).strftime("%b %Y")
+        
+        m_rev = sum(
+            b.total for b in bookings_data 
+            if b.created_at and b.created_at.year == target_month_year and b.created_at.month == target_month
+        )
+        m_count = sum(
+            1 for b in bookings_data 
+            if b.created_at and b.created_at.year == target_month_year and b.created_at.month == target_month
+        )
+
+        monthly_stats.append({
+            "month": month_label,
+            "revenue": m_rev,
+            "bookings": m_count
+        })
+
+    response_data = {
         "total_bookings": total_bookings,
         "total_properties": total_properties,
         "total_revenue": revenue,
         "pending_bookings": pending,
+        "monthly_stats": monthly_stats,
     }
+    await cache_set_json(cache_key, response_data, ttl_seconds=30)
+    return response_data
+
+
+@router.get("/analytics")
+async def get_admin_analytics(admin: User = Depends(get_admin), db: AsyncSession = Depends(get_db)):
+    cache_key = "admin:analytics"
+    cached = await cache_get_json(cache_key)
+    if cached:
+        return cached
+
+    today = date.today()
+
+    result = await db.execute(
+        select(Booking, Property)
+        .join(Property, Booking.property_id == Property.id)
+        .where(Booking.status.in_([BookingStatus.confirmed, BookingStatus.completed]))
+    )
+    rows = result.all()
+
+    # Daily Stats (Last 30 Days)
+    daily_stats = []
+    for i in range(29, -1, -1):
+        day_date = today - timedelta(days=i)
+        day_str = day_date.strftime("%d %b")
+        
+        day_rev = sum(
+            b.total for b, p in rows 
+            if b.created_at and b.created_at.date() == day_date
+        )
+        day_count = sum(
+            1 for b, p in rows 
+            if b.created_at and b.created_at.date() == day_date
+        )
+        day_nights = sum(
+            b.nights for b, p in rows 
+            if b.created_at and b.created_at.date() == day_date
+        )
+
+        daily_stats.append({
+            "date": day_str,
+            "full_date": day_date.isoformat(),
+            "revenue": day_rev,
+            "bookings": day_count,
+            "nights": day_nights,
+        })
+
+    # Monthly Stats (Last 12 Months)
+    monthly_stats = []
+    for i in range(11, -1, -1):
+        target_year = today.year
+        target_month = today.month - i
+        while target_month <= 0:
+            target_month += 12
+            target_year -= 1
+
+        month_label = date(target_year, target_month, 1).strftime("%b %Y")
+        
+        m_rev = sum(
+            b.total for b, p in rows 
+            if b.created_at and b.created_at.year == target_year and b.created_at.month == target_month
+        )
+        m_count = sum(
+            1 for b, p in rows 
+            if b.created_at and b.created_at.year == target_year and b.created_at.month == target_month
+        )
+        m_nights = sum(
+            b.nights for b, p in rows 
+            if b.created_at and b.created_at.year == target_year and b.created_at.month == target_month
+        )
+
+        monthly_stats.append({
+            "month": month_label,
+            "revenue": m_rev,
+            "bookings": m_count,
+            "nights": m_nights,
+        })
+
+    # Property Performance Breakdown
+    property_map = {}
+    all_props_res = await db.execute(select(Property).options(selectinload(Property.images)))
+    all_properties = all_props_res.scalars().all()
+    for prop in all_properties:
+        first_img = next((img.image_url for img in prop.images if img.is_primary), prop.images[0].image_url if prop.images else None)
+        property_map[str(prop.id)] = {
+            "property_id": str(prop.id),
+            "name": prop.name,
+            "city": prop.city,
+            "state": prop.state,
+            "price_per_night": prop.price_per_night,
+            "total_revenue": 0,
+            "bookings_count": 0,
+            "nights_booked": 0,
+            "image_url": first_img,
+        }
+
+    for b, p in rows:
+        pid = str(b.property_id)
+        if pid in property_map:
+            property_map[pid]["total_revenue"] += b.total
+            property_map[pid]["bookings_count"] += 1
+            property_map[pid]["nights_booked"] += b.nights
+
+    property_performance = list(property_map.values())
+    property_performance.sort(key=lambda x: x["total_revenue"], reverse=True)
+
+    total_rev = sum(b.total for b, p in rows)
+    total_nights = sum(b.nights for b, p in rows)
+    total_bks = len(rows)
+    avg_daily_rate = round(total_rev / total_nights) if total_nights > 0 else 0
+
+    analytics_response = {
+        "summary": {
+            "total_revenue": total_rev,
+            "total_bookings": total_bks,
+            "total_nights": total_nights,
+            "avg_daily_rate": avg_daily_rate,
+        },
+        "daily_stats": daily_stats,
+        "monthly_stats": monthly_stats,
+        "property_performance": property_performance,
+    }
+    await cache_set_json(cache_key, analytics_response, ttl_seconds=30)
+    return analytics_response
 
 
 @router.post("/upload-image")
