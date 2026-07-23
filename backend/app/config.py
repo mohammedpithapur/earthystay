@@ -1,6 +1,6 @@
-from pydantic import model_validator
-from pydantic import Field
-from pydantic import AliasChoices
+import json
+from typing import Any
+from pydantic import model_validator, field_validator, Field, AliasChoices
 from pydantic_settings import BaseSettings
 
 
@@ -44,6 +44,18 @@ class Settings(BaseSettings):
     RAZORPAY_KEY_SECRET: str = ""
 
     model_config = {"env_file": ".env"}
+
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v: Any) -> list[str]:
+        if isinstance(v, str):
+            if v.startswith("["):
+                try:
+                    return json.loads(v)
+                except Exception:
+                    pass
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        return v
 
     @model_validator(mode="after")
     def validate_production_settings(self):

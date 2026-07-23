@@ -1,12 +1,12 @@
-# ── AWS Lambda Container Image ────────────────────────────────────────────────
-# Uses the official AWS Lambda Python 3.12 base image.
-# This is deployed via AWS ECR → Lambda (container image).
-# For local dev, use: docker-compose.yml (which uses the gunicorn CMD instead)
+# ── Render / Web Service Dockerfile ──────────────────────────────────────────
+FROM python:3.12-slim
 
-FROM public.ecr.aws/lambda/python:3.12
+WORKDIR /app
 
-# Install system deps needed by psycopg2 / asyncpg
-RUN dnf install -y libpq gcc && dnf clean all
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy & install Python dependencies
 COPY requirements.txt ./
@@ -17,5 +17,7 @@ COPY app ./app
 COPY alembic ./alembic
 COPY alembic.ini ./
 
-# AWS Lambda invokes this handler: app/main.py → handler (Mangum instance)
-CMD ["app.main.handler"]
+EXPOSE 10000
+
+# Start Uvicorn bound to 0.0.0.0 and $PORT (Render sets PORT environment variable)
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-10000}"]

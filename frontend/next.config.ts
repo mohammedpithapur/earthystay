@@ -29,7 +29,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: blob: https://images.unsplash.com https://*.supabase.co https://checkout.razorpay.com",
       "font-src 'self' data: https://fonts.gstatic.com",
-      `connect-src 'self' ${apiOrigin()} http://localhost:8000 http://127.0.0.1:8000 http://localhost:3000 http://127.0.0.1:3000 https://*.supabase.co https://api.razorpay.com`,
+      `connect-src 'self' ${apiOrigin()} https://*.onrender.com http://localhost:8000 http://127.0.0.1:8000 http://localhost:3000 http://127.0.0.1:3000 https://*.supabase.co https://api.razorpay.com`,
       "frame-src 'self' https://api.razorpay.com",
       "frame-ancestors 'none'",
     ].join("; "),
