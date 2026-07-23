@@ -2,6 +2,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { Property } from '@/lib/types'
+import { Star, MapPin, Bed, Bath, Users } from 'lucide-react'
 
 interface Props {
   property: Property
@@ -59,25 +60,33 @@ export default function PropertyCard({ property }: Props) {
             position: 'absolute', top: '14px', right: '14px',
             backgroundColor: 'var(--color-text-primary)',
             color: 'var(--color-gold)',
-            padding: '6px 12px',
+            padding: '6px 10px',
             fontSize: '12px',
             fontWeight: '700',
             borderRadius: '6px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '4px',
           }}>
-            ★ {property.avg_rating}
+            <Star style={{ width: '13px', height: '13px', fill: 'var(--color-gold)', strokeWidth: 0 }} />
+            {property.avg_rating}
           </div>
 
           {/* Location Badge */}
           <div style={{
             position: 'absolute', bottom: '14px', left: '14px',
-            backgroundColor: 'rgba(43,32,23,0.82)',
+            backgroundColor: 'rgba(43,32,23,0.85)',
             color: '#ffffff',
-            padding: '6px 12px',
+            padding: '6px 10px',
             fontSize: '11px',
             letterSpacing: '1px',
             textTransform: 'uppercase',
             borderRadius: '6px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '5px',
           }}>
+            <MapPin style={{ width: '12px', height: '12px', color: 'var(--color-gold)' }} />
             {property.city}, {property.state}
           </div>
         </div>
@@ -96,21 +105,19 @@ export default function PropertyCard({ property }: Props) {
           </h3>
 
           {/* Details Row */}
-          <div style={{ display: 'flex', gap: '12px', marginBottom: '12px', flexWrap: 'wrap', fontSize: '13px' }}>
-            {[
-              { label: `${property.bedrooms} Beds` },
-              { label: `${property.bathrooms} Baths` },
-              { label: `${property.max_guests} Guests` },
-            ].map(detail => (
-              <span key={detail.label} style={{
-                fontSize: '12px',
-                color: 'var(--color-text-secondary)',
-                letterSpacing: '0.2px',
-                fontWeight: '500',
-              }}>
-                {detail.label}
-              </span>
-            ))}
+          <div style={{ display: 'flex', gap: '14px', marginBottom: '12px', flexWrap: 'wrap', fontSize: '13px' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: 'var(--color-text-secondary)', fontWeight: '500' }}>
+              <Bed style={{ width: '14px', height: '14px', strokeWidth: 1.8 }} />
+              {property.bedrooms} Beds
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: 'var(--color-text-secondary)', fontWeight: '500' }}>
+              <Bath style={{ width: '14px', height: '14px', strokeWidth: 1.8 }} />
+              {property.bathrooms} Baths
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: 'var(--color-text-secondary)', fontWeight: '500' }}>
+              <Users style={{ width: '14px', height: '14px', strokeWidth: 1.8 }} />
+              {property.max_guests} Guests
+            </span>
           </div>
 
           <div style={{ height: '1px', backgroundColor: 'var(--color-border)', marginBottom: '12px' }} />

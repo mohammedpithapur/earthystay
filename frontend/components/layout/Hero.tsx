@@ -1,6 +1,7 @@
 "use client"
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { MapPin } from 'lucide-react'
 import Copy from '@/lib/copy'
 import { buildApiUrl } from '@/lib/api'
 
@@ -295,7 +296,7 @@ export default function Hero() {
                     onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--color-bg-soft)'}
                     onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
-                    📍 <strong>{loc.city}</strong>, {loc.state}
+                    <MapPin size={14} style={{ display: 'inline', marginRight: '6px', color: 'var(--color-gold)', verticalAlign: '-1px' }} /><strong>{loc.city}</strong>, {loc.state}
                   </div>
                 ))}
               </div>

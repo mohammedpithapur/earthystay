@@ -19,6 +19,8 @@ export interface Property {
   description: string
   price_per_night: number
   cleaning_fee: number
+  extra_guest_charge_per_night?: number
+  base_guests?: number
   max_guests: number
   bedrooms: number
   bathrooms: number

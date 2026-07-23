@@ -43,11 +43,53 @@ export type CreateReviewPayload = {
   created_at?: string
 }
 
+export type MonthlyStat = {
+  month: string
+  revenue: number
+  bookings: number
+  nights?: number
+}
+
+export type AnalyticsSummary = {
+  total_revenue: number
+  total_bookings: number
+  total_nights: number
+  avg_daily_rate: number
+}
+
+export type DailyStat = {
+  date: string
+  full_date: string
+  revenue: number
+  bookings: number
+  nights: number
+}
+
+export type PropertyPerformance = {
+  property_id: string
+  name: string
+  city: string
+  state: string
+  price_per_night: number
+  total_revenue: number
+  bookings_count: number
+  nights_booked: number
+  image_url?: string | null
+}
+
+export type AdminAnalyticsResponse = {
+  summary: AnalyticsSummary
+  daily_stats: DailyStat[]
+  monthly_stats: MonthlyStat[]
+  property_performance: PropertyPerformance[]
+}
+
 export type AdminDashboard = {
   total_bookings: number
   total_properties: number
   total_revenue: number
   pending_bookings: number
+  monthly_stats?: MonthlyStat[]
 }
 
 export type AdminBooking = {
@@ -79,6 +121,59 @@ export type AdminBookingList = {
   total: number
   page: number
   limit: number
+}
+
+// ─── Payment & Settlement Types ───────────────────────────────────────────────
+
+export type AdminPayment = {
+  id: string
+  booking_id: string
+  booking_ref: string | null
+  guest_name: string | null
+  guest_email: string | null
+  property_name: string | null
+  razorpay_order_id: string
+  razorpay_payment_id: string | null
+  amount_rupees: number
+  currency: string
+  status: 'created' | 'paid' | 'failed' | 'refunded'
+  created_at: string | null
+}
+
+export type AdminPaymentList = {
+  items: AdminPayment[]
+  total: number
+  page: number
+  limit: number
+}
+
+export type SettlementBatch = {
+  settlement_id: string
+  status: string
+  amount_rupees: number
+  fees_rupees: number
+  tax_rupees: number
+  utr: string | null
+  settled_at: string | null
+  transaction_count: number
+}
+
+export type AdminSettlementsResponse = {
+  settlements: SettlementBatch[]
+  total_settled_rupees: number
+  count: number
+  error?: string
+}
+
+export type PaymentSummary = {
+  total_collected_rupees: number
+  total_settled_rupees: number
+  pending_with_razorpay_rupees: number
+  total_refunded_rupees: number
+  paid_transactions: number
+  pending_payment_count: number
+  settlement_batches: number
+  razorpay_error: string | null
 }
 
 // ─── Calendar / Date Blocking ─────────────────────────────────────────────────
@@ -720,6 +815,47 @@ export async function updateAdminEventStatus(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ status }),
   })
-  if (!response.ok) throw new Error(`Failed to update event request (${response.status})`)
+  if (!response.ok) throw new Error(`Failed to update event status (${response.status})`)
   return response.json()
 }
+
+export async function getAdminAnalytics(
+  fetcher: ApiFetcher,
+): Promise<AdminAnalyticsResponse> {
+  const response = await fetcher(buildApiUrl('/admin/analytics'))
+  if (!response.ok) throw new Error(`Failed to load analytics (${response.status})`)
+  return response.json()
+}
+
+// ─── Payments & Settlements API ───────────────────────────────────────────────
+
+export async function getAdminPayments(
+  fetcher: ApiFetcher,
+  params?: { status?: string; search?: string; page?: number; limit?: number }
+): Promise<AdminPaymentList> {
+  const query = new URLSearchParams()
+  if (params?.status) query.set('status', params.status)
+  if (params?.search) query.set('search', params.search)
+  if (params?.page) query.set('page', String(params.page))
+  if (params?.limit) query.set('limit', String(params.limit))
+  const url = buildApiUrl(`/payments/admin/all${query.toString() ? '?' + query.toString() : ''}`)
+  const response = await fetcher(url)
+  if (!response.ok) throw new Error(`Failed to load payments (${response.status})`)
+  return response.json()
+}
+
+export async function getAdminSettlements(
+  fetcher: ApiFetcher,
+): Promise<AdminSettlementsResponse> {
+  const response = await fetcher(buildApiUrl('/payments/admin/settlements'))
+  if (!response.ok) throw new Error(`Failed to load settlements (${response.status})`)
+  return response.json()
+}
+
+export async function getPaymentSummary(
+  fetcher: ApiFetcher,
+): Promise<PaymentSummary> {
+  const response = await fetcher(buildApiUrl('/payments/admin/summary'))
+  if (!response.ok) throw new Error(`Failed to load payment summary (${response.status})`)
+  return response.json()
+}

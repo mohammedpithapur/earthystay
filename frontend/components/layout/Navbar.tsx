@@ -84,7 +84,7 @@ export default function Navbar() {
         {/* Desktop nav links */}
         <div className="hidden md:flex items-center gap-8">
           {[
-            { label: 'Our Properties', href: '/properties' },
+            { label: 'Our Hotels', href: '/properties' },
             { label: 'Corporate', href: '/corporate' },
             { label: 'Wedding', href: '/wedding' },
             { label: 'Contact Us', href: '/contact' },
@@ -201,7 +201,7 @@ export default function Navbar() {
       {mounted && menuOpen && (
         <div className="md:hidden flex flex-col w-full" style={{ backgroundColor: 'var(--color-navbar)', borderTop: '1px solid var(--color-navbar-border)', padding: '16px 24px', gap: '16px', maxWidth: '1400px', margin: '0 auto' }}>
           {[
-            { label: 'Our Properties', href: '/properties' },
+            { label: 'Our Hotels', href: '/properties' },
             { label: 'Corporate', href: '/corporate' },
             { label: 'Wedding', href: '/wedding' },
             { label: 'Offers', href: '/offers' },

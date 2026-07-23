@@ -1,5 +1,6 @@
 'use client'
 import dynamic from 'next/dynamic'
+import { MapPin } from 'lucide-react'
 
 const Map = dynamic(() => import('./Map'), {
   ssr: false,
@@ -13,7 +14,7 @@ const Map = dynamic(() => import('./Map'), {
       flexDirection: 'column',
       gap: '12px'
     }}>
-      <span style={{ fontSize: '32px' }}>🗺️</span>
+      <MapPin size={32} color="var(--color-gold)" />
       <p style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Loading map...</p>
     </div>
   )
