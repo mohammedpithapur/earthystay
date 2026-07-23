@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation'
 import PropertyCard from '@/components/property/PropertyCard'
 import { buildApiUrl } from '@/lib/api'
 import type { Property } from '@/lib/types'
+import { Building2, SlidersHorizontal, Search, RotateCcw, PawPrint } from 'lucide-react'
 
 const roomTypeOptions = [
   { value: 'all', label: 'Any Room Type' },
@@ -251,7 +252,9 @@ export default function PropertiesClient() {
               border: '1px solid var(--color-border)',
               borderRadius: '12px',
             }}>
-              <div style={{ fontSize: '48px', marginBottom: '16px', color: 'var(--color-gold)' }}>[ ]</div>
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+                <Building2 style={{ width: '48px', height: '48px', color: 'var(--color-gold)', strokeWidth: 1.5 }} />
+              </div>
               <h3 style={{ fontSize: '24px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '12px' }}>No properties found</h3>
               <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', marginBottom: '24px' }}>Try adjusting your filters to find your perfect stay</p>
               <button

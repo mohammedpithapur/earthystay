@@ -7,6 +7,7 @@ import MapWrapper from '@/components/shared/MapWrapper'
 import { buildApiUrl, fetchPropertyReviews } from '@/lib/api'
 import type { Property, Review } from '@/lib/types'
 import type { DateRange } from 'react-day-picker'
+import { Star, MapPin, Users, Bed, Bath, Calendar, Moon, Dog, Check, Phone, Mail, Clock, ShieldAlert, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react'
 
 const bathroomLabel: Record<string, string> = {
   ensuite: 'Private Ensuite',
@@ -237,8 +238,12 @@ export default function PropertyDetailPage() {
 
   const nights = calcNights()
   const basePrice = nights * property.price_per_night
+  const baseGuests = property.base_guests || 2
+  const extraGuestRate = property.extra_guest_charge_per_night || 0
+  const extraGuests = Math.max(0, guests - baseGuests)
+  const extraGuestCharge = extraGuests * nights * extraGuestRate
   const petCharge = pets * nights * property.pet_charge_per_night
-  const totalPrice = basePrice + property.cleaning_fee + petCharge
+  const totalPrice = basePrice + extraGuestCharge + property.cleaning_fee + petCharge
 
   const handleBook = () => {
     if (!checkIn || !checkOut) { alert('Please select check-in and check-out dates'); return }
@@ -299,16 +304,16 @@ export default function PropertyDetailPage() {
             <>
               <button
                 onClick={() => setActiveImage(i => Math.max(0, i - 1))}
-                style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', backgroundColor: 'rgba(0,0,0,0.55)', color: '#ffffff', border: 'none', width: '48px', height: '48px', fontSize: '22px', cursor: 'pointer', borderRadius: '50%', backdropFilter: 'blur(4px)', transition: 'background 0.2s ease', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', backgroundColor: 'rgba(0,0,0,0.55)', color: '#ffffff', border: 'none', width: '48px', height: '48px', cursor: 'pointer', borderRadius: '50%', backdropFilter: 'blur(4px)', transition: 'background 0.2s ease', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.8)')}
                 onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.55)')}
-              >‹</button>
+              ><ChevronLeft size={22} /></button>
               <button
                 onClick={() => setActiveImage(i => Math.min(property.images.length - 1, i + 1))}
-                style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', backgroundColor: 'rgba(0,0,0,0.55)', color: '#ffffff', border: 'none', width: '48px', height: '48px', fontSize: '22px', cursor: 'pointer', borderRadius: '50%', backdropFilter: 'blur(4px)', transition: 'background 0.2s ease', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                style={{ position: 'absolute', right: '16px', top: '50%', transform: 'translateY(-50%)', backgroundColor: 'rgba(0,0,0,0.55)', color: '#ffffff', border: 'none', width: '48px', height: '48px', cursor: 'pointer', borderRadius: '50%', backdropFilter: 'blur(4px)', transition: 'background 0.2s ease', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                 onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.8)')}
                 onMouseLeave={e => (e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.55)')}
-              >›</button>
+              ><ChevronRight size={22} /></button>
             </>
           )}
         </div>
@@ -339,15 +344,15 @@ export default function PropertyDetailPage() {
 
           {/* Badges */}
           <div style={{ display: 'flex', gap: '10px', marginBottom: '12px', flexWrap: 'wrap' }}>
-            <span style={{ backgroundColor: 'var(--color-bg-soft)', color: 'var(--color-text-primary)', padding: '5px 12px', fontSize: '12px', letterSpacing: '0.5px', borderRadius: '6px', fontWeight: '600' }}>
-              {property.city}, {property.state}
+            <span style={{ backgroundColor: 'var(--color-bg-soft)', color: 'var(--color-text-primary)', padding: '5px 12px', fontSize: '12px', letterSpacing: '0.5px', borderRadius: '6px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <MapPin size={13} /> {property.city}, {property.state}
             </span>
-            <span style={{ backgroundColor: 'var(--color-text-primary)', color: 'var(--color-gold)', padding: '5px 12px', fontSize: '12px', borderRadius: '6px', fontWeight: '600' }}>
-              ★ {property.avg_rating} ({property.review_count} reviews)
+            <span style={{ backgroundColor: 'var(--color-text-primary)', color: 'var(--color-gold)', padding: '5px 12px', fontSize: '12px', borderRadius: '6px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <Star size={13} fill="currentColor" /> {property.avg_rating} ({property.review_count} reviews)
             </span>
             {property.pets_allowed && (
-              <span style={{ backgroundColor: '#E8F5E9', color: '#2E7D32', padding: '5px 12px', fontSize: '12px', borderRadius: '6px', fontWeight: '600' }}>
-                Pets Welcome{(property as { max_pets?: number }).max_pets ? ` · up to ${(property as { max_pets?: number }).max_pets}` : ''}
+              <span style={{ backgroundColor: '#E8F5E9', color: '#2E7D32', padding: '5px 12px', fontSize: '12px', borderRadius: '6px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <Dog size={13} /> Pets Welcome{(property as { max_pets?: number }).max_pets ? ` · up to ${(property as { max_pets?: number }).max_pets}` : ''}
               </span>
             )}
           </div>
@@ -359,10 +364,10 @@ export default function PropertyDetailPage() {
           {/* Quick Stats */}
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', padding: '20px 0', borderTop: '1px solid var(--color-border)', borderBottom: '1px solid var(--color-border)', marginBottom: '32px' }}>
             {[
-              { icon: '👥', label: `${property.max_guests} Guests` },
-              { icon: '🛏️', label: `${property.bedrooms} Bedroom${property.bedrooms !== 1 ? 's' : ''}` },
-              { icon: '🌙', label: `Min ${property.min_nights} Night${property.min_nights !== 1 ? 's' : ''}` },
-              { icon: '🚿', label: (() => {
+              { icon: <Users size={16} />, label: `${property.max_guests} Guests` },
+              { icon: <Bed size={16} />, label: `${property.bedrooms} Bedroom${property.bedrooms !== 1 ? 's' : ''}` },
+              { icon: <Moon size={16} />, label: `Min ${property.min_nights} Night${property.min_nights !== 1 ? 's' : ''}` },
+              { icon: <Bath size={16} />, label: (() => {
                 const detail = property.bathrooms_detail
                 if (detail && detail.length > 0) {
                   const typeLabels: Record<string, string> = { ensuite: 'Private Attached', detached_private: 'Private Detached', shared: 'Shared' }
@@ -370,9 +375,9 @@ export default function PropertyDetailPage() {
                 }
                 return `${property.bathrooms} Bath${property.bathrooms !== 1 ? 's' : ''}`
               })() },
-            ].map(stat => (
-              <div key={stat.label} style={{
-                display: 'flex', alignItems: 'center', gap: '6px',
+            ].map((stat, idx) => (
+              <div key={idx} style={{
+                display: 'flex', alignItems: 'center', gap: '8px',
                 backgroundColor: 'var(--color-bg-soft)',
                 padding: '8px 14px',
                 borderRadius: '8px',
@@ -380,13 +385,13 @@ export default function PropertyDetailPage() {
                 fontWeight: '600',
                 color: 'var(--color-text-primary)',
               }}>
-                <span style={{ fontSize: '15px' }}>{stat.icon}</span>
+                <span style={{ color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center' }}>{stat.icon}</span>
                 {stat.label}
               </div>
             ))}
             {property.pets_allowed && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', backgroundColor: '#E8F5E9', padding: '8px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: '600', color: '#2E7D32' }}>
-                <span style={{ fontSize: '15px' }}>🐾</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#E8F5E9', padding: '8px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: '600', color: '#2E7D32' }}>
+                <Dog size={16} />
                 Pets Welcome
               </div>
             )}
@@ -499,6 +504,7 @@ export default function PropertyDetailPage() {
                 </div>
 
                 <div style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-gold)', borderRadius: '12px', padding: '20px 24px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                  <ShieldAlert size={22} style={{ color: 'var(--color-gold)', flexShrink: 0, marginTop: '2px' }} />
                   <div>
                     <h4 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '6px' }}>Important: Non-Refundable Booking</h4>
                     <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>All bookings are non-refundable. Once payment is confirmed, cancellations will not be eligible for a refund. Please review your dates carefully before booking.</p>
@@ -513,13 +519,13 @@ export default function PropertyDetailPage() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px' }}>
                 {property.amenities.map(amenity => (
                   <div key={amenity} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 16px', backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
-                    <span style={{ color: 'var(--color-gold)', fontSize: '16px', fontWeight: '700' }}>&#10003;</span>
+                    <Check size={16} style={{ color: 'var(--color-gold)', flexShrink: 0 }} />
                     <span style={{ fontSize: '14px', color: 'var(--color-text-primary)' }}>{amenity}</span>
                   </div>
                 ))}
                 {property.pets_allowed && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 16px', backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
-                    <span style={{ color: 'var(--color-gold)', fontSize: '16px', fontWeight: '700' }}>&#10003;</span>
+                    <Dog size={16} style={{ color: 'var(--color-gold)', flexShrink: 0 }} />
                     <span style={{ fontSize: '14px', color: 'var(--color-text-primary)' }}>Pets (+&#8377;{property.pet_charge_per_night}/pet/night)</span>
                   </div>
                 )}
@@ -530,7 +536,7 @@ export default function PropertyDetailPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px' }}>
                   {property.bathrooms_detail.map((b, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 16px', backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
-                      <span style={{ color: 'var(--color-gold)', fontSize: '16px', fontWeight: '700' }}>&#10003;</span>
+                      <Bath size={16} style={{ color: 'var(--color-gold)', flexShrink: 0 }} />
                       <span style={{ fontSize: '14px', color: 'var(--color-text-primary)' }}>{b.count}x {bathroomLabel[b.type]}</span>
                     </div>
                   ))}
@@ -538,7 +544,9 @@ export default function PropertyDetailPage() {
               </div>
 
               <div style={{ marginTop: '32px', ...cardStyle }}>
-                <h3 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '16px' }}>Check In &amp; Out</h3>
+                <h3 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Clock size={20} style={{ color: 'var(--color-gold)' }} /> Check In &amp; Out
+                </h3>
                 <div style={{ display: 'flex', gap: '32px' }}>
                   <div>
                     <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '600' }}>Check In</p>
@@ -562,8 +570,8 @@ export default function PropertyDetailPage() {
                 <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--color-gold)', marginBottom: '24px' }} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                   {property.house_rules.map((rule, i) => (
-                    <div key={i} style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', paddingBottom: '16px', borderBottom: i < property.house_rules.length - 1 ? '1px solid var(--color-border)' : 'none' }}>
-                      <span style={{ color: 'var(--color-gold)', fontSize: '16px', flexShrink: 0, marginTop: '2px' }}>&#9675;</span>
+                    <div key={i} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', paddingBottom: '16px', borderBottom: i < property.house_rules.length - 1 ? '1px solid var(--color-border)' : 'none' }}>
+                      <Check size={16} style={{ color: 'var(--color-gold)', flexShrink: 0, marginTop: '3px' }} />
                       <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>{rule}</p>
                     </div>
                   ))}
@@ -596,6 +604,7 @@ export default function PropertyDetailPage() {
                 </div>
 
                 <div style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-gold)', borderRadius: '12px', padding: '20px 24px', display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                  <ShieldAlert size={22} style={{ color: 'var(--color-gold)', flexShrink: 0, marginTop: '2px' }} />
                   <div>
                     <h4 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '6px' }}>Important: Non-Refundable Booking Policy</h4>
                     <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>All bookings are non-refundable once payment is confirmed.</p>
@@ -610,7 +619,7 @@ export default function PropertyDetailPage() {
               <div style={cardStyle}>
                 <h3 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '16px' }}>Address</h3>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-                  <span style={{ color: 'var(--color-gold)', fontSize: '18px', lineHeight: '1.2' }}>•</span>
+                  <MapPin size={20} style={{ color: 'var(--color-gold)', flexShrink: 0, marginTop: '2px' }} />
                   <div>
                     <p style={{ fontSize: '15px', color: 'var(--color-text-primary)', fontWeight: '700', marginBottom: '4px' }}>{property.name}</p>
                     <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>{property.address}</p>
@@ -629,10 +638,10 @@ export default function PropertyDetailPage() {
                 <h3 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '16px' }}>Contact Property</h3>
                 <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
                   <a href={`tel:${property.contact_phone}`} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', border: '1px solid var(--color-gold)', borderRadius: '8px', color: 'var(--color-text-primary)', textDecoration: 'none', fontSize: '14px', fontWeight: '600' }}>
-                    {property.contact_phone}
+                    <Phone size={15} style={{ color: 'var(--color-gold)' }} /> {property.contact_phone}
                   </a>
                   <a href={`mailto:${property.contact_email}`} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', border: '1px solid var(--color-gold)', borderRadius: '8px', color: 'var(--color-text-primary)', textDecoration: 'none', fontSize: '14px', fontWeight: '600' }}>
-                    {property.contact_email}
+                    <Mail size={15} style={{ color: 'var(--color-gold)' }} /> {property.contact_email}
                   </a>
                 </div>
               </div>
@@ -645,13 +654,17 @@ export default function PropertyDetailPage() {
               <div style={{ ...cardStyle, display: 'flex', gap: '32px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <div style={{ textAlign: 'center' }}>
                   <p style={{ fontSize: '56px', color: 'var(--color-text-primary)', lineHeight: '1', fontWeight: '800' }}>{property.avg_rating}</p>
-                  <p style={{ color: 'var(--color-gold)', fontSize: '20px', marginBottom: '4px' }}>{'★'.repeat(Math.floor(property.avg_rating))}</p>
+                  <div style={{ color: 'var(--color-gold)', display: 'flex', gap: '2px', justifyContent: 'center', margin: '4px 0' }}>
+                    {Array.from({ length: Math.floor(property.avg_rating) }).map((_, idx) => (
+                      <Star key={idx} size={18} fill="currentColor" />
+                    ))}
+                  </div>
                   <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>{property.review_count} review{property.review_count !== 1 ? 's' : ''}</p>
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   {starCounts.map(({ star, count }) => (
                     <div key={star} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                      <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', width: '24px' }}>{star}★</span>
+                      <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', width: '24px', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>{star}<Star size={10} fill="currentColor" color="var(--color-gold)" /></span>
                       <div style={{ flex: 1, height: '6px', backgroundColor: 'var(--color-border)', borderRadius: '3px' }}>
                         <div style={{
                           height: '100%', backgroundColor: 'var(--color-gold)', borderRadius: '3px',
@@ -669,7 +682,7 @@ export default function PropertyDetailPage() {
                 <div style={{ textAlign: 'center', padding: '40px', color: 'var(--color-text-muted)' }}>Loading reviews…</div>
               ) : reviews.length === 0 ? (
                 <div style={{ backgroundColor: '#ffffff', padding: '40px', border: '1px solid var(--color-border)', borderRadius: '12px', textAlign: 'center', color: 'var(--color-text-muted)' }}>
-                  <p style={{ fontSize: '32px', marginBottom: '8px' }}>✦</p>
+                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}><Sparkles size={32} color="var(--color-gold)" /></div>
                   <p style={{ fontWeight: '700', marginBottom: '4px' }}>No reviews yet</p>
                   <p style={{ fontSize: '13px' }}>Be the first to stay here</p>
                 </div>
@@ -690,7 +703,9 @@ export default function PropertyDetailPage() {
                             </div>
                           </div>
                         </div>
-                        <div style={{ color: 'var(--color-gold)', fontSize: '14px' }}>{'★'.repeat(review.rating)}</div>
+                        <div style={{ display: 'inline-flex', gap: '1px' }}>
+                          {Array.from({ length: review.rating }).map((_, i) => <Star key={i} size={13} fill="currentColor" color="var(--color-gold)" />)}
+                        </div>
                       </div>
                       {review.comment && <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', lineHeight: '1.7' }}>{review.comment}</p>}
                     </div>
@@ -772,7 +787,7 @@ export default function PropertyDetailPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
                 <button onClick={() => setGuests(Math.max(1, guests - 1))} style={{ border: '1px solid var(--color-border)', backgroundColor: '#ffffff', width: '36px', height: '36px', fontSize: '16px', cursor: 'pointer', borderRadius: '4px', fontWeight: '700' }}>−</button>
                 <span style={{ minWidth: '45px', textAlign: 'center', fontSize: '16px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{guests}</span>
-                <button onClick={() => setGuests(Math.min(property.max_guests, guests + 1))} style={{ border: '1px solid var(--color-border)', backgroundColor: '#ffffff', width: '36px', height: '36px', fontSize: '16px', cursor: 'pointer', borderRadius: '4px', fontWeight: '700' }}>+</button>
+                <button onClick={() => setGuests(Math.min(property.max_guests || 20, guests + 1))} style={{ border: '1px solid var(--color-border)', backgroundColor: '#ffffff', width: '36px', height: '36px', fontSize: '16px', cursor: 'pointer', borderRadius: '4px', fontWeight: '700' }}>+</button>
               </div>
             </div>
             {property.pets_allowed && (
@@ -793,6 +808,12 @@ export default function PropertyDetailPage() {
                 <span>&#8377;{property.price_per_night.toLocaleString('en-IN')} x {nights} nights</span>
                 <span>&#8377;{basePrice.toLocaleString('en-IN')}</span>
               </div>
+              {extraGuestCharge > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: 'var(--color-text-secondary)' }}>
+                  <span>Extra guest charge ({extraGuests} guest{extraGuests > 1 ? 's' : ''} x {nights} night{nights > 1 ? 's' : ''})</span>
+                  <span>&#8377;{extraGuestCharge.toLocaleString('en-IN')}</span>
+                </div>
+              )}
               {pets > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: 'var(--color-text-secondary)' }}>
                   <span>{pets} pet{pets > 1 ? 's' : ''} x {nights} nights</span>

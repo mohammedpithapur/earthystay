@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -8,15 +8,18 @@ import { useRequireAuth } from '@/lib/auth/useRequireAuth'
 import {
   listPropertyGroups, createPropertyGroup, updatePropertyGroup, deletePropertyGroup,
   addPropertyGroupMember, removePropertyGroupMember, updatePropertyGroupMember,
-  listAdminProperties, deleteAdminProperty,
+  listAdminProperties, deleteAdminProperty, duplicateAdminProperty, buildApiUrl,
   getAdminDashboard, listAdminBookings, updateAdminBookingStatus, updateAdminBookingWithRefund,
   createAdminReview, deleteAdminReview, fetchPropertyReviews,
   listICalLinks, createICalLink, deleteICalLink, getICalExportUrl,
-  listAdminEvents, updateAdminEventStatus,
+  listAdminEvents, updateAdminEventStatus, getAdminAnalytics,
+  getAdminPayments, getAdminSettlements, getPaymentSummary,
   type PropertyGroup, type CreateReviewPayload, type AdminBooking, type AdminDashboard, type ICalLink,
-  type EventRequest, type EventStatus,
+  type EventRequest, type EventStatus, type AdminAnalyticsResponse,
+  type AdminPayment, type AdminPaymentList, type SettlementBatch, type PaymentSummary,
 } from '@/lib/api'
 import type { Property, Review } from '@/lib/types'
+import { Printer, Building2, Users, Calendar, Download, Share2, Plus, Trash2, Edit3, Star, Check, X, Bed, Mail, Phone, Wallet, BadgeCheck, Clock, RefreshCw, AlertTriangle, CheckCircle, XCircle, CreditCard } from 'lucide-react'
 import CalendarModal from './properties/CalendarModal'
 
 const BOOKINGS_PER_PAGE = 15
@@ -70,6 +73,12 @@ export default function AdminPage() {
   // ── Dashboard stats ───────────────────────────────────────────────────────
   const [dashStats, setDashStats] = useState<AdminDashboard | null>(null)
 
+  // ── Analytics state ───────────────────────────────────────────────────────
+  const [analyticsData, setAnalyticsData] = useState<AdminAnalyticsResponse | null>(null)
+  const [analyticsLoading, setAnalyticsLoading] = useState(false)
+  const [timeframeMode, setTimeframeMode] = useState<'daily' | 'monthly'>('monthly')
+  const [metricMode, setMetricMode] = useState<'revenue' | 'bookings' | 'nights'>('revenue')
+
   // ── Bookings state ────────────────────────────────────────────────────────
   const [bookings, setBookings] = useState<AdminBooking[]>([])
   const [bookingsTotal, setBookingsTotal] = useState(0)
@@ -116,8 +125,36 @@ export default function AdminPage() {
   const [eventsStatusFilter, setEventsStatusFilter] = useState('')
   const eventsSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // ── Payments & Settlements state ──────────────────────────────────────────
+  const [paymentsData, setPaymentsData] = useState<AdminPaymentList | null>(null)
+  const [paymentsLoading, setPaymentsLoading] = useState(false)
+  const [paymentSummary, setPaymentSummary] = useState<PaymentSummary | null>(null)
+  const [settlements, setSettlements] = useState<SettlementBatch[]>([])
+  const [settlementsLoading, setSettlementsLoading] = useState(false)
+  const [paymentsSearch, setPaymentsSearch] = useState('')
+  const [paymentsStatusFilter, setPaymentsStatusFilter] = useState('')
+  const [paymentsPage, setPaymentsPage] = useState(1)
+
   // ── Calendar / date-blocking state ───────────────────────────────────────
   const [calendarProperty, setCalendarProperty] = useState<{ id: string; name: string } | null>(null)
+
+  // ── Confirmation Modal state ─────────────────────────────────────────────
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean
+    title: string
+    subtitle?: string
+    description?: string
+    confirmLabel?: string
+    cancelLabel?: string
+    isDanger?: boolean
+    onConfirm?: () => Promise<void> | void
+    isNoticeOnly?: boolean
+    noticeActionLabel?: string
+    onNoticeAction?: () => void
+  }>({
+    isOpen: false,
+    title: '',
+  })
 
   // ── Load bookings ─────────────────────────────────────────────────────────
   const loadBookings = useCallback(async (page = 1, search = '', status = '') => {
@@ -186,9 +223,36 @@ export default function AdminPage() {
     finally { setEventsLoading(false) }
   }, [fetchWithAuth, loading, user])
 
+  const loadAnalytics = useCallback(async () => {
+    setAnalyticsLoading(true)
+    try {
+      const data = await getAdminAnalytics(fetchWithAuth)
+      setAnalyticsData(data)
+    } catch { /* noop */ }
+    finally { setAnalyticsLoading(false) }
+  }, [fetchWithAuth])
+
+  const loadPayments = useCallback(async (page = 1, search = '', status = '') => {
+    if (loading || !user) return
+    setPaymentsLoading(true)
+    setSettlementsLoading(true)
+    try {
+      const [pmts, summary, sett] = await Promise.all([
+        getAdminPayments(fetchWithAuth, { page, search: search || undefined, status: status || undefined, limit: 20 }),
+        getPaymentSummary(fetchWithAuth),
+        getAdminSettlements(fetchWithAuth),
+      ])
+      setPaymentsData(pmts)
+      setPaymentSummary(summary)
+      setSettlements(sett.settlements || [])
+    } catch { /* noop */ }
+    finally { setPaymentsLoading(false); setSettlementsLoading(false) }
+  }, [fetchWithAuth, loading, user])
+
   // ── Effects: load data when tab changes ──────────────────────────────────
   useEffect(() => {
     if (activeTab === 'overview') { void loadDashboard(); void loadBookings(1, '', '') }
+    if (activeTab === 'analytics') { void loadAnalytics() }
     if (activeTab === 'bookings') { void loadBookings(1, searchBooking, statusFilter) }
     if (activeTab === 'groups')   { void loadGroups() }
     if (activeTab === 'properties') {
@@ -203,6 +267,9 @@ export default function AdminPage() {
     }
     if (activeTab === 'events') {
       void loadEvents(eventsSearch, eventsStatusFilter)
+    }
+    if (activeTab === 'payments') {
+      void loadPayments(1, paymentsSearch, paymentsStatusFilter)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab])
@@ -234,24 +301,59 @@ export default function AdminPage() {
     } catch { /* noop */ }
   }
 
-  const handleCancelWithRefund = async (booking: AdminBooking) => {
+  const handleCancelWithRefund = (booking: AdminBooking) => {
     const isPaid = (booking as AdminBooking & { payment_status?: string }).payment_status === 'paid'
-    const msg = isPaid
-      ? `Cancel booking ${booking.booking_ref} and issue a full refund of ₹${booking.total.toLocaleString('en-IN')}? This cannot be undone.`
-      : `Cancel booking ${booking.booking_ref}? This cannot be undone.`
-    if (!confirm(msg)) return
-    try {
-      const updated = await updateAdminBookingWithRefund(booking.id, 'cancelled', undefined, fetchWithAuth)
-      setBookings(prev => prev.map(b => b.id === booking.id ? updated : b))
-    } catch (e) { alert((e as Error).message || 'Failed to cancel booking') }
+    setConfirmModal({
+      isOpen: true,
+      title: 'Cancel Booking',
+      subtitle: `Cancel booking ${booking.booking_ref}?`,
+      description: isPaid
+        ? `This will cancel the booking and issue a full refund of ₹${booking.total.toLocaleString('en-IN')} to the guest.`
+        : 'This action will cancel the booking.',
+      confirmLabel: 'Cancel Booking',
+      cancelLabel: 'Keep Booking',
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          const updated = await updateAdminBookingWithRefund(booking.id, 'cancelled', undefined, fetchWithAuth)
+          setBookings(prev => prev.map(b => b.id === booking.id ? updated : b))
+        } catch (e) {
+          setConfirmModal({
+            isOpen: true,
+            title: 'Cancellation Failed',
+            subtitle: (e as Error).message || 'Failed to cancel booking.',
+            isNoticeOnly: true,
+            noticeActionLabel: 'OK',
+          })
+        }
+      }
+    })
   }
 
-  const handleDeleteProperty = async (propertyId: string, name: string) => {
-    if (!confirm(`Delete "${name}"? This cannot be undone.`)) return
-    try {
-      await deleteAdminProperty(propertyId, fetchWithAuth)
-      setApiProperties(prev => prev.filter(p => p.id !== propertyId))
-    } catch { alert('Failed to delete property') }
+  const handleDeleteProperty = (propertyId: string, name: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Property',
+      subtitle: `Are you sure you want to delete "${name}"?`,
+      description: 'This action will permanently remove the property listing. This cannot be undone.',
+      confirmLabel: 'Delete Property',
+      cancelLabel: 'Cancel',
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          await deleteAdminProperty(propertyId, fetchWithAuth)
+          setApiProperties(prev => prev.filter(p => p.id !== propertyId))
+        } catch {
+          setConfirmModal({
+            isOpen: true,
+            title: 'Delete Failed',
+            subtitle: 'Failed to delete property.',
+            isNoticeOnly: true,
+            noticeActionLabel: 'OK',
+          })
+        }
+      }
+    })
   }
 
   const handleIcalSync = async (propertyId: string) => {
@@ -289,6 +391,34 @@ export default function AdminPage() {
     setSearchBooking(value)
     if (searchTimer.current) clearTimeout(searchTimer.current)
     searchTimer.current = setTimeout(() => loadBookings(1, value, statusFilter), 400)
+  }
+
+  const handleAdminDownloadPDF = async (ref: string) => {
+    const element = document.getElementById('admin-voucher-content')
+    if (!element) return
+    const btns = element.querySelectorAll<HTMLElement>('button')
+    btns.forEach(b => { b.style.display = 'none' })
+    try {
+      const html2canvas = (await import('html2canvas')).default
+      const jsPDF = (await import('jspdf')).default
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        scrollX: 0,
+        scrollY: 0,
+      })
+      const imgData = canvas.toDataURL('image/png')
+      const pdfWidth = 148
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pdfWidth, pdfHeight] })
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
+      pdf.save(`voucher-${ref}.pdf`)
+    } catch (err) {
+      console.error('PDF download error:', err)
+    } finally {
+      btns.forEach(b => { b.style.display = '' })
+    }
   }
 
   const handleStatusFilter = (value: string) => {
@@ -431,16 +561,25 @@ export default function AdminPage() {
     } catch { setGroupError('Failed to rename group') }
   }
 
-  const handleDeleteGroup = async (groupId: string) => {
-    if (!confirm('Delete this group? Properties won\'t be deleted.')) return
-    setGroupError('')
-    try {
-      await deletePropertyGroup(groupId, fetchWithAuth)
-      setGroups(prev => prev.filter(g => g.id !== groupId))
-      if (expandedGroup === groupId) setExpandedGroup(null)
-    } catch { setGroupError('Failed to delete group') }
+  const handleDeleteGroup = (groupId: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Group',
+      subtitle: 'Delete this group?',
+      description: 'Properties in this group will not be deleted.',
+      confirmLabel: 'Delete Group',
+      cancelLabel: 'Cancel',
+      isDanger: true,
+      onConfirm: async () => {
+        setGroupError('')
+        try {
+          await deletePropertyGroup(groupId, fetchWithAuth)
+          setGroups(prev => prev.filter(g => g.id !== groupId))
+          if (expandedGroup === groupId) setExpandedGroup(null)
+        } catch { setGroupError('Failed to delete group') }
+      }
+    })
   }
-
   const handleAddMember = async (groupId: string) => {
     if (!memberPropertyId) return
     setGroupError('')
@@ -488,17 +627,9 @@ export default function AdminPage() {
     setAddingReview(false)
   }
 
-  const handleDeleteReview = async (reviewId: string, propertyId: string) => {
-    if (!confirm('Delete this review? This cannot be undone.')) return
-    try {
-      await deleteAdminReview(reviewId, fetchWithAuth)
-      await loadGroupReviews(propertyId)
-    } catch { setGroupError('Failed to delete review') }
-  }
-
   const handleUpdateReview = async (reviewId: string, propertyId: string) => {
     try {
-      await fetchWithAuth(`/admin/reviews/${reviewId}`, {
+      await fetchWithAuth(buildApiUrl(`/admin/reviews/${reviewId}`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editReviewForm),
@@ -508,20 +639,57 @@ export default function AdminPage() {
     } catch { setGroupError('Failed to update review') }
   }
 
-  const handleDuplicateProperty = async (propertyId: string, name: string) => {
-    if (!confirm(`Create a copy of "${name}"?`)) return
-    try {
-      const res = await fetchWithAuth(`/admin/properties/${propertyId}/duplicate`, { method: 'POST' })
-      if (!res.ok) throw new Error()
-      const newProp = await res.json()
-      setApiProperties(prev => [newProp, ...prev])
-      router.push(`/admin/properties?id=${newProp.id}`)
-    } catch { alert('Failed to duplicate property') }
+  const handleDeleteReview = (reviewId: string, propertyId: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Review',
+      subtitle: 'Delete this review?',
+      description: 'This action cannot be undone.',
+      confirmLabel: 'Delete Review',
+      cancelLabel: 'Cancel',
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          await deleteAdminReview(reviewId, fetchWithAuth)
+          await loadGroupReviews(propertyId)
+        } catch { setGroupError('Failed to delete review') }
+      }
+    })
+  }
+
+  const handleDuplicateProperty = (propertyId: string, name: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Duplicate Property',
+      subtitle: `Create a copy of "${name}"?`,
+      description: 'A new draft listing with the same details and photos will be created.',
+      confirmLabel: 'Duplicate',
+      cancelLabel: 'Cancel',
+      isDanger: false,
+      onConfirm: async () => {
+        try {
+          const newProp = await duplicateAdminProperty(propertyId, fetchWithAuth)
+          setApiProperties(prev => [newProp, ...prev])
+          router.push(`/admin/properties?id=${newProp.id}`)
+        } catch (e: unknown) {
+          setConfirmModal({
+            isOpen: true,
+            title: 'Duplication Failed',
+            subtitle: e instanceof Error ? e.message : 'Failed to duplicate property.',
+            description: 'Please check your connection and try again.',
+            isNoticeOnly: true,
+            noticeActionLabel: 'OK',
+          })
+        }
+      }
+    })
   }
 
   const tabs = [
     { id: 'overview', label: 'Overview' },
+    { id: 'analytics', label: 'Reports & Analytics' },
     { id: 'bookings', label: 'Bookings' },
+    { id: 'payments', label: 'Payments' },
     { id: 'properties', label: 'Properties' },
     { id: 'groups', label: 'Groups' },
     { id: 'ical', label: 'iCal Sync' },
@@ -702,12 +870,520 @@ export default function AdminPage() {
                     })()}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: '700', marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{property.name}</p>
-                      <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>&#8377;{property.price_per_night.toLocaleString('en-IN')}/night · &#9733;{property.avg_rating}</p>
+                      <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>&#8377;{property.price_per_night.toLocaleString('en-IN')}/night · <Star size={12} fill="currentColor" style={{ display: 'inline-block', verticalAlign: '-1px', color: 'var(--color-gold)' }} /> {property.avg_rating}</p>
                     </div>
                     <span style={{ fontSize: '11px', backgroundColor: '#E8F5E9', color: '#2E7D32', padding: '3px 8px', fontWeight: '700', flexShrink: 0, borderRadius: '6px' }}>Live</span>
                   </div>
                 ))}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Reports & Analytics Tab */}
+        {activeTab === 'analytics' && (
+          <div>
+            {/* Header controls & Export */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', flexWrap: 'wrap', gap: '16px' }}>
+              <div>
+                <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '4px' }}>Reports & Performance Analytics</h2>
+                <p style={{ fontSize: '14px', color: 'var(--color-text-muted)' }}>Financial trends, occupancy performance, and property breakdown</p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+                {/* Timeframe Mode Selector */}
+                <div style={{ display: 'flex', backgroundColor: 'var(--color-bg-card)', padding: '4px', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
+                  <button
+                    onClick={() => setTimeframeMode('monthly')}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      backgroundColor: timeframeMode === 'monthly' ? 'var(--color-gold)' : 'transparent',
+                      color: timeframeMode === 'monthly' ? '#1A1A1A' : 'var(--color-text-muted)',
+                      fontSize: '13px',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Monthly (12 Mo)
+                  </button>
+                  <button
+                    onClick={() => setTimeframeMode('daily')}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      backgroundColor: timeframeMode === 'daily' ? 'var(--color-gold)' : 'transparent',
+                      color: timeframeMode === 'daily' ? '#1A1A1A' : 'var(--color-text-muted)',
+                      fontSize: '13px',
+                      fontWeight: '700',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Daily (30 Days)
+                  </button>
+                </div>
+
+                {/* CSV Export Button */}
+                <button
+                  onClick={() => {
+                    if (!analyticsData) return
+                    const items = timeframeMode === 'monthly' ? analyticsData.monthly_stats : analyticsData.daily_stats
+                    const headers = timeframeMode === 'monthly' ? 'Month,Revenue,Bookings,Nights\n' : 'Date,Revenue,Bookings,Nights\n'
+                    const csvContent = 'data:text/csv;charset=utf-8,' + headers + items.map(e => `${'month' in e ? e.month : e.date},${e.revenue},${e.bookings},${e.nights || 0}`).join('\n')
+                    const encodedUri = encodeURI(csvContent)
+                    const link = document.createElement('a')
+                    link.setAttribute('href', encodedUri)
+                    link.setAttribute('download', `earthystay_analytics_${timeframeMode}.csv`)
+                    document.body.appendChild(link)
+                    link.click()
+                    document.body.removeChild(link)
+                  }}
+                  style={{
+                    ...buttonStyle,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  <Download size={14} /> Export CSV
+                </button>
+              </div>
+            </div>
+
+            {analyticsLoading && (
+              <div style={{ textAlign: 'center', padding: '60px 0' }}>
+                <div style={{ width: '40px', height: '40px', border: '3px solid var(--color-gold)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 16px' }} />
+                <p style={{ fontSize: '14px', color: 'var(--color-text-muted)' }}>Loading analytical reports…</p>
+              </div>
+            )}
+
+            {!analyticsLoading && analyticsData && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                {/* Key Performance Indicators (KPIs) */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+                  <div style={{ padding: '20px 24px', backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px' }}>
+                    <p style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--color-text-muted)', fontWeight: '700', marginBottom: '8px' }}>Total Revenue</p>
+                    <p style={{ fontSize: '28px', fontWeight: '800', color: 'var(--color-gold)' }}>&#8377;{analyticsData.summary.total_revenue.toLocaleString('en-IN')}</p>
+                    <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '4px' }}>Gross earnings from all stays</p>
+                  </div>
+                  <div style={{ padding: '20px 24px', backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px' }}>
+                    <p style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--color-text-muted)', fontWeight: '700', marginBottom: '8px' }}>Confirmed Bookings</p>
+                    <p style={{ fontSize: '28px', fontWeight: '800', color: '#2E7D32' }}>{analyticsData.summary.total_bookings}</p>
+                    <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '4px' }}>Successful reservation count</p>
+                  </div>
+                  <div style={{ padding: '20px 24px', backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px' }}>
+                    <p style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--color-text-muted)', fontWeight: '700', marginBottom: '8px' }}>Total Nights Booked</p>
+                    <p style={{ fontSize: '28px', fontWeight: '800', color: '#1565C0' }}>{analyticsData.summary.total_nights} Nights</p>
+                    <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '4px' }}>Combined length of stay</p>
+                  </div>
+                  <div style={{ padding: '20px 24px', backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px' }}>
+                    <p style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1.5px', color: 'var(--color-text-muted)', fontWeight: '700', marginBottom: '8px' }}>Avg. Daily Rate (ADR)</p>
+                    <p style={{ fontSize: '28px', fontWeight: '800', color: '#6A1B9A' }}>&#8377;{analyticsData.summary.avg_daily_rate.toLocaleString('en-IN')}</p>
+                    <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '4px' }}>Revenue earned per night stayed</p>
+                  </div>
+                </div>
+
+                {/* Airbnb-style Interactive Performance Graph Card */}
+                <div style={cardStyle}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+                    <div>
+                      <h3 style={{ fontSize: '20px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '4px' }}>
+                        {timeframeMode === 'monthly' ? 'Monthly Performance (12 Months)' : 'Daily Performance (Last 30 Days)'}
+                      </h3>
+                      <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>Visual trajectory of revenue and booking volume</p>
+                    </div>
+
+                    {/* Metric Switcher */}
+                    <div style={{ display: 'flex', backgroundColor: 'var(--color-bg-card)', padding: '4px', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
+                      <button
+                        onClick={() => setMetricMode('revenue')}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: '6px',
+                          border: 'none',
+                          backgroundColor: metricMode === 'revenue' ? '#ffffff' : 'transparent',
+                          color: metricMode === 'revenue' ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
+                          fontSize: '12px',
+                          fontWeight: '700',
+                          cursor: 'pointer',
+                          boxShadow: metricMode === 'revenue' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
+                        }}
+                      >
+                        Revenue (₹)
+                      </button>
+                      <button
+                        onClick={() => setMetricMode('bookings')}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: '6px',
+                          border: 'none',
+                          backgroundColor: metricMode === 'bookings' ? '#ffffff' : 'transparent',
+                          color: metricMode === 'bookings' ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
+                          fontSize: '12px',
+                          fontWeight: '700',
+                          cursor: 'pointer',
+                          boxShadow: metricMode === 'bookings' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
+                        }}
+                      >
+                        Bookings
+                      </button>
+                      <button
+                        onClick={() => setMetricMode('nights')}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: '6px',
+                          border: 'none',
+                          backgroundColor: metricMode === 'nights' ? '#ffffff' : 'transparent',
+                          color: metricMode === 'nights' ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
+                          fontSize: '12px',
+                          fontWeight: '700',
+                          cursor: 'pointer',
+                          boxShadow: metricMode === 'nights' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
+                        }}
+                      >
+                        Nights
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Dynamic Bar Chart View */}
+                  {(() => {
+                    const dataList = timeframeMode === 'monthly' ? analyticsData.monthly_stats : analyticsData.daily_stats
+                    const maxValue = Math.max(
+                      ...dataList.map(item => {
+                        if (metricMode === 'revenue') return item.revenue
+                        if (metricMode === 'bookings') return item.bookings
+                        return item.nights || 0
+                      }),
+                      1
+                    )
+
+                    return (
+                      <div style={{ overflowX: 'auto' }}>
+                        <div style={{ minWidth: timeframeMode === 'daily' ? '840px' : 'auto', height: '260px', display: 'flex', alignItems: 'flex-end', gap: timeframeMode === 'daily' ? '10px' : '20px', padding: '24px 12px 12px', borderBottom: '1px solid var(--color-border)', position: 'relative' }}>
+                          {dataList.map((item, idx) => {
+                            const val = metricMode === 'revenue' ? item.revenue : metricMode === 'bookings' ? item.bookings : (item.nights || 0)
+                            const label = 'month' in item ? item.month : item.date
+                            const heightPct = Math.max(14, Math.round((val / maxValue) * 190))
+
+                            return (
+                              <div key={idx} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end', position: 'relative' }}>
+                                {/* Value Label */}
+                                <div style={{ fontSize: '11px', fontWeight: '800', color: 'var(--color-text-secondary)', marginBottom: '8px', whiteSpace: 'nowrap' }}>
+                                  {val > 0 ? (metricMode === 'revenue' ? `₹${val.toLocaleString('en-IN')}` : val) : '—'}
+                                </div>
+
+                                {/* Dynamic Bar */}
+                                <div
+                                  title={`${label}: ${metricMode === 'revenue' ? `₹${item.revenue.toLocaleString('en-IN')}` : metricMode === 'bookings' ? `${item.bookings} bookings` : `${item.nights || 0} nights`}`}
+                                  style={{
+                                    width: '100%',
+                                    maxWidth: timeframeMode === 'daily' ? '24px' : '44px',
+                                    height: `${heightPct}px`,
+                                    background: val > 0
+                                      ? metricMode === 'revenue'
+                                        ? 'linear-gradient(180deg, #D4AF37 0%, #AA820A 100%)'
+                                        : metricMode === 'bookings'
+                                        ? 'linear-gradient(180deg, #2E7D32 0%, #1B5E20 100%)'
+                                        : 'linear-gradient(180deg, #1565C0 0%, #0D47A1 100%)'
+                                      : 'var(--color-bg-soft)',
+                                    borderRadius: '6px 6px 2px 2px',
+                                    transition: 'height 0.3s ease',
+                                    cursor: 'pointer',
+                                  }}
+                                />
+
+                                {/* Time Label */}
+                                <p style={{ fontSize: timeframeMode === 'daily' ? '10px' : '12px', color: 'var(--color-text-secondary)', fontWeight: '700', marginTop: '12px', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                                  {label}
+                                </p>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                  })()}
+                </div>
+
+                {/* Airbnb-style Property Performance Breakdown Table */}
+                <div style={cardStyle}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                    <div>
+                      <h3 style={{ fontSize: '20px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '4px' }}>Property Performance Breakdown</h3>
+                      <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>Revenue and occupancy comparison across all listed properties</p>
+                    </div>
+                  </div>
+
+                  <div style={{ overflowX: 'auto' }}>
+                    <table className="responsive-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
+                          {['Property', 'Location', 'Base Rate', 'Bookings', 'Nights Booked', 'Total Revenue', 'ADR'].map(h => (
+                            <th key={h} style={{ padding: '12px 16px', textAlign: h === 'Property' || h === 'Location' ? 'left' : 'right', fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700' }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {analyticsData.property_performance.map((prop, i) => {
+                          const adr = prop.nights_booked > 0 ? Math.round(prop.total_revenue / prop.nights_booked) : 0
+                          return (
+                            <tr key={prop.property_id} style={{ borderBottom: '1px solid var(--color-bg-soft)', backgroundColor: i % 2 === 0 ? '#ffffff' : 'var(--color-bg-card)' }}>
+                              <td style={{ padding: '14px 16px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                  {prop.image_url ? (
+                                    <Image src={prop.image_url} alt={prop.name} width={48} height={36} style={{ width: '48px', height: '36px', objectFit: 'cover', borderRadius: '6px', flexShrink: 0 }} unoptimized />
+                                  ) : (
+                                    <div style={{ width: '48px', height: '36px', borderRadius: '6px', backgroundColor: 'var(--color-bg-soft)', flexShrink: 0 }} />
+                                  )}
+                                  <div>
+                                    <p style={{ fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: '700', marginBottom: '2px' }}>{prop.name}</p>
+                                  </div>
+                                </div>
+                              </td>
+                              <td style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--color-text-secondary)' }}>{prop.city}, {prop.state}</td>
+                              <td style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--color-text-secondary)', textAlign: 'right', fontWeight: '600' }}>&#8377;{prop.price_per_night.toLocaleString('en-IN')}</td>
+                              <td style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--color-text-secondary)', textAlign: 'right', fontWeight: '700' }}>{prop.bookings_count}</td>
+                              <td style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--color-text-secondary)', textAlign: 'right', fontWeight: '700' }}>{prop.nights_booked} nights</td>
+                              <td style={{ padding: '14px 16px', fontSize: '14px', color: 'var(--color-gold)', textAlign: 'right', fontWeight: '800' }}>&#8377;{prop.total_revenue.toLocaleString('en-IN')}</td>
+                              <td style={{ padding: '14px 16px', fontSize: '13px', color: 'var(--color-text-primary)', textAlign: 'right', fontWeight: '700' }}>&#8377;{adr.toLocaleString('en-IN')}</td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        {/* Payments Tab */}
+        {activeTab === 'payments' && (
+          <div>
+            <div style={{ marginBottom: '32px' }}>
+              <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '4px' }}>Payments & Settlements</h2>
+              <p style={{ fontSize: '14px', color: 'var(--color-text-muted)' }}>
+                Compare what guests paid vs what Razorpay has actually transferred to your bank account
+              </p>
+            </div>
+
+            {/* Summary Cards */}
+            {paymentsLoading && !paymentSummary ? (
+              <div style={{ display: 'flex', gap: '24px', marginBottom: '32px' }}>
+                {[0,1,2,3].map(i => <div key={i} style={{ flex: 1, height: '120px', backgroundColor: 'var(--color-bg-card)', borderRadius: '16px', border: '1px solid var(--color-border)', animation: 'pulse 1.5s ease-in-out infinite' }} />)}
+                <style>{`@keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.4 } }`}</style>
+              </div>
+            ) : paymentSummary ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '32px' }}>
+                {/* Collected */}
+                <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '16px', padding: '24px', borderTop: '3px solid #4CAF50' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                    <Wallet size={15} color="#4CAF50" />
+                    <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700', margin: 0 }}>Total Collected</p>
+                  </div>
+                  <p style={{ fontSize: '28px', fontWeight: '800', color: '#2E7D32', marginBottom: '4px' }}>₹{paymentSummary.total_collected_rupees.toLocaleString('en-IN')}</p>
+                  <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>{paymentSummary.paid_transactions} paid transactions</p>
+                  <p style={{ fontSize: '11px', color: '#4CAF50', marginTop: '6px', fontWeight: '600' }}>Captured by Razorpay</p>
+                </div>
+
+                {/* Settled to Bank */}
+                <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '16px', padding: '24px', borderTop: '3px solid #C8A951' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                    <BadgeCheck size={15} color="#C8A951" />
+                    <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700', margin: 0 }}>Settled to Bank</p>
+                  </div>
+                  <p style={{ fontSize: '28px', fontWeight: '800', color: 'var(--color-gold)', marginBottom: '4px' }}>₹{paymentSummary.total_settled_rupees.toLocaleString('en-IN')}</p>
+                  <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>{paymentSummary.settlement_batches} settlement batches</p>
+                  <p style={{ fontSize: '11px', color: 'var(--color-gold)', marginTop: '6px', fontWeight: '600' }}>Actually in your bank</p>
+                </div>
+
+                {/* Pending with Razorpay */}
+                <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '16px', padding: '24px', borderTop: '3px solid #FF9800' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                    <Clock size={15} color="#FF9800" />
+                    <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700', margin: 0 }}>Pending Transfer</p>
+                  </div>
+                  <p style={{ fontSize: '28px', fontWeight: '800', color: '#E65100', marginBottom: '4px' }}>₹{paymentSummary.pending_with_razorpay_rupees.toLocaleString('en-IN')}</p>
+                  <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>Being processed by Razorpay</p>
+                  <p style={{ fontSize: '11px', color: '#FF9800', marginTop: '6px', fontWeight: '600' }}>Expected in 1-2 business days</p>
+                </div>
+
+                {/* Refunded */}
+                <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '16px', padding: '24px', borderTop: '3px solid #F44336' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                    <RefreshCw size={15} color="#F44336" />
+                    <p style={{ fontSize: '11px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700', margin: 0 }}>Total Refunded</p>
+                  </div>
+                  <p style={{ fontSize: '28px', fontWeight: '800', color: '#C62828', marginBottom: '4px' }}>₹{paymentSummary.total_refunded_rupees.toLocaleString('en-IN')}</p>
+                  <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>Returned to guests</p>
+                  <p style={{ fontSize: '11px', color: '#F44336', marginTop: '6px', fontWeight: '600' }}>Refunded via Razorpay</p>
+                </div>
+              </div>
+            ) : null}
+
+            {paymentSummary?.razorpay_error && (
+              <div style={{ backgroundColor: '#FFF8E7', border: '1px solid #FFE082', borderRadius: '10px', padding: '14px 18px', marginBottom: '24px', fontSize: '13px', color: '#5D4037', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                <AlertTriangle size={16} color="#F57F17" style={{ flexShrink: 0, marginTop: '1px' }} />
+                <div><strong>Note:</strong> Could not fetch real-time settlement data from Razorpay. Settlement figures may not reflect current balances.
+                <br /><span style={{ fontSize: '11px', opacity: 0.7 }}>{paymentSummary.razorpay_error}</span></div>
+              </div>
+            )}
+
+            {/* Razorpay Settlement Batches */}
+            {settlements.length > 0 && (
+              <div style={{ ...cardStyle, marginBottom: '24px' }}>
+                <div style={{ marginBottom: '20px' }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '4px' }}>Settlement Batches</h3>
+                  <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>Each row = one bank transfer from Razorpay to your account (with UTR reference number)</p>
+                </div>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '2px solid var(--color-border)' }}>
+                        {['Settlement ID', 'Date Settled', 'Amount', 'Razorpay Fees', 'Transactions', 'UTR Number', 'Status'].map(h => (
+                          <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: '11px', letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700', whiteSpace: 'nowrap' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {settlements.map((s, i) => (
+                        <tr key={s.settlement_id} style={{ borderBottom: '1px solid var(--color-bg-soft)', backgroundColor: i % 2 === 0 ? '#ffffff' : 'var(--color-bg-card)' }}>
+                          <td style={{ padding: '12px 14px', fontSize: '12px', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>{s.settlement_id}</td>
+                          <td style={{ padding: '12px 14px', fontSize: '13px', color: 'var(--color-text-primary)', fontWeight: '600', whiteSpace: 'nowrap' }}>
+                            {s.settled_at ? new Date(s.settled_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+                          </td>
+                          <td style={{ padding: '12px 14px', fontSize: '14px', color: '#2E7D32', fontWeight: '800' }}>₹{s.amount_rupees.toLocaleString('en-IN')}</td>
+                          <td style={{ padding: '12px 14px', fontSize: '13px', color: '#C62828', fontWeight: '600' }}>₹{s.fees_rupees.toLocaleString('en-IN')}</td>
+                          <td style={{ padding: '12px 14px', fontSize: '13px', color: 'var(--color-text-secondary)', textAlign: 'center' }}>{s.transaction_count}</td>
+                          <td style={{ padding: '12px 14px', fontSize: '11px', color: 'var(--color-text-muted)', fontFamily: 'monospace' }}>{s.utr || '—'}</td>
+                          <td style={{ padding: '12px 14px' }}>
+                            <span style={{ backgroundColor: s.status === 'processed' ? '#E8F5E9' : '#FFF8E7', color: s.status === 'processed' ? '#2E7D32' : '#F57F17', padding: '4px 10px', fontSize: '11px', fontWeight: '700', borderRadius: '999px', textTransform: 'uppercase' }}>
+                              {s.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Transactions Table */}
+            <div style={cardStyle}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+                <div>
+                  <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '4px' }}>All Transactions</h3>
+                  <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>{paymentsData?.total ?? 0} total Razorpay transactions</p>
+                </div>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  <input
+                    type="text"
+                    placeholder="Search by Order ID, Payment ID, Guest..."
+                    value={paymentsSearch}
+                    onChange={e => {
+                      setPaymentsSearch(e.target.value)
+                      setPaymentsPage(1)
+                      void loadPayments(1, e.target.value, paymentsStatusFilter)
+                    }}
+                    style={{ padding: '9px 14px', fontSize: '13px', border: '1px solid var(--color-border)', borderRadius: '8px', outline: 'none', width: '260px' }}
+                  />
+                  <select
+                    value={paymentsStatusFilter}
+                    onChange={e => {
+                      setPaymentsStatusFilter(e.target.value)
+                      setPaymentsPage(1)
+                      void loadPayments(1, paymentsSearch, e.target.value)
+                    }}
+                    style={{ padding: '9px 14px', fontSize: '13px', border: '1px solid var(--color-border)', borderRadius: '8px', outline: 'none', backgroundColor: '#fff' }}
+                  >
+                    <option value="">All Statuses</option>
+                    <option value="paid">Paid</option>
+                    <option value="created">Pending</option>
+                    <option value="refunded">Refunded</option>
+                    <option value="failed">Failed</option>
+                  </select>
+                </div>
+              </div>
+
+              {paymentsLoading ? (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '48px' }}>
+                  <div style={{ width: '32px', height: '32px', border: '3px solid var(--color-gold)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                  <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                </div>
+              ) : (
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead>
+                      <tr style={{ borderBottom: '2px solid var(--color-border)' }}>
+                        {['Date', 'Booking Ref', 'Guest', 'Property', 'Razorpay Order ID', 'Payment ID', 'Amount', 'Status'].map(h => (
+                          <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: '11px', letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700', whiteSpace: 'nowrap' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(paymentsData?.items ?? []).length === 0 ? (
+                        <tr>
+                          <td colSpan={8} style={{ padding: '48px', textAlign: 'center', color: 'var(--color-text-muted)', fontSize: '14px' }}>
+                            No transactions found
+                          </td>
+                        </tr>
+                      ) : (paymentsData?.items ?? []).map((p: AdminPayment, i: number) => {
+                        const statusConfig: Record<string, { bg: string; color: string; icon: React.ReactNode; label: string }> = {
+                          paid:     { bg: '#E8F5E9', color: '#2E7D32', icon: <CheckCircle size={12} />, label: 'Paid' },
+                          created:  { bg: '#FFF8E7', color: '#F57F17', icon: <Clock size={12} />,        label: 'Pending' },
+                          refunded: { bg: '#E3F2FD', color: '#1565C0', icon: <RefreshCw size={12} />,    label: 'Refunded' },
+                          failed:   { bg: '#FFEBEE', color: '#C62828', icon: <XCircle size={12} />,      label: 'Failed' },
+                        }
+                        const sc = statusConfig[p.status] ?? { bg: '#F5F5F5', color: '#757575', icon: null, label: p.status }
+                        return (
+                          <tr key={p.id} style={{ borderBottom: '1px solid var(--color-bg-soft)', backgroundColor: i % 2 === 0 ? '#ffffff' : 'var(--color-bg-card)' }}>
+                            <td style={{ padding: '12px 14px', fontSize: '13px', color: 'var(--color-text-secondary)', whiteSpace: 'nowrap' }}>
+                              {p.created_at ? new Date(p.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'}
+                            </td>
+                            <td style={{ padding: '12px 14px' }}>
+                              <span style={{ fontSize: '13px', color: 'var(--color-gold)', fontWeight: '800' }}>{p.booking_ref || '—'}</span>
+                            </td>
+                            <td style={{ padding: '12px 14px' }}>
+                              <p style={{ fontSize: '13px', color: 'var(--color-text-primary)', fontWeight: '600', marginBottom: '2px' }}>{p.guest_name || '—'}</p>
+                              <p style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>{p.guest_email || ''}</p>
+                            </td>
+                            <td style={{ padding: '12px 14px', fontSize: '13px', color: 'var(--color-text-secondary)', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.property_name || '—'}</td>
+                            <td style={{ padding: '12px 14px', fontSize: '11px', color: 'var(--color-text-muted)', fontFamily: 'monospace', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.razorpay_order_id}</td>
+                            <td style={{ padding: '12px 14px', fontSize: '11px', color: 'var(--color-text-muted)', fontFamily: 'monospace', maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.razorpay_payment_id || '—'}</td>
+                            <td style={{ padding: '12px 14px', fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: '800', whiteSpace: 'nowrap' }}>₹{p.amount_rupees.toLocaleString('en-IN')}</td>
+                            <td style={{ padding: '12px 14px' }}>
+                              <span style={{ backgroundColor: sc.bg, color: sc.color, padding: '4px 10px', fontSize: '11px', fontWeight: '700', borderRadius: '999px', whiteSpace: 'nowrap', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>{sc.icon}{sc.label}</span>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+
+                  {/* Pagination */}
+                  {paymentsData && paymentsData.total > 20 && (
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginTop: '20px' }}>
+                      <button
+                        onClick={() => { const p = paymentsPage - 1; setPaymentsPage(p); void loadPayments(p, paymentsSearch, paymentsStatusFilter) }}
+                        disabled={paymentsPage <= 1}
+                        style={{ padding: '8px 16px', border: '1px solid var(--color-border)', borderRadius: '8px', cursor: paymentsPage <= 1 ? 'not-allowed' : 'pointer', opacity: paymentsPage <= 1 ? 0.4 : 1, fontSize: '13px', backgroundColor: '#fff' }}
+                      >← Prev</button>
+                      <span style={{ padding: '8px 16px', fontSize: '13px', color: 'var(--color-text-muted)' }}>
+                        Page {paymentsPage} of {Math.ceil(paymentsData.total / 20)}
+                      </span>
+                      <button
+                        onClick={() => { const p = paymentsPage + 1; setPaymentsPage(p); void loadPayments(p, paymentsSearch, paymentsStatusFilter) }}
+                        disabled={paymentsPage >= Math.ceil(paymentsData.total / 20)}
+                        style={{ padding: '8px 16px', border: '1px solid var(--color-border)', borderRadius: '8px', cursor: paymentsPage >= Math.ceil(paymentsData.total / 20) ? 'not-allowed' : 'pointer', opacity: paymentsPage >= Math.ceil(paymentsData.total / 20) ? 0.4 : 1, fontSize: '13px', backgroundColor: '#fff' }}
+                      >Next →</button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -772,7 +1448,16 @@ export default function AdminPage() {
                       <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginBottom: '2px' }}>Total Amount</p>
                       <p style={{ fontSize: '28px', fontWeight: '800', color: 'var(--color-text-primary)' }}>&#8377;{voucherBooking.total.toLocaleString('en-IN')}</p>
                     </div>
-                    <button onClick={() => window.print()} style={{ padding: '10px 20px', backgroundColor: 'var(--color-gold)', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>🖨 Print</button>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button onClick={() => handleAdminDownloadPDF(voucherBooking.booking_ref)} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 16px', backgroundColor: 'var(--color-gold)', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', color: 'var(--color-text-primary)' }}>
+                        <Download style={{ width: '15px', height: '15px' }} />
+                        Download PDF
+                      </button>
+                      <button onClick={() => window.print()} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 16px', backgroundColor: 'var(--color-bg-soft)', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', color: 'var(--color-text-primary)' }}>
+                        <Printer style={{ width: '15px', height: '15px' }} />
+                        Print
+                      </button>
+                    </div>
                   </div>
                   </div>
                 </div>
@@ -941,11 +1626,14 @@ export default function AdminPage() {
                       <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
                         {[
                           `${property.bedrooms} beds`, `${property.bathrooms} baths`,
-                          `${property.max_guests} guests`, `★ ${property.avg_rating}`,
+                          `${property.max_guests} guests`,
                           `${property.review_count} reviews`, property.pets_allowed ? 'Pet friendly' : 'No pets',
                         ].map(label => (
                           <span key={label} style={{ fontSize: '12px', color: 'var(--color-text-secondary)', fontWeight: '500' }}>{label}</span>
                         ))}
+                        <span style={{ fontSize: '12px', color: 'var(--color-text-secondary)', fontWeight: '500', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                          <Star size={11} fill="currentColor" color="var(--color-gold)" />{property.avg_rating}
+                        </span>
                       </div>
                     </div>
 
@@ -956,11 +1644,11 @@ export default function AdminPage() {
                         <button
                           onClick={() => setCalendarProperty({ id: property.id, name: property.name })}
                           title="View & manage calendar"
-                          style={{ padding: '8px 14px', border: '1px solid #3d3425', borderRadius: '8px', backgroundColor: '#1a1611', color: '#c9a84c', fontSize: '14px', cursor: 'pointer' }}
-                        >📅 Calendar</button>
+                          style={{ ...buttonStyle, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                        ><Calendar size={14} /> Calendar</button>
                         <button onClick={() => router.push(`/admin/properties?id=${property.id}`)} style={buttonStyle}>Edit</button>
                         <Link href={`/properties/${property.id}`} style={{ ...buttonStyle, display: 'inline-block', textDecoration: 'none', textAlign: 'center' }}>View</Link>
-                        <button onClick={() => handleDuplicateProperty(property.id, property.name)} style={{ padding: '8px 16px', border: '1px solid var(--color-border)', borderRadius: '8px', backgroundColor: '#ffffff', color: 'var(--color-text-primary)', fontSize: '13px', cursor: 'pointer', fontWeight: '700' }}>Duplicate</button>
+                        <button onClick={() => handleDuplicateProperty(property.id, property.name)} style={buttonStyle}>Duplicate</button>
                         <button
                           onClick={() => {
                             const group = groups.find(g => g.members.some(m => m.property_id === property.id))
@@ -973,12 +1661,20 @@ export default function AdminPage() {
                               }
                               setActiveTab('groups')
                             } else {
-                              alert('This property is not part of any group. Please assign it to a group in the Groups tab to manage its reviews.')
+                              setConfirmModal({
+                                isOpen: true,
+                                title: 'Group Required for Reviews',
+                                subtitle: `"${property.name}" is not assigned to a group.`,
+                                description: 'Please assign this property to a group in the Groups tab to view and manage its reviews.',
+                                isNoticeOnly: true,
+                                noticeActionLabel: 'Go to Groups',
+                                onNoticeAction: () => setActiveTab('groups'),
+                              })
                             }
                           }}
-                          style={{ padding: '8px 16px', border: '1px solid var(--color-border)', borderRadius: '8px', backgroundColor: '#ffffff', color: 'var(--color-text-primary)', fontSize: '13px', cursor: 'pointer', fontWeight: '700' }}
+                          style={{ padding: '8px 16px', border: '1px solid var(--color-border)', borderRadius: '8px', backgroundColor: '#ffffff', color: 'var(--color-text-primary)', fontSize: '13px', cursor: 'pointer', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                         >
-                          ★ Reviews
+                          <Star size={14} fill="currentColor" style={{ color: 'var(--color-gold)' }} /> Reviews
                         </button>
                         <button onClick={() => handleDeleteProperty(property.id, property.name)} style={{ padding: '8px 16px', border: '1px solid #FFCDD2', borderRadius: '8px', backgroundColor: '#FFEBEE', color: '#C62828', fontSize: '13px', cursor: 'pointer', fontWeight: '700' }}>Delete</button>
                       </div>
@@ -1027,7 +1723,9 @@ export default function AdminPage() {
               <div style={{ textAlign: 'center', padding: '60px', color: 'var(--color-text-muted)' }}>Loading groups…</div>
             ) : groups.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '60px', color: 'var(--color-text-muted)', backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px' }}>
-                <div style={{ fontSize: '32px', marginBottom: '12px' }}>🏘️</div>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px' }}>
+                  <Building2 size={36} style={{ color: 'var(--color-gold)' }} />
+                </div>
                 <p style={{ fontSize: '16px', fontWeight: '700', marginBottom: '6px' }}>No groups yet</p>
                 <p style={{ fontSize: '13px' }}>Create your first group above to group sub-properties</p>
               </div>
@@ -1044,7 +1742,7 @@ export default function AdminPage() {
                       {/* Group header */}
                       <div style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap', cursor: 'pointer' }} onClick={() => setExpandedGroup(isExpanded ? null : group.id)}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: 0 }}>
-                          <span style={{ fontSize: '20px' }}>🏘️</span>
+                          <Building2 size={20} style={{ color: 'var(--color-gold)', flexShrink: 0 }} />
                           {isEditingName ? (
                             <input
                               autoFocus
@@ -1089,7 +1787,7 @@ export default function AdminPage() {
                               {group.members.map(member => (
                                 <div key={member.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', padding: '12px 16px', backgroundColor: '#ffffff', borderRadius: '10px', border: '1px solid var(--color-border)', flexWrap: 'wrap' }}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
-                                    <span style={{ fontSize: '16px' }}>{member.is_whole_property ? '🏠' : '🛏️'}</span>
+                                    <span style={{ display: 'flex', alignItems: 'center' }}>{member.is_whole_property ? <Building2 size={16} style={{ color: 'var(--color-gold)' }} /> : <Bed size={16} style={{ color: 'var(--color-text-muted)' }} />}</span>
                                     <div style={{ minWidth: 0 }}>
                                       <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{member.property.name}</p>
                                       <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>{member.property.city}, {member.property.state} · {member.is_whole_property ? <strong>Whole Property</strong> : 'Sub-property'}</p>
@@ -1162,7 +1860,7 @@ export default function AdminPage() {
                                     <div>
                                       <label style={{ fontSize: '11px', letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '6px', display: 'block', fontWeight: '700' }}>Rating</label>
                                       <select value={newReview.rating} onChange={e => setNewReview(r => ({ ...r, rating: parseInt(e.target.value) }))} style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '14px', outline: 'none', backgroundColor: '#fff', cursor: 'pointer' }}>
-                                        {[5,4,3,2,1].map(n => <option key={n} value={n}>{'★'.repeat(n)} ({n}/5)</option>)}
+                                        {[5,4,3,2,1].map(n => <option key={n} value={n}>{n} star{n !== 1 ? 's' : ''} ({n}/5)</option>)}
                                       </select>
                                     </div>
                                   </div>
@@ -1194,7 +1892,7 @@ export default function AdminPage() {
                                               <input value={editReviewForm.platform} onChange={e => setEditReviewForm(f => ({ ...f, platform: e.target.value }))} placeholder="Platform" style={{ padding: '8px 12px', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '13px', outline: 'none' }} />
                                             </div>
                                             <select value={editReviewForm.rating} onChange={e => setEditReviewForm(f => ({ ...f, rating: parseInt(e.target.value) }))} style={{ padding: '8px 12px', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '13px', outline: 'none', backgroundColor: '#fff', cursor: 'pointer' }}>
-                                              {[5,4,3,2,1].map(n => <option key={n} value={n}>{'★'.repeat(n)} ({n}/5)</option>)}
+                                              {[5,4,3,2,1].map(n => <option key={n} value={n}>{n} star{n !== 1 ? 's' : ''} ({n}/5)</option>)}
                                             </select>
                                             <textarea value={editReviewForm.comment} onChange={e => setEditReviewForm(f => ({ ...f, comment: e.target.value }))} rows={3} placeholder="Comment" style={{ padding: '8px 12px', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '13px', resize: 'vertical', outline: 'none', fontFamily: 'inherit' }} />
                                             <div style={{ display: 'flex', gap: '8px' }}>
@@ -1208,7 +1906,9 @@ export default function AdminPage() {
                                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
                                                 <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{review.guest_name}</p>
                                                 {review.platform && <span style={{ fontSize: '11px', backgroundColor: '#E3F2FD', color: '#1565C0', padding: '2px 8px', borderRadius: '999px', fontWeight: '700' }}>{review.platform}</span>}
-                                                <span style={{ color: 'var(--color-gold)', fontSize: '14px' }}>{'★'.repeat(review.rating)}</span>
+                                                <span style={{ display: 'inline-flex', gap: '1px' }}>
+                                                  {Array.from({ length: review.rating }).map((_, i) => <Star key={i} size={13} fill="currentColor" color="var(--color-gold)" />)}
+                                                </span>
                                               </div>
                                               {review.comment && <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.5' }}>{review.comment}</p>}
                                               <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '4px' }}>{new Date(review.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
@@ -1277,7 +1977,7 @@ export default function AdminPage() {
                         <button
                           onClick={() => handleCopyIcal(property.id, exportUrl)}
                           style={{ padding: '10px 16px', backgroundColor: icalCopied[property.id] ? '#4CAF50' : '#2E7D32', color: '#ffffff', border: 'none', fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: '700', borderRadius: '8px', transition: 'background 0.3s' }}
-                        >{icalCopied[property.id] ? '✓ Copied!' : 'Copy'}</button>
+                        >{icalCopied[property.id] ? <><Check size={13} style={{ display: 'inline', marginRight: '4px' }} />Copied!</> : 'Copy'}</button>
                       </div>
                     </div>
 
@@ -1412,8 +2112,8 @@ export default function AdminPage() {
                         <h3 style={{ fontSize: '18px', fontWeight: '800', marginTop: '8px', color: 'var(--color-text-primary)' }}>
                           {ev.name}
                         </h3>
-                        <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
-                          ✉ {ev.email} &bull; 📞 {ev.phone}
+                        <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                          <Mail size={13} style={{ color: 'var(--color-gold)' }} /> {ev.email} &bull; <Phone size={13} style={{ color: 'var(--color-gold)' }} /> {ev.phone}
                         </p>
                       </div>
 
@@ -1475,8 +2175,8 @@ export default function AdminPage() {
                       </div>
                       <div>
                         <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '2px', fontWeight: '600' }}>Guests / Rooms</p>
-                        <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)' }}>
-                          👤 {ev.no_of_guests} guests {ev.requires_rooms ? `& 🛌 ${ev.no_of_rooms} rooms` : '(No rooms)'}
+                        <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                          <Users size={14} style={{ color: 'var(--color-text-muted)' }} /> {ev.no_of_guests} guests {ev.requires_rooms ? <><Bed size={14} style={{ color: 'var(--color-text-muted)', marginLeft: '4px' }} /> {ev.no_of_rooms} rooms</> : '(No rooms)'}
                         </p>
                       </div>
                       <div>
@@ -1498,7 +2198,79 @@ export default function AdminPage() {
           </div>
         )}
       </div>
-      {/* Admin Calendar Modal — opened by clicking 📅 Calendar on any property card */}
+      {/* In-App Confirmation / Alert Modal */}
+      {confirmModal.isOpen && (
+        <div
+          onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 1100,
+            backgroundColor: 'rgba(0, 0, 0, 0.55)', backdropFilter: 'blur(3px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px'
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              backgroundColor: '#ffffff', borderRadius: '16px', maxWidth: '440px', width: '100%',
+              padding: '28px', boxShadow: '0 20px 50px rgba(0,0,0,0.2)', border: '1px solid var(--color-border)',
+              animation: 'editorSlideIn 0.2s ease-out'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--color-text-primary)', margin: 0 }}>
+                {confirmModal.title}
+              </h3>
+              <button
+                onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: 'var(--color-text-muted)', lineHeight: 1 }}
+              >×</button>
+            </div>
+
+            {confirmModal.subtitle && (
+              <p style={{ fontSize: '14px', fontWeight: '600', color: 'var(--color-text-primary)', marginBottom: '8px' }}>
+                {confirmModal.subtitle}
+              </p>
+            )}
+
+            {confirmModal.description && (
+              <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.5', marginBottom: '24px' }}>
+                {confirmModal.description}
+              </p>
+            )}
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '24px' }}>
+              {!confirmModal.isNoticeOnly && (
+                <button
+                  onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                  style={{
+                    padding: '9px 18px', border: '1px solid var(--color-border)', borderRadius: '8px',
+                    backgroundColor: '#ffffff', color: 'var(--color-text-primary)', fontSize: '13px',
+                    fontWeight: '700', cursor: 'pointer'
+                  }}
+                >
+                  {confirmModal.cancelLabel || 'Cancel'}
+                </button>
+              )}
+              <button
+                onClick={async () => {
+                  const action = confirmModal.onConfirm || confirmModal.onNoticeAction
+                  setConfirmModal(prev => ({ ...prev, isOpen: false }))
+                  if (action) await action()
+                }}
+                style={{
+                  padding: '9px 18px', border: 'none', borderRadius: '8px',
+                  backgroundColor: confirmModal.isDanger ? '#C62828' : 'var(--color-gold)',
+                  color: '#ffffff', fontSize: '13px', fontWeight: '800', cursor: 'pointer'
+                }}
+              >
+                {confirmModal.confirmLabel || confirmModal.noticeActionLabel || 'Confirm'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Admin Calendar Modal — opened by clicking the Calendar button on any property card */}
       {calendarProperty && (
         <CalendarModal
           propertyId={calendarProperty.id}

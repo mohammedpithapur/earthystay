@@ -1,351 +1,3 @@
-// 'use client'
-
-// import { useState, type FormEvent } from 'react'
-// import Image from 'next/image'
-// import Link from 'next/link'
-// import { useSearchParams } from 'next/navigation'
-// import { dummyProperties } from '@/lib/data/properties'
-// import type { Property } from '@/lib/types'
-
-// type PropertyDraft = {
-//   name: string
-//   description: string
-//   address: string
-//   city: string
-//   state: string
-//   country: string
-//   price_per_night: string
-//   cleaning_fee: string
-//   max_guests: string
-//   bedrooms: string
-//   bathrooms: string
-//   min_nights: string
-//   pets_allowed: boolean
-//   pet_charge_per_night: string
-//   check_in_time: string
-//   check_out_time: string
-//   contact_phone: string
-//   contact_email: string
-//   latitude: string
-//   longitude: string
-//   avg_rating: string
-//   review_count: string
-//   is_published: boolean
-//   amenities: string
-//   house_rules: string
-//   primary_image_url: string
-//   secondary_image_url: string
-// }
-
-// const navLinkStyle = {
-//   color: 'var(--color-navbar-text)',
-//   fontSize: '13px',
-//   letterSpacing: '1px',
-//   textDecoration: 'none',
-//   textTransform: 'uppercase' as const,
-//   fontWeight: '500' as const,
-//   transition: 'color 0.2s ease',
-// }
-
-// function createDraft(property?: Property): PropertyDraft {
-//   return {
-//     name: property?.name ?? '',
-//     description: property?.description ?? '',
-//     address: property?.address ?? '',
-//     city: property?.city ?? '',
-//     state: property?.state ?? '',
-//     country: property?.country ?? 'India',
-//     price_per_night: property?.price_per_night?.toString() ?? '',
-//     cleaning_fee: property?.cleaning_fee?.toString() ?? '',
-//     max_guests: property?.max_guests?.toString() ?? '',
-//     bedrooms: property?.bedrooms?.toString() ?? '',
-//     bathrooms: property?.bathrooms?.toString() ?? '',
-//     min_nights: property?.min_nights?.toString() ?? '1',
-//     pets_allowed: property?.pets_allowed ?? false,
-//     pet_charge_per_night: property?.pet_charge_per_night?.toString() ?? '',
-//     check_in_time: property?.check_in_time ?? '',
-//     check_out_time: property?.check_out_time ?? '',
-//     contact_phone: property?.contact_phone ?? '',
-//     contact_email: property?.contact_email ?? '',
-//     latitude: property?.latitude?.toString() ?? '',
-//     longitude: property?.longitude?.toString() ?? '',
-//     avg_rating: property?.avg_rating?.toString() ?? '0',
-//     review_count: property?.review_count?.toString() ?? '0',
-//     is_published: property?.is_published ?? true,
-//     amenities: property?.amenities?.join('\n') ?? '',
-//     house_rules: property?.house_rules?.join('\n') ?? '',
-//     primary_image_url: property?.images.find(image => image.is_primary)?.image_url ?? property?.images[0]?.image_url ?? '',
-//     secondary_image_url: property?.images[1]?.image_url ?? '',
-//   }
-// }
-
-// type PropertyEditorProps = {
-//   property?: Property
-//   backHref: string
-// }
-
-// function PropertyEditor({ property, backHref }: PropertyEditorProps) {
-//   const [draft, setDraft] = useState<PropertyDraft>(() => createDraft(property))
-//   const [errors, setErrors] = useState<Record<string, string>>({})
-//   const [savedMessage, setSavedMessage] = useState('')
-//   const [isSaving, setIsSaving] = useState(false)
-
-//   const updateField = <K extends keyof PropertyDraft>(field: K, value: PropertyDraft[K]) => {
-//     setDraft(prev => ({ ...prev, [field]: value }))
-//   }
-
-//   const validate = () => {
-//     const nextErrors: Record<string, string> = {}
-
-//     if (!draft.name.trim()) nextErrors.name = 'Property name is required'
-//     if (!draft.description.trim()) nextErrors.description = 'Description is required'
-//     if (!draft.address.trim()) nextErrors.address = 'Address is required'
-//     if (!draft.city.trim()) nextErrors.city = 'City is required'
-//     if (!draft.state.trim()) nextErrors.state = 'State is required'
-//     if (!draft.contact_email.trim()) nextErrors.contact_email = 'Contact email is required'
-//     if (!draft.contact_phone.trim()) nextErrors.contact_phone = 'Contact phone is required'
-//     if (!draft.price_per_night.trim()) nextErrors.price_per_night = 'Nightly price is required'
-//     if (!draft.primary_image_url.trim()) nextErrors.primary_image_url = 'Primary image URL is required'
-
-//     setErrors(nextErrors)
-//     return Object.keys(nextErrors).length === 0
-//   }
-
-//   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-//     event.preventDefault()
-//     setSavedMessage('')
-
-//     if (!validate()) return
-
-//     setIsSaving(true)
-//     setTimeout(() => {
-//       setIsSaving(false)
-//       setSavedMessage(property ? 'Property draft updated. Connect this form to your backend to persist changes.' : 'Property draft created. Connect this form to your backend to persist it.')
-//     }, 600)
-//   }
-
-//   const inputStyle = (field: keyof PropertyDraft) => ({
-//     width: '100%',
-//     padding: '13px 14px',
-//     border: `1px solid ${errors[field] ? '#C62828' : 'var(--color-border)'}`,
-//     borderRadius: '8px',
-//     fontSize: '14px',
-//     color: 'var(--color-text-primary)',
-//     outline: 'none',
-//     backgroundColor: '#ffffff',
-//     boxSizing: 'border-box' as const,
-//   })
-
-//   const cardStyle = { backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '14px', padding: '24px' }
-
-//   return (
-//     <div style={{ backgroundColor: 'var(--color-bg-card)', minHeight: '100vh' }}>
-//       <div style={{ backgroundColor: 'var(--color-navbar)', padding: '28px 24px' }}>
-//         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-//           <div>
-//             <p style={{ color: 'var(--color-gold)', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '8px', fontWeight: '700' }}>{property ? 'Edit Property' : 'Add Property'}</p>
-//             <h1 style={{ color: 'var(--color-text-primary)', fontSize: 'clamp(24px, 3vw, 34px)', fontWeight: '800' }}>{property ? 'Update the listing details' : 'Create a new listing'}</h1>
-//           </div>
-//           <Link href={backHref} style={navLinkStyle} onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-gold)'} onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-navbar-text)'}>
-//             Back to Admin
-//           </Link>
-//         </div>
-//       </div>
-
-//       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '32px 24px 72px' }}>
-//         {savedMessage && (
-//           <div style={{ ...cardStyle, marginBottom: '20px', borderColor: '#C8E6C9', backgroundColor: '#F1F8F2', color: '#2E7D32', fontWeight: '600' }}>
-//             {savedMessage}
-//           </div>
-//         )}
-
-//         <form onSubmit={handleSubmit}>
-//           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.2fr) minmax(300px, 0.8fr)', gap: '20px', alignItems: 'start' }}>
-//             <div style={{ display: 'grid', gap: '20px' }}>
-//               <div style={cardStyle}>
-//                 <h2 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '18px', color: 'var(--color-text-primary)' }}>Core Details</h2>
-//                 <div style={{ display: 'grid', gap: '16px' }}>
-//                   <div>
-//                     <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '700' }}>Property Name</label>
-//                     <input value={draft.name} onChange={event => updateField('name', event.target.value)} style={inputStyle('name')} />
-//                     {errors.name && <p style={{ marginTop: '6px', color: '#C62828', fontSize: '12px' }}>{errors.name}</p>}
-//                   </div>
-
-//                   <div>
-//                     <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '700' }}>Description</label>
-//                     <textarea value={draft.description} onChange={event => updateField('description', event.target.value)} rows={5} style={{ ...inputStyle('description'), resize: 'vertical' }} />
-//                     {errors.description && <p style={{ marginTop: '6px', color: '#C62828', fontSize: '12px' }}>{errors.description}</p>}
-//                   </div>
-
-//                   <div>
-//                     <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '700' }}>Address</label>
-//                     <input value={draft.address} onChange={event => updateField('address', event.target.value)} style={inputStyle('address')} />
-//                     {errors.address && <p style={{ marginTop: '6px', color: '#C62828', fontSize: '12px' }}>{errors.address}</p>}
-//                   </div>
-
-//                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
-//                     {[
-//                       ['city', 'City'],
-//                       ['state', 'State'],
-//                       ['country', 'Country'],
-//                     ].map(([field, label]) => (
-//                       <div key={field}>
-//                         <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '700' }}>{label}</label>
-//                         <input value={draft[field as keyof PropertyDraft] as string} onChange={event => updateField(field as keyof PropertyDraft, event.target.value as PropertyDraft[keyof PropertyDraft])} style={inputStyle(field as keyof PropertyDraft)} />
-//                         {errors[field] && <p style={{ marginTop: '6px', color: '#C62828', fontSize: '12px' }}>{errors[field]}</p>}
-//                       </div>
-//                     ))}
-//                   </div>
-//                 </div>
-//               </div>
-
-//               <div style={cardStyle}>
-//                 <h2 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '18px', color: 'var(--color-text-primary)' }}>Pricing and Rules</h2>
-//                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '14px' }}>
-//                   {[
-//                     ['price_per_night', 'Price Per Night'],
-//                     ['cleaning_fee', 'Cleaning Fee'],
-//                     ['pet_charge_per_night', 'Pet Charge / Night'],
-//                     ['max_guests', 'Max Guests'],
-//                     ['bedrooms', 'Bedrooms'],
-//                     ['bathrooms', 'Bathrooms'],
-//                     ['min_nights', 'Minimum Nights'],
-//                     ['avg_rating', 'Average Rating'],
-//                     ['review_count', 'Review Count'],
-//                   ].map(([field, label]) => (
-//                     <div key={field}>
-//                       <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '700' }}>{label}</label>
-//                       <input type="number" value={draft[field as keyof PropertyDraft] as string} onChange={event => updateField(field as keyof PropertyDraft, event.target.value as PropertyDraft[keyof PropertyDraft])} style={inputStyle(field as keyof PropertyDraft)} />
-//                     </div>
-//                   ))}
-//                 </div>
-
-//                 <div style={{ marginTop: '16px' }}>
-//                   <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '700' }}>House Rules</label>
-//                   <textarea value={draft.house_rules} onChange={event => updateField('house_rules', event.target.value)} rows={4} placeholder="One rule per line" style={{ ...inputStyle('house_rules'), resize: 'vertical' }} />
-//                 </div>
-
-//                 <div style={{ marginTop: '16px' }}>
-//                   <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '700' }}>Amenities</label>
-//                   <textarea value={draft.amenities} onChange={event => updateField('amenities', event.target.value)} rows={4} placeholder="One amenity per line" style={{ ...inputStyle('amenities'), resize: 'vertical' }} />
-//                 </div>
-//               </div>
-
-//               <div style={cardStyle}>
-//                 <h2 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '18px', color: 'var(--color-text-primary)' }}>Operations</h2>
-//                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
-//                   {[
-//                     ['check_in_time', 'Check In Time'],
-//                     ['check_out_time', 'Check Out Time'],
-//                     ['contact_phone', 'Contact Phone'],
-//                     ['contact_email', 'Contact Email'],
-//                     ['latitude', 'Latitude'],
-//                     ['longitude', 'Longitude'],
-//                   ].map(([field, label]) => (
-//                     <div key={field}>
-//                       <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '700' }}>{label}</label>
-//                       <input value={draft[field as keyof PropertyDraft] as string} onChange={event => updateField(field as keyof PropertyDraft, event.target.value as PropertyDraft[keyof PropertyDraft])} style={inputStyle(field as keyof PropertyDraft)} />
-//                       {errors[field] && <p style={{ marginTop: '6px', color: '#C62828', fontSize: '12px' }}>{errors[field]}</p>}
-//                     </div>
-//                   ))}
-//                 </div>
-//               </div>
-//             </div>
-
-//             <div style={{ display: 'grid', gap: '20px' }}>
-//               <div style={cardStyle}>
-//                 <h2 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '18px', color: 'var(--color-text-primary)' }}>Status and Media</h2>
-//                 <div style={{ display: 'grid', gap: '16px' }}>
-//                   <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: '600' }}>
-//                     <input type="checkbox" checked={draft.is_published} onChange={event => updateField('is_published', event.target.checked)} />
-//                     Published
-//                   </label>
-
-//                   <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: '600' }}>
-//                     <input type="checkbox" checked={draft.pets_allowed} onChange={event => updateField('pets_allowed', event.target.checked)} />
-//                     Pets allowed
-//                   </label>
-
-//                   <div>
-//                     <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '700' }}>Primary Image URL</label>
-//                     <input value={draft.primary_image_url} onChange={event => updateField('primary_image_url', event.target.value)} style={inputStyle('primary_image_url')} />
-//                     {errors.primary_image_url && <p style={{ marginTop: '6px', color: '#C62828', fontSize: '12px' }}>{errors.primary_image_url}</p>}
-//                   </div>
-
-//                   <div>
-//                     <label style={{ display: 'block', fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '8px', fontWeight: '700' }}>Secondary Image URL</label>
-//                     <input value={draft.secondary_image_url} onChange={event => updateField('secondary_image_url', event.target.value)} style={inputStyle('secondary_image_url')} />
-//                   </div>
-
-//                   {draft.primary_image_url && (
-//                     <div style={{ border: '1px solid var(--color-border)', borderRadius: '12px', overflow: 'hidden', backgroundColor: 'var(--color-bg-card)' }}>
-//                       <div style={{ position: 'relative', width: '100%', aspectRatio: '4 / 3' }}>
-//                         <Image src={draft.primary_image_url} alt={draft.name || 'Property preview'} fill sizes="(max-width: 768px) 100vw, 360px" style={{ objectFit: 'cover' }} />
-//                       </div>
-//                       <div style={{ padding: '14px 16px' }}>
-//                         <p style={{ fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '4px', fontWeight: '700' }}>Preview</p>
-//                         <p style={{ fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: '700' }}>{draft.name || 'Untitled property'}</p>
-//                         <p style={{ fontSize: '12px', color: 'var(--color-text-primary)' }}>{draft.city || 'City'}, {draft.state || 'State'}</p>
-//                       </div>
-//                     </div>
-//                   )}
-//                 </div>
-//               </div>
-
-//               <div style={cardStyle}>
-//                 <h2 style={{ fontSize: '20px', fontWeight: '800', marginBottom: '14px', color: 'var(--color-text-primary)' }}>Save</h2>
-//                 <p style={{ fontSize: '14px', color: 'var(--color-text-primary)', lineHeight: '1.6', marginBottom: '18px' }}>
-//                   This is a single add/edit page. Open it without an id for a fresh form, or with ?id=... to edit an existing property.
-//                 </p>
-//                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-//                   <button type="submit" disabled={isSaving} style={{ backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', border: 'none', padding: '12px 18px', fontSize: '13px', fontWeight: '800', letterSpacing: '1px', cursor: 'pointer', borderRadius: '8px', opacity: isSaving ? 0.8 : 1 }}>
-//                     {isSaving ? 'Saving...' : property ? 'Save Changes' : 'Create Property'}
-//                   </button>
-//                   <Link href={backHref} style={navLinkStyle} onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-gold)'} onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-navbar-text)'}>
-//                     Cancel
-//                   </Link>
-//                 </div>
-//               </div>
-//             </div>
-//           </div>
-//         </form>
-//       </div>
-//     </div>
-//   )
-// }
-
-// export default function AdminPropertyPage() {
-//   const searchParams = useSearchParams()
-//   const propertyId = searchParams.get('id') || ''
-//   const property = dummyProperties.find(item => item.id === propertyId)
-
-//   if (propertyId && !property) {
-//     return (
-//       <div style={{ backgroundColor: 'var(--color-bg-card)', minHeight: '100vh' }}>
-//         <div style={{ backgroundColor: 'var(--color-navbar)', padding: '28px 24px' }}>
-//           <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-//             <div>
-//               <p style={{ color: 'var(--color-gold)', fontSize: '12px', letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '8px', fontWeight: '700' }}>Edit Property</p>
-//               <h1 style={{ color: 'var(--color-text-primary)', fontSize: 'clamp(24px, 3vw, 34px)', fontWeight: '800' }}>Property not found</h1>
-//             </div>
-//             <Link href="/admin" style={navLinkStyle} onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-gold)'} onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.color = 'var(--color-navbar-text)'}>
-//               Back to Admin
-//             </Link>
-//           </div>
-//         </div>
-
-//         <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '32px 24px 72px' }}>
-//           <div style={cardStyle}>
-//             <p style={{ fontSize: '15px', color: 'var(--color-text-secondary)', lineHeight: '1.7' }}>
-//               The property id in the edit link does not match any demo property.
-//             </p>
-//           </div>
-//         </div>
-//       </div>
-//     )
-//   }
-
-//   return <PropertyEditor key={property?.id ?? 'new'} property={property} backHref="/admin" />
 'use client'
 import Image from 'next/image'
 import React, { Suspense, useState, useEffect, useRef } from 'react'
@@ -444,6 +96,8 @@ type PropertyFormState = {
   amenities: string[]
   price_per_night: number
   cleaning_fee: number
+  extra_guest_charge_per_night: number
+  base_guests: number
   pet_charge_per_night: number
   min_nights: number
   pets_allowed: boolean
@@ -475,7 +129,7 @@ const EMPTY_FORM: PropertyFormState = {
   latitude: 20.5937, longitude: 78.9629,
   images: [] as { id: string; property_id: string; image_url: string; is_primary: boolean; display_order: number }[],
   amenities: [] as string[],
-  price_per_night: 5000, cleaning_fee: 800, pet_charge_per_night: 300,
+  price_per_night: 5000, cleaning_fee: 800, extra_guest_charge_per_night: 0, base_guests: 2, pet_charge_per_night: 300,
   min_nights: 1, pets_allowed: false, max_pets: 0, is_published: true,
   house_rules: [] as string[],
 }
@@ -506,6 +160,8 @@ function createFormFromProperty(property?: Property | null): PropertyFormState {
     amenities: [...property.amenities],
     price_per_night: property.price_per_night,
     cleaning_fee: property.cleaning_fee,
+    extra_guest_charge_per_night: property.extra_guest_charge_per_night ?? 0,
+    base_guests: property.base_guests ?? 2,
     pet_charge_per_night: property.pet_charge_per_night,
     min_nights: property.min_nights,
     pets_allowed: property.pets_allowed,
@@ -1172,8 +828,15 @@ function PricingSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: (
         <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', fontSize: '14px', color: 'var(--color-text-muted)', fontWeight: '600' }}>₹</span>
         <input
           style={{ ...inputStyle, paddingLeft: '32px' }}
-          type="number" min={0} value={value}
-          onChange={e => setForm({ ...form, [key]: parseInt(e.target.value) || 0 })}
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          value={value === 0 ? '' : value}
+          placeholder="0"
+          onChange={e => {
+            const raw = e.target.value.replace(/[^0-9]/g, '')
+            setForm({ ...form, [key]: raw === '' ? 0 : parseInt(raw, 10) || 0 })
+          }}
         />
       </div>
       {hint && <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '6px' }}>{hint}</p>}
@@ -1184,6 +847,29 @@ function PricingSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       {priceInput('Nightly Rate', form.price_per_night, 'price_per_night', 'Base price per night before fees')}
       {priceInput('Cleaning Fee', form.cleaning_fee, 'cleaning_fee', 'One-time fee charged per booking')}
+
+      <div style={{ height: '1px', backgroundColor: 'var(--color-border)' }} />
+
+      <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--color-text-primary)', margin: 0 }}>Extra Guest Fees</h3>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        <div>
+          <FieldLabel>Standard Guest Capacity (Base Guests)</FieldLabel>
+          <input
+            style={inputStyle}
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={form.base_guests === 0 ? '' : form.base_guests}
+            placeholder="2"
+            onChange={e => {
+              const raw = e.target.value.replace(/[^0-9]/g, '')
+              setForm({ ...form, base_guests: raw === '' ? 1 : Math.max(1, parseInt(raw, 10) || 1) })
+            }}
+          />
+          <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '6px' }}>Number of guests included in the base nightly rate</p>
+        </div>
+        {priceInput('Extra Guest Fee (per guest/night)', form.extra_guest_charge_per_night, 'extra_guest_charge_per_night', 'Additional charge per extra guest per night')}
+      </div>
 
       <div style={{ height: '1px', backgroundColor: 'var(--color-border)' }} />
 
@@ -1219,8 +905,13 @@ function PricingSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: (
         <p style={{ fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '600', marginBottom: '12px' }}>Pricing Preview</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--color-text-secondary)' }}>
-            <span>Base nightly rate</span><span>₹{form.price_per_night.toLocaleString('en-IN')}</span>
+            <span>Base nightly rate (up to {form.base_guests || 2} guests)</span><span>₹{form.price_per_night.toLocaleString('en-IN')}</span>
           </div>
+          {form.extra_guest_charge_per_night > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--color-text-secondary)' }}>
+              <span>Extra guest charge (per extra guest/night)</span><span>₹{form.extra_guest_charge_per_night.toLocaleString('en-IN')}</span>
+            </div>
+          )}
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--color-text-secondary)' }}>
             <span>Cleaning fee</span><span>₹{form.cleaning_fee.toLocaleString('en-IN')}</span>
           </div>
@@ -1231,7 +922,7 @@ function PricingSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: (
           )}
           <div style={{ height: '1px', backgroundColor: 'var(--color-border)', margin: '4px 0' }} />
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '15px', fontWeight: '700', color: 'var(--color-text-primary)' }}>
-            <span>2-night total (est.)</span>
+            <span>2-night base total (est.)</span>
             <span>₹{(form.price_per_night * 2 + form.cleaning_fee).toLocaleString('en-IN')}</span>
           </div>
         </div>
@@ -1594,6 +1285,8 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
       amenities: form.amenities,
       price_per_night: form.price_per_night,
       cleaning_fee: form.cleaning_fee,
+      extra_guest_charge_per_night: form.extra_guest_charge_per_night,
+      base_guests: form.base_guests,
       pet_charge_per_night: form.pet_charge_per_night,
       min_nights: form.min_nights,
       pets_allowed: form.pets_allowed,

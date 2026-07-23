@@ -10,6 +10,7 @@ import {
   type UserDashboard, type MyBooking,
 } from '@/lib/api'
 import type { Property } from '@/lib/types'
+import { Building2, Share2, Download, Calendar, Users, Check, X, Shield, Clock, MapPin, Plus, LogOut } from 'lucide-react'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -21,7 +22,7 @@ const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
 }
 
 const PAYMENT_STATUS_COLORS: Record<string, { bg: string; color: string; label: string }> = {
-  paid:     { bg: '#E8F5E9', color: '#2E7D32', label: '✓ Paid' },
+  paid:     { bg: '#E8F5E9', color: '#2E7D32', label: 'Paid' },
   unpaid:   { bg: '#FFF8E7', color: '#E65100', label: 'Unpaid' },
   refunded: { bg: '#E3F2FD', color: '#1565C0', label: 'Refunded' },
 }
@@ -58,12 +59,18 @@ function VoucherModal({ booking, property: propFromCache, onClose }: {
     try {
       const html2canvas = (await import('html2canvas')).default
       const jsPDF = (await import('jspdf')).default
-      const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        scrollX: 0,
+        scrollY: 0,
+      })
       const imgData = canvas.toDataURL('image/png')
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a5' })
-      const pageWidth = pdf.internal.pageSize.getWidth()
-      const pageHeight = (canvas.height * pageWidth) / canvas.width
-      pdf.addImage(imgData, 'PNG', 0, 0, pageWidth, pageHeight)
+      const pdfWidth = 148
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: [pdfWidth, pdfHeight] })
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
       return pdf
     } finally {
       btns.forEach(b => { b.style.display = '' })
@@ -218,15 +225,17 @@ function VoucherModal({ booking, property: propFromCache, onClose }: {
               <button
                 onClick={handleDownloadPDF}
                 disabled={isDownloading}
-                style={{ padding: '10px 20px', border: '1px solid var(--color-border)', borderRadius: '8px', backgroundColor: 'transparent', fontSize: '13px', cursor: isDownloading ? 'not-allowed' : 'pointer', fontWeight: '600', color: 'var(--color-text-secondary)', opacity: isDownloading ? 0.7 : 1 }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 20px', border: '1px solid var(--color-border)', borderRadius: '8px', backgroundColor: 'transparent', fontSize: '13px', cursor: isDownloading ? 'not-allowed' : 'pointer', fontWeight: '600', color: 'var(--color-text-secondary)', opacity: isDownloading ? 0.7 : 1 }}
               >
+                <Download style={{ width: '15px', height: '15px' }} />
                 {isDownloading ? 'Downloading…' : 'Download PDF'}
               </button>
               <button
                 onClick={handleSharePDF}
                 disabled={isPdfGenerating}
-                style={{ padding: '10px 20px', border: 'none', borderRadius: '8px', backgroundColor: 'var(--color-gold)', fontSize: '13px', cursor: isPdfGenerating ? 'not-allowed' : 'pointer', fontWeight: '700', color: 'var(--color-text-primary)', opacity: isPdfGenerating ? 0.7 : 1 }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 20px', border: 'none', borderRadius: '8px', backgroundColor: 'var(--color-gold)', fontSize: '13px', cursor: isPdfGenerating ? 'not-allowed' : 'pointer', fontWeight: '700', color: 'var(--color-text-primary)', opacity: isPdfGenerating ? 0.7 : 1 }}
               >
+                <Share2 style={{ width: '15px', height: '15px' }} />
                 {isPdfGenerating ? 'Sharing…' : 'Share Voucher'}
               </button>
             </div>
@@ -538,11 +547,13 @@ export default function DashboardPage() {
     if (bookings.length === 0) {
       return (
         <div style={{ textAlign: 'center', padding: '80px 24px', backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '14px' }}>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>🏡</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+            <Building2 style={{ width: '48px', height: '48px', color: 'var(--color-gold)', strokeWidth: 1.5 }} />
+          </div>
           <h3 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '10px' }}>{emptyTitle}</h3>
           <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', marginBottom: '24px' }}>{emptyBody}</p>
           <Link href="/properties" style={{ backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', padding: '14px 32px', fontSize: '13px', letterSpacing: '1.5px', textTransform: 'uppercase', fontWeight: '700', textDecoration: 'none', borderRadius: '8px', display: 'inline-block' }}>
-            Explore Properties
+            Explore Our Hotels
           </Link>
         </div>
       )
@@ -637,8 +648,8 @@ export default function DashboardPage() {
             <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', marginTop: '4px' }}>{user.email}</p>
           </div>
           <Link href="/properties"
-            style={{ backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', padding: '14px 28px', fontSize: '13px', letterSpacing: '1.5px', fontWeight: '800', textTransform: 'uppercase', textDecoration: 'none', borderRadius: '8px', display: 'inline-block' }}>
-            + Book New Stay
+            style={{ backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', padding: '14px 28px', fontSize: '13px', letterSpacing: '1.5px', fontWeight: '800', textTransform: 'uppercase', textDecoration: 'none', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <Plus size={16} /> Book New Stay
           </Link>
         </div>
       </div>
@@ -736,7 +747,9 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <p style={{ fontSize: '18px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '2px' }}>{user.full_name}</p>
-                  <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>{user.role === 'admin' ? '✦ Admin Account' : 'Guest Account'}</p>
+                  <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    {user.role === 'admin' ? <><Shield size={13} style={{ color: 'var(--color-gold)' }} /> Admin Account</> : 'Guest Account'}
+                  </p>
                 </div>
               </div>
 
@@ -763,7 +776,7 @@ export default function DashboardPage() {
               ))}
 
               {profileError && <p style={{ color: '#C62828', fontSize: '13px', marginBottom: '12px', fontWeight: '600' }}>{profileError}</p>}
-              {profileSuccess && <p style={{ color: '#2E7D32', fontSize: '13px', marginBottom: '12px', fontWeight: '600' }}>✓ {profileSuccess}</p>}
+              {profileSuccess && <p style={{ color: '#2E7D32', fontSize: '13px', marginBottom: '12px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}><Check size={14} /> {profileSuccess}</p>}
 
               <button
                 onClick={handleSaveProfile}
@@ -795,7 +808,7 @@ export default function DashboardPage() {
               ))}
 
               {passwordError && <p style={{ color: '#C62828', fontSize: '13px', marginBottom: '12px', fontWeight: '600' }}>{passwordError}</p>}
-              {passwordSuccess && <p style={{ color: '#2E7D32', fontSize: '13px', marginBottom: '12px', fontWeight: '600' }}>✓ {passwordSuccess}</p>}
+              {passwordSuccess && <p style={{ color: '#2E7D32', fontSize: '13px', marginBottom: '12px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}><Check size={14} /> {passwordSuccess}</p>}
 
               <button
                 onClick={handleChangePassword}
@@ -809,8 +822,8 @@ export default function DashboardPage() {
             <div style={{ textAlign: 'center', marginTop: '8px' }}>
               <button
                 onClick={async () => { await logout(); router.push('/') }}
-                style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', fontSize: '14px', cursor: 'pointer', textDecoration: 'underline' }}>
-                Sign Out
+                style={{ background: 'none', border: 'none', color: 'var(--color-text-muted)', fontSize: '14px', cursor: 'pointer', textDecoration: 'underline', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <LogOut size={14} /> Sign Out
               </button>
             </div>
           </div>

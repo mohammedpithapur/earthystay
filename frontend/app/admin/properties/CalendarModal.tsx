@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { ApiFetcher, CalendarEvent } from '@/lib/api'
 import { getPropertyCalendar, createAdminBlock, deleteAdminBlock } from '@/lib/api'
+import { Calendar } from 'lucide-react'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -298,7 +299,9 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
           padding: '18px 24px', borderBottom: '1px solid #2e2618', flexShrink: 0,
         }}>
           <div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#e8d5a3' }}>📅 Property Calendar</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#e8d5a3', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Calendar size={18} style={{ color: '#c9a84c' }} /> Property Calendar
+            </div>
             <div style={{ fontSize: '0.78rem', color: '#8a7a5a', marginTop: 2 }}>{propertyName}</div>
           </div>
           <button

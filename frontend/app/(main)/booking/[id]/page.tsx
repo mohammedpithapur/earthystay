@@ -5,6 +5,7 @@ import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { buildApiUrl, createBooking, createPaymentOrder, verifyPayment } from '@/lib/api'
 import { useAuth } from '@/lib/auth/AuthContext'
 import type { Property } from '@/lib/types'
+import { AlertTriangle } from 'lucide-react'
 
 // ── Razorpay type declarations ────────────────────────────────────────────────
 interface RazorpayOptions {
@@ -324,7 +325,7 @@ export default function BookingPage() {
           {/* Payment error notice */}
           {paymentError && (
             <div style={{ backgroundColor: '#FFF5F5', border: '1px solid #E53E3E', borderRadius: '12px', padding: '16px 20px', marginBottom: '24px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-              <span style={{ fontSize: '18px', flexShrink: 0 }}>⚠️</span>
+              <AlertTriangle size={18} color="#E53E3E" style={{ flexShrink: 0, marginTop: '1px' }} />
               <p style={{ fontSize: '13px', color: '#C53030', lineHeight: '1.6', margin: 0 }}>{paymentError}</p>
             </div>
           )}
