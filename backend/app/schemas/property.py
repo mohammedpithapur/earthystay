@@ -1,3 +1,4 @@
+import json
 from typing import Any
 from pydantic import BaseModel, Field, field_validator
 from uuid import UUID
@@ -73,7 +74,32 @@ class PropertyOut(BaseModel):
     def ensure_list(cls, v: Any) -> list[dict]:
         if v is None:
             return []
-        return v
+        if isinstance(v, str):
+            try:
+                parsed = json.loads(v)
+                return [item for item in parsed if isinstance(item, dict)] if isinstance(parsed, list) else []
+            except Exception:
+                return []
+        if isinstance(v, list):
+            return [item for item in v if isinstance(item, dict)]
+        return []
+
+    @field_validator("amenities", "house_rules", mode="before")
+    @classmethod
+    def ensure_str_list(cls, v: Any) -> list[str]:
+        if v is None:
+            return []
+        if isinstance(v, str):
+            try:
+                parsed = json.loads(v)
+                if isinstance(parsed, list):
+                    return [str(x) for x in parsed if not (isinstance(x, str) and (x.startswith("__space__:") or x.startswith("{")))]
+            except Exception:
+                pass
+            return []
+        if isinstance(v, list):
+            return [str(x) for x in v if not (isinstance(x, str) and (x.startswith("__space__:") or x.startswith("{")))]
+        return []
 
     model_config = {"from_attributes": True}
 
