@@ -163,11 +163,14 @@ async def apply_properties_inheritance(db: AsyncSession, properties: list[Proper
 
         cloned = copy.copy(p)
         cloned.images = list(p.images)
+        child_spaces = p.spaces_detail
 
         if not cloned.override_house_rules:
             cloned.house_rules = whole_property.house_rules
         if not cloned.override_amenities:
             cloned.amenities = whole_property.amenities
+            if child_spaces:
+                cloned.spaces_detail = child_spaces
         if not cloned.override_details:
             cloned.description = whole_property.description
             cloned.address = whole_property.address

@@ -57,19 +57,46 @@ class Property(Base):
     @property
     def spaces_detail(self) -> list[dict]:
         spaces = []
-        if hasattr(self, "amenities") and isinstance(self.amenities, list):
-            for item in self.amenities:
-                if isinstance(item, str) and item.startswith("__space__:"):
-                    try:
-                        spaces.append(json.loads(item[10:]))
-                    except Exception:
-                        pass
+        raw = getattr(self, "amenities", [])
+        if isinstance(raw, str):
+            try:
+                raw = json.loads(raw)
+            except Exception:
+                raw = []
+        if isinstance(raw, list):
+            for item in raw:
+                if isinstance(item, str):
+                    if item.startswith("__space__:"):
+                        try:
+                            spaces.append(json.loads(item[10:]))
+                        except Exception:
+                            pass
+                    elif item.strip().startswith("{") and ("type" in item or "count" in item):
+                        try:
+                            parsed = json.loads(item)
+                            if isinstance(parsed, dict) and "type" in parsed:
+                                spaces.append(parsed)
+                        except Exception:
+                            pass
+                elif isinstance(item, dict) and "type" in item:
+                    spaces.append(item)
         return spaces
 
     @spaces_detail.setter
     def spaces_detail(self, value):
         current = list(self.amenities) if hasattr(self, "amenities") and isinstance(self.amenities, list) else []
-        clean = [item for item in current if not (isinstance(item, str) and item.startswith("__space__:"))]
+        if isinstance(current, str):
+            try:
+                current = json.loads(current)
+            except Exception:
+                current = []
+        if not isinstance(current, list):
+            current = []
+        clean = [
+            item for item in current
+            if not (isinstance(item, str) and (item.startswith("__space__:") or item.strip().startswith("{")))
+            and not isinstance(item, dict)
+        ]
         if value and isinstance(value, list):
             for sp in value:
                 if isinstance(sp, dict):
