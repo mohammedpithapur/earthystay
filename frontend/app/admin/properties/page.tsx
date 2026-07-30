@@ -8,7 +8,7 @@ import { useAuth } from '@/lib/auth/AuthContext'
 import { useRequireAuth } from '@/lib/auth/useRequireAuth'
 import { uploadPropertyImage } from '@/lib/supabase/storage'
 // NOTE: admin UI now loads properties from the API via `listAdminProperties`
-import { Property, type BathroomDetail } from '@/lib/types'
+import { Property, type BathroomDetail, type SpaceDetail } from '@/lib/types'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -81,6 +81,7 @@ type PropertyFormState = {
   bedrooms: number
   bathrooms: number
   bathrooms_detail: BathroomDetail[]
+  spaces_detail: SpaceDetail[]
   max_guests: number
   check_in_time: string
   check_out_time: string
@@ -123,6 +124,7 @@ type PhotosSectionProps = {
 const EMPTY_FORM: PropertyFormState = {
   name: '', description: '', bedrooms: 1, bathrooms: 1,
   bathrooms_detail: [{ type: 'ensuite' as const, count: 1 }],
+  spaces_detail: [] as SpaceDetail[],
   max_guests: 2, check_in_time: '2:00 PM', check_out_time: '11:00 AM',
   contact_phone: '', contact_email: '',
   address: '', city: '', state: '', country: 'India',
@@ -145,6 +147,7 @@ function createFormFromProperty(property?: Property | null): PropertyFormState {
     bedrooms: property.bedrooms,
     bathrooms: property.bathrooms,
     bathrooms_detail: property.bathrooms_detail.map(detail => ({ ...detail })),
+    spaces_detail: (property.spaces_detail ?? []).map((s: SpaceDetail) => ({ ...s })),
     max_guests: property.max_guests,
     check_in_time: property.check_in_time,
     check_out_time: property.check_out_time,
@@ -351,6 +354,87 @@ function BasicInfoSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm:
           ))}
         </div>
       </div>
+
+      {/* Spaces Detail Section */}
+      <div>
+        <FieldLabel>Spaces & Areas ({form.spaces_detail.reduce((s, sp) => s + sp.count, 0)} total)</FieldLabel>
+        <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '16px' }}>Add spaces available at your property and specify if they are shared or private</p>
+        {form.spaces_detail.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '14px' }}>
+            {form.spaces_detail.map((sp, idx) => {
+              const spaceLabels: Record<string, string> = {
+                balcony: 'Balcony', terrace: 'Terrace', kitchen: 'Kitchen',
+                hall: 'Hall', living_room: 'Living Room', dining_room: 'Dining Room', entrance: 'Entrance',
+              }
+              return (
+                <div key={idx} style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <select
+                    value={sp.type}
+                    onChange={e => {
+                      const updated = [...form.spaces_detail]
+                      updated[idx] = { ...updated[idx], type: e.target.value as SpaceDetail['type'] }
+                      setForm({ ...form, spaces_detail: updated })
+                    }}
+                    style={{ ...selectStyle, flex: '1 1 140px', minWidth: '120px' }}
+                  >
+                    <option value="balcony">Balcony</option>
+                    <option value="terrace">Terrace</option>
+                    <option value="kitchen">Kitchen</option>
+                    <option value="hall">Hall</option>
+                    <option value="living_room">Living Room</option>
+                    <option value="dining_room">Dining Room</option>
+                    <option value="entrance">Entrance</option>
+                  </select>
+                  <select
+                    value={sp.sharing}
+                    onChange={e => {
+                      const updated = [...form.spaces_detail]
+                      updated[idx] = { ...updated[idx], sharing: e.target.value as SpaceDetail['sharing'] }
+                      setForm({ ...form, spaces_detail: updated })
+                    }}
+                    style={{ ...selectStyle, flex: '1 1 120px', minWidth: '100px' }}
+                  >
+                    <option value="not_shared">Not Shared</option>
+                    <option value="shared">Shared</option>
+                  </select>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: '0 0 auto' }}>
+                    <button onClick={() => {
+                      const updated = [...form.spaces_detail]
+                      updated[idx] = { ...updated[idx], count: Math.max(1, sp.count - 1) }
+                      setForm({ ...form, spaces_detail: updated })
+                    }} disabled={sp.count <= 1} style={{ width: '28px', height: '28px', border: '1px solid var(--color-border)', borderRadius: '50%', backgroundColor: 'transparent', cursor: sp.count <= 1 ? 'not-allowed' : 'pointer', fontSize: '14px' }}>−</button>
+                    <span style={{ fontSize: '14px', fontWeight: '700', minWidth: '20px', textAlign: 'center' as const }}>{sp.count}</span>
+                    <button onClick={() => {
+                      const updated = [...form.spaces_detail]
+                      updated[idx] = { ...updated[idx], count: Math.min(10, sp.count + 1) }
+                      setForm({ ...form, spaces_detail: updated })
+                    }} style={{ width: '28px', height: '28px', border: '1px solid var(--color-border)', borderRadius: '50%', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '14px' }}>+</button>
+                  </div>
+                  <button onClick={() => {
+                    const updated = form.spaces_detail.filter((_, i) => i !== idx)
+                    setForm({ ...form, spaces_detail: updated })
+                  }} style={{ width: '28px', height: '28px', border: '1px solid #FFCDD2', borderRadius: '50%', backgroundColor: '#FFEBEE', color: '#C62828', cursor: 'pointer', fontSize: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>×</button>
+                </div>
+              )
+            })}
+          </div>
+        )}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          {(['balcony', 'terrace', 'kitchen', 'hall', 'living_room', 'dining_room', 'entrance'] as const).map(type => {
+            const labels: Record<string, string> = {
+              balcony: '+ Balcony', terrace: '+ Terrace', kitchen: '+ Kitchen',
+              hall: '+ Hall', living_room: '+ Living Room', dining_room: '+ Dining Room', entrance: '+ Entrance',
+            }
+            return (
+              <button key={type} onClick={() => {
+                const updated = [...form.spaces_detail, { type, count: 1, sharing: 'not_shared' as const }]
+                setForm({ ...form, spaces_detail: updated })
+              }} style={{ padding: '7px 14px', border: '1px dashed var(--color-border)', borderRadius: '8px', backgroundColor: 'transparent', fontSize: '12px', cursor: 'pointer', color: 'var(--color-text-muted)', fontWeight: '600' }}>{labels[type]}</button>
+            )
+          })}
+        </div>
+      </div>
+
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
         <div>
@@ -1270,6 +1354,7 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
       bedrooms: form.bedrooms,
       bathrooms: form.bathrooms,
       bathrooms_detail: form.bathrooms_detail,
+      spaces_detail: form.spaces_detail,
       max_guests: form.max_guests,
       check_in_time: form.check_in_time,
       check_out_time: form.check_out_time,

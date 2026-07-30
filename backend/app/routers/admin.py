@@ -321,8 +321,11 @@ async def create_property(
     db: AsyncSession = Depends(get_db),
 ):
     images = await normalize_property_images(data.images)
-    property_data = data.model_dump(exclude={"images"})
+    spaces = data.spaces_detail
+    property_data = data.model_dump(exclude={"images", "spaces_detail"})
     property = Property(owner_id=admin.id, **property_data)
+    if spaces:
+        property.spaces_detail = spaces
     db.add(property)
 
     try:
@@ -361,10 +364,14 @@ async def update_property(
         raise HTTPException(status_code=404, detail="Property not found")
     images = await normalize_property_images(data.images)
     update_data = data.model_dump(exclude_unset=True, exclude={"images"})
+    spaces = update_data.pop("spaces_detail", None)
 
     try:
         for key, val in update_data.items():
             setattr(property, key, val)
+
+        if spaces is not None:
+            property.spaces_detail = spaces
 
         await sync_property_images(db, property_id, images)
         await db.commit()

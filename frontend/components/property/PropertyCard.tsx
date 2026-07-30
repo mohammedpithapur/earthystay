@@ -2,7 +2,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { Property } from '@/lib/types'
-import { Star, MapPin, Bed, Bath, Users } from 'lucide-react'
+import { Star, MapPin, Bed, Bath, Users, User, Armchair, Sofa, Utensils, TreePalm, LayoutDashboard, UtensilsCrossed, DoorOpen } from 'lucide-react'
 
 interface Props {
   property: Property
@@ -104,21 +104,93 @@ export default function PropertyCard({ property }: Props) {
             {property.name}
           </h3>
 
-          {/* Details Row */}
-          <div style={{ display: 'flex', gap: '14px', marginBottom: '12px', flexWrap: 'wrap', fontSize: '13px' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: 'var(--color-text-secondary)', fontWeight: '500' }}>
-              <Bed style={{ width: '14px', height: '14px', strokeWidth: 1.8 }} />
-              {property.bedrooms} Beds
-            </span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: 'var(--color-text-secondary)', fontWeight: '500' }}>
-              <Bath style={{ width: '14px', height: '14px', strokeWidth: 1.8 }} />
-              {property.bathrooms} Baths
-            </span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: 'var(--color-text-secondary)', fontWeight: '500' }}>
-              <Users style={{ width: '14px', height: '14px', strokeWidth: 1.8 }} />
-              {property.max_guests} Guests
-            </span>
-          </div>
+          {/* Details Row — ONLY Guests, Beds, Baths, and spaces_detail (Balcony, Living Room, Kitchen, etc. with Shared/Not Shared) */}
+          {(() => {
+            type Slot = { icon: React.ReactNode; text: string }
+            const slots: Slot[] = []
+            const spaces = property.spaces_detail ?? []
+
+            // 1. Guests (Always)
+            slots.push({
+              icon: <Users style={{ width: '14px', height: '14px', strokeWidth: 1.8 }} />,
+              text: `${property.max_guests} Guests`
+            })
+
+            // 2. Beds (Always)
+            slots.push({
+              icon: <Bed style={{ width: '14px', height: '14px', strokeWidth: 1.8 }} />,
+              text: `${property.bedrooms} Beds`
+            })
+
+            // 3. Baths (with type icon)
+            const hasSharedBath = (property.bathrooms_detail ?? []).some(b => b.type === 'shared')
+            const isBathShared = (property.bathrooms_detail ?? []).length > 0 ? hasSharedBath : false
+            slots.push({
+              icon: <Bath style={{ width: '14px', height: '14px', strokeWidth: 1.8 }} />,
+              text: `${property.bathrooms} Baths`,
+              sharingIcon: isBathShared ? <Users style={{ width: '13px', height: '13px', color: '#B45309' }} title="Shared" /> : <User style={{ width: '13px', height: '13px', color: '#15803D' }} title="Not Shared" />
+            })
+
+            // 4. Spaces (Balcony, Terrace, Kitchen, Hall, Living Room, Dining Room, Entrance)
+            const spaceConfig: Record<string, { label: string; icon: React.ReactNode; matchKeywords: string[] }> = {
+              balcony: { label: 'Balcony', icon: <Armchair style={{ width: '14px', height: '14px', strokeWidth: 1.8 }} />, matchKeywords: ['balcony'] },
+              terrace: { label: 'Terrace', icon: <TreePalm style={{ width: '14px', height: '14px', strokeWidth: 1.8 }} />, matchKeywords: ['terrace'] },
+              kitchen: { label: 'Kitchen', icon: <Utensils style={{ width: '14px', height: '14px', strokeWidth: 1.8 }} />, matchKeywords: ['kitchen'] },
+              hall: { label: 'Hall', icon: <LayoutDashboard style={{ width: '14px', height: '14px', strokeWidth: 1.8 }} />, matchKeywords: ['hall'] },
+              living_room: { label: 'Living Room', icon: <Sofa style={{ width: '14px', height: '14px', strokeWidth: 1.8 }} />, matchKeywords: ['living room', 'livingroom'] },
+              dining_room: { label: 'Dining Room', icon: <UtensilsCrossed style={{ width: '14px', height: '14px', strokeWidth: 1.8 }} />, matchKeywords: ['dining room', 'diningroom'] },
+              entrance: { label: 'Entrance', icon: <DoorOpen style={{ width: '14px', height: '14px', strokeWidth: 1.8 }} />, matchKeywords: ['entrance'] },
+            }
+
+            const activeSpacesMap = new Map<string, { type: string; count: number; sharing: string }>()
+
+            // Add spaces explicitly configured in spaces_detail
+            for (const sp of spaces) {
+              if (Number(sp.count) > 0 && spaceConfig[sp.type]) {
+                activeSpacesMap.set(sp.type, { type: sp.type, count: Number(sp.count), sharing: sp.sharing || 'not_shared' })
+              }
+            }
+
+            // Also check general amenities for existing properties that have "Balcony", "Kitchen", etc.
+            const cleanAmenities = (property.amenities ?? []).filter(a => typeof a === 'string' && !a.startsWith('__space__:'))
+            for (const [key, cfg] of Object.entries(spaceConfig)) {
+              if (!activeSpacesMap.has(key)) {
+                const foundInAmenities = cleanAmenities.some(a => cfg.matchKeywords.some(kw => a.toLowerCase().includes(kw)))
+                if (foundInAmenities) {
+                  activeSpacesMap.set(key, { type: key, count: 1, sharing: 'not_shared' })
+                }
+              }
+            }
+
+            for (const sp of activeSpacesMap.values()) {
+              const cfg = spaceConfig[sp.type]
+              if (cfg) {
+                const isShared = sp.sharing === 'shared'
+                slots.push({
+                  icon: cfg.icon,
+                  text: `${sp.count} ${cfg.label}`,
+                  sharingIcon: isShared ? <Users style={{ width: '13px', height: '13px', color: '#B45309' }} title="Shared" /> : <User style={{ width: '13px', height: '13px', color: '#15803D' }} title="Not Shared" />
+                })
+              }
+            }
+
+            return (
+              <div style={{ display: 'flex', gap: '14px', marginBottom: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+                {slots.slice(0, 5).map((slot, i) => (
+                  <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: 'var(--color-text-secondary)', fontWeight: '500' }}>
+                    {slot.icon}
+                    {slot.text}
+                    {slot.sharingIcon && (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', marginLeft: '1px' }}>
+                        {slot.sharingIcon}
+                      </span>
+                    )}
+                  </span>
+                ))}
+              </div>
+            )
+          })()}
+
 
           <div style={{ height: '1px', backgroundColor: 'var(--color-border)', marginBottom: '12px' }} />
 
@@ -134,33 +206,38 @@ export default function PropertyCard({ property }: Props) {
           </div>
 
           {/* Amenities */}
-          <div style={{ display: 'flex', gap: '6px', marginTop: 'auto', flexWrap: 'wrap' }}>
-            {property.amenities.slice(0, 3).map(amenity => (
-              <span key={amenity} style={{
-                backgroundColor: 'var(--color-bg-soft)',
-                color: 'var(--color-text-secondary)',
-                padding: '3px 8px',
-                fontSize: '10px',
-                letterSpacing: '0.2px',
-                borderRadius: '4px',
-                fontWeight: '500',
-              }}>
-                {amenity}
-              </span>
-            ))}
-            {property.amenities.length > 3 && (
-              <span style={{
-                backgroundColor: 'var(--color-bg-soft)',
-                color: 'var(--color-gold)',
-                padding: '3px 8px',
-                fontSize: '10px',
-                borderRadius: '4px',
-                fontWeight: '600',
-              }}>
-                +{property.amenities.length - 3}
-              </span>
-            )}
-          </div>
+          {(() => {
+            const displayAmenities = (property.amenities ?? []).filter(a => typeof a === 'string' && !a.startsWith('__space__:'))
+            return (
+              <div style={{ display: 'flex', gap: '6px', marginTop: 'auto', flexWrap: 'wrap' }}>
+                {displayAmenities.slice(0, 3).map(amenity => (
+                  <span key={amenity} style={{
+                    backgroundColor: 'var(--color-bg-soft)',
+                    color: 'var(--color-text-secondary)',
+                    padding: '3px 8px',
+                    fontSize: '10px',
+                    letterSpacing: '0.2px',
+                    borderRadius: '4px',
+                    fontWeight: '500',
+                  }}>
+                    {amenity}
+                  </span>
+                ))}
+                {displayAmenities.length > 3 && (
+                  <span style={{
+                    backgroundColor: 'var(--color-bg-soft)',
+                    color: 'var(--color-gold)',
+                    padding: '3px 8px',
+                    fontSize: '10px',
+                    borderRadius: '4px',
+                    fontWeight: '600',
+                  }}>
+                    +{displayAmenities.length - 3}
+                  </span>
+                )}
+              </div>
+            )
+          })()}
         </div>
       </div>
     </Link>

@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field
+from typing import Any
+from pydantic import BaseModel, Field, field_validator
 from uuid import UUID
 from datetime import datetime
 
@@ -50,7 +51,8 @@ class PropertyOut(BaseModel):
     max_guests: int
     bedrooms: int
     bathrooms: int
-    bathrooms_detail: list[dict]
+    bathrooms_detail: list[dict] = Field(default_factory=list)
+    spaces_detail: list[dict] = Field(default_factory=list)
     min_nights: int
     pets_allowed: bool
     max_pets: int
@@ -65,6 +67,13 @@ class PropertyOut(BaseModel):
     created_at: datetime
     updated_at: datetime
     images: list[PropertyImageOut] = Field(default_factory=list)
+
+    @field_validator("spaces_detail", "bathrooms_detail", mode="before")
+    @classmethod
+    def ensure_list(cls, v: Any) -> list[dict]:
+        if v is None:
+            return []
+        return v
 
     model_config = {"from_attributes": True}
 
@@ -91,6 +100,7 @@ class PropertyCreate(BaseModel):
     bedrooms: int
     bathrooms: int
     bathrooms_detail: list[dict] = []
+    spaces_detail: list[dict] = []
     min_nights: int = 1
     pets_allowed: bool = False
     max_pets: int = 0
@@ -125,6 +135,7 @@ class PropertyUpdate(BaseModel):
     bedrooms: int | None = None
     bathrooms: int | None = None
     bathrooms_detail: list[dict] | None = None
+    spaces_detail: list[dict] | None = None
     min_nights: int | None = None
     pets_allowed: bool | None = None
     max_pets: int | None = None

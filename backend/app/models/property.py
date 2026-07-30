@@ -1,4 +1,5 @@
 import uuid
+import json
 from datetime import datetime
 
 from sqlalchemy import String, Integer, Float, Boolean, DateTime, Text, ForeignKey, Index
@@ -52,6 +53,28 @@ class Property(Base):
     review_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, onupdate=utc_now, nullable=False)
+
+    @property
+    def spaces_detail(self) -> list[dict]:
+        spaces = []
+        if hasattr(self, "amenities") and isinstance(self.amenities, list):
+            for item in self.amenities:
+                if isinstance(item, str) and item.startswith("__space__:"):
+                    try:
+                        spaces.append(json.loads(item[10:]))
+                    except Exception:
+                        pass
+        return spaces
+
+    @spaces_detail.setter
+    def spaces_detail(self, value):
+        current = list(self.amenities) if hasattr(self, "amenities") and isinstance(self.amenities, list) else []
+        clean = [item for item in current if not (isinstance(item, str) and item.startswith("__space__:"))]
+        if value and isinstance(value, list):
+            for sp in value:
+                if isinstance(sp, dict):
+                    clean.append(f"__space__:{json.dumps(sp)}")
+        self.amenities = clean
 
     images: Mapped[list["PropertyImage"]] = relationship("PropertyImage", back_populates="property", cascade="all, delete-orphan")
     group_memberships: Mapped[list["PropertyGroupMember"]] = relationship(

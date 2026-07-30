@@ -7,7 +7,7 @@ import MapWrapper from '@/components/shared/MapWrapper'
 import { buildApiUrl, fetchPropertyReviews } from '@/lib/api'
 import type { Property, Review } from '@/lib/types'
 import type { DateRange } from 'react-day-picker'
-import { Star, MapPin, Users, Bed, Bath, Calendar, Moon, Dog, Check, Phone, Mail, Clock, ShieldAlert, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Star, MapPin, Users, User, Bed, Bath, Calendar, Moon, Dog, Check, Phone, Mail, Clock, ShieldAlert, Sparkles, ChevronLeft, ChevronRight, Armchair, Sofa, Utensils, UtensilsCrossed, DoorOpen, LayoutDashboard, TreePalm } from 'lucide-react'
 
 const bathroomLabel: Record<string, string> = {
   ensuite: 'Private Ensuite',
@@ -362,40 +362,106 @@ export default function PropertyDetailPage() {
           </h1>
 
           {/* Quick Stats */}
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', padding: '20px 0', borderTop: '1px solid var(--color-border)', borderBottom: '1px solid var(--color-border)', marginBottom: '32px' }}>
-            {[
-              { icon: <Users size={16} />, label: `${property.max_guests} Guests` },
-              { icon: <Bed size={16} />, label: `${property.bedrooms} Bedroom${property.bedrooms !== 1 ? 's' : ''}` },
-              { icon: <Moon size={16} />, label: `Min ${property.min_nights} Night${property.min_nights !== 1 ? 's' : ''}` },
-              { icon: <Bath size={16} />, label: (() => {
-                const detail = property.bathrooms_detail
-                if (detail && detail.length > 0) {
-                  const typeLabels: Record<string, string> = { ensuite: 'Private Attached', detached_private: 'Private Detached', shared: 'Shared' }
-                  return detail.map(d => `${d.count} ${typeLabels[d.type] || d.type}`).join(', ')
+          {(() => {
+            const spaceConfig: Record<string, { label: string; icon: React.ReactNode; matchKeywords: string[] }> = {
+              balcony: { label: 'Balcony', icon: <Armchair size={16} />, matchKeywords: ['balcony'] },
+              terrace: { label: 'Terrace', icon: <TreePalm size={16} />, matchKeywords: ['terrace'] },
+              kitchen: { label: 'Kitchen', icon: <Utensils size={16} />, matchKeywords: ['kitchen'] },
+              hall: { label: 'Hall', icon: <LayoutDashboard size={16} />, matchKeywords: ['hall'] },
+              living_room: { label: 'Living Room', icon: <Sofa size={16} />, matchKeywords: ['living room', 'livingroom'] },
+              dining_room: { label: 'Dining Room', icon: <UtensilsCrossed size={16} />, matchKeywords: ['dining room', 'diningroom'] },
+              entrance: { label: 'Entrance', icon: <DoorOpen size={16} />, matchKeywords: ['entrance'] },
+            }
+
+            type StatChip = { icon: React.ReactNode; label: string; tag?: { text: string; color: string; bg: string } }
+            const chips: StatChip[] = []
+
+            // Guests
+            chips.push({ icon: <Users size={16} />, label: `${property.max_guests} Guests` })
+
+            // Bedrooms
+            chips.push({ icon: <Bed size={16} />, label: `${property.bedrooms} Beds` })
+
+            // Bathrooms (with type)
+            const hasSharedBath = (property.bathrooms_detail ?? []).some(b => b.type === 'shared')
+            const isBathShared = (property.bathrooms_detail ?? []).length > 0 ? hasSharedBath : false
+            chips.push({
+              icon: <Bath size={16} />,
+              label: `${property.bathrooms} Baths`,
+              tag: (property.bathrooms_detail ?? []).length > 0 ? {
+                text: isBathShared ? 'Shared' : 'Not Shared',
+                color: isBathShared ? '#B45309' : '#15803D',
+                bg: isBathShared ? '#FEF3C7' : '#DCFCE7',
+                icon: isBathShared ? <Users size={12} /> : <User size={12} />
+              } : undefined
+            })
+
+            // Min Nights
+            chips.push({ icon: <Moon size={16} />, label: `Min ${property.min_nights} Night${property.min_nights !== 1 ? 's' : ''}` })
+
+            // Spaces (explicitly configured + auto-detected from amenities)
+            const activeSpacesMap = new Map<string, { type: string; count: number; sharing: string }>()
+            for (const sp of property.spaces_detail ?? []) {
+              if (Number(sp.count) > 0 && spaceConfig[sp.type]) {
+                activeSpacesMap.set(sp.type, { type: sp.type, count: Number(sp.count), sharing: sp.sharing || 'not_shared' })
+              }
+            }
+            const cleanAmenities = (property.amenities ?? []).filter(a => typeof a === 'string' && !a.startsWith('__space__:'))
+            for (const [key, cfg] of Object.entries(spaceConfig)) {
+              if (!activeSpacesMap.has(key)) {
+                const foundInAmenities = cleanAmenities.some(a => cfg.matchKeywords.some(kw => a.toLowerCase().includes(kw)))
+                if (foundInAmenities) {
+                  activeSpacesMap.set(key, { type: key, count: 1, sharing: 'not_shared' })
                 }
-                return `${property.bathrooms} Bath${property.bathrooms !== 1 ? 's' : ''}`
-              })() },
-            ].map((stat, idx) => (
-              <div key={idx} style={{
-                display: 'flex', alignItems: 'center', gap: '8px',
-                backgroundColor: 'var(--color-bg-soft)',
-                padding: '8px 14px',
-                borderRadius: '8px',
-                fontSize: '13px',
-                fontWeight: '600',
-                color: 'var(--color-text-primary)',
-              }}>
-                <span style={{ color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center' }}>{stat.icon}</span>
-                {stat.label}
+              }
+            }
+
+            for (const sp of activeSpacesMap.values()) {
+              const cfg = spaceConfig[sp.type]
+              if (cfg) {
+                const isShared = sp.sharing === 'shared'
+                chips.push({
+                  icon: cfg.icon,
+                  label: `${sp.count} ${cfg.label}`,
+                  tag: {
+                    text: isShared ? 'Shared' : 'Not Shared',
+                    color: isShared ? '#B45309' : '#15803D',
+                    bg: isShared ? '#FEF3C7' : '#DCFCE7',
+                    icon: isShared ? <Users size={12} /> : <User size={12} />
+                  }
+                })
+              }
+            }
+
+            if (property.pets_allowed) {
+              chips.push({ icon: <Dog size={16} />, label: 'Pets Welcome' })
+            }
+
+            return (
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', padding: '20px 0', borderTop: '1px solid var(--color-border)', borderBottom: '1px solid var(--color-border)', marginBottom: '32px' }}>
+                {chips.map((chip, idx) => (
+                  <div key={idx} style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    backgroundColor: 'var(--color-bg-soft)',
+                    padding: '8px 14px',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    color: 'var(--color-text-primary)',
+                  }}>
+                    <span style={{ color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center' }}>{chip.icon}</span>
+                    {chip.label}
+                    {chip.tag && (
+                      <span style={{ fontSize: '11px', fontWeight: '600', color: chip.tag.color, backgroundColor: chip.tag.bg, padding: '2px 8px', borderRadius: '100px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        {chip.tag.icon}
+                        {chip.tag.text}
+                      </span>
+                    )}
+                  </div>
+                ))}
               </div>
-            ))}
-            {property.pets_allowed && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: '#E8F5E9', padding: '8px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: '600', color: '#2E7D32' }}>
-                <Dog size={16} />
-                Pets Welcome
-              </div>
-            )}
-          </div>
+            )
+          })()}
 
           {/* Tabs - Vertical on Mobile, Horizontal on Desktop */}
           <div className="flex md:flex-row flex-col" style={{ gap: '0', marginBottom: '32px', borderBottom: 'none' }}>
@@ -517,7 +583,7 @@ export default function PropertyDetailPage() {
           {activeTab === 'amenities' && (
             <div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px' }}>
-                {property.amenities.map(amenity => (
+                {(property.amenities ?? []).filter(a => typeof a === 'string' && !a.startsWith('__space__:')).map(amenity => (
                   <div key={amenity} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 16px', backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
                     <Check size={16} style={{ color: 'var(--color-gold)', flexShrink: 0 }} />
                     <span style={{ fontSize: '14px', color: 'var(--color-text-primary)' }}>{amenity}</span>
@@ -531,17 +597,68 @@ export default function PropertyDetailPage() {
                 )}
               </div>
 
-              <div style={{ marginTop: '32px' }}>
-                <h3 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '16px' }}>Bathroom Details</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px' }}>
-                  {property.bathrooms_detail.map((b, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 16px', backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
-                      <Bath size={16} style={{ color: 'var(--color-gold)', flexShrink: 0 }} />
-                      <span style={{ fontSize: '14px', color: 'var(--color-text-primary)' }}>{b.count}x {bathroomLabel[b.type]}</span>
-                    </div>
-                  ))}
+              {property.bathrooms_detail && property.bathrooms_detail.length > 0 && (
+                <div style={{ marginTop: '32px' }}>
+                  <h3 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '16px' }}>Bathroom Details</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px' }}>
+                    {property.bathrooms_detail.map((b, i) => (
+                      <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 16px', backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
+                        <Bath size={16} style={{ color: 'var(--color-gold)', flexShrink: 0 }} />
+                        <span style={{ fontSize: '14px', color: 'var(--color-text-primary)' }}>{b.count}x {bathroomLabel[b.type]}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
+
+              {/* Spaces & Areas in Amenities tab */}
+              {(() => {
+                const spaceConfig: Record<string, { label: string; icon: React.ReactNode; matchKeywords: string[] }> = {
+                  balcony: { label: 'Balcony', icon: <Armchair size={16} />, matchKeywords: ['balcony'] },
+                  terrace: { label: 'Terrace', icon: <TreePalm size={16} />, matchKeywords: ['terrace'] },
+                  kitchen: { label: 'Kitchen', icon: <Utensils size={16} />, matchKeywords: ['kitchen'] },
+                  hall: { label: 'Hall', icon: <LayoutDashboard size={16} />, matchKeywords: ['hall'] },
+                  living_room: { label: 'Living Room', icon: <Sofa size={16} />, matchKeywords: ['living room', 'livingroom'] },
+                  dining_room: { label: 'Dining Room', icon: <UtensilsCrossed size={16} />, matchKeywords: ['dining room', 'diningroom'] },
+                  entrance: { label: 'Entrance', icon: <DoorOpen size={16} />, matchKeywords: ['entrance'] },
+                }
+                const activeSpacesMap = new Map<string, { type: string; count: number; sharing: string }>()
+                for (const sp of property.spaces_detail ?? []) {
+                  if (Number(sp.count) > 0 && spaceConfig[sp.type]) {
+                    activeSpacesMap.set(sp.type, { type: sp.type, count: Number(sp.count), sharing: sp.sharing || 'not_shared' })
+                  }
+                }
+                const cleanAmenities = (property.amenities ?? []).filter(a => typeof a === 'string' && !a.startsWith('__space__:'))
+                for (const [key, cfg] of Object.entries(spaceConfig)) {
+                  if (!activeSpacesMap.has(key)) {
+                    const foundInAmenities = cleanAmenities.some(a => cfg.matchKeywords.some(kw => a.toLowerCase().includes(kw)))
+                    if (foundInAmenities) {
+                      activeSpacesMap.set(key, { type: key, count: 1, sharing: 'not_shared' })
+                    }
+                  }
+                }
+                if (activeSpacesMap.size === 0) return null
+                return (
+                  <div style={{ marginTop: '32px' }}>
+                    <h3 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '16px' }}>Spaces &amp; Areas</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px' }}>
+                      {Array.from(activeSpacesMap.values()).map((sp, i) => {
+                        const cfg = spaceConfig[sp.type]
+                        return (
+                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 16px', backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
+                            <span style={{ color: 'var(--color-gold)', flexShrink: 0, display: 'flex' }}>{cfg?.icon ?? <LayoutDashboard size={16} />}</span>
+                            <span style={{ fontSize: '14px', color: 'var(--color-text-primary)', flex: 1 }}>{sp.count}x {cfg?.label ?? sp.type}</span>
+                            <span style={{ fontSize: '11px', fontWeight: '600', color: sp.sharing === 'shared' ? '#B45309' : '#15803D', backgroundColor: sp.sharing === 'shared' ? '#FEF3C7' : '#DCFCE7', padding: '2px 7px', borderRadius: '100px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              {sp.sharing === 'shared' ? <Users size={12} /> : <User size={12} />}
+                              {sp.sharing === 'shared' ? 'Shared' : 'Not Shared'}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })()}
 
               <div style={{ marginTop: '32px', ...cardStyle }}>
                 <h3 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>

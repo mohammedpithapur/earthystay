@@ -5,6 +5,15 @@ export interface BathroomDetail {
   count: number
 }
 
+export type SpaceType = 'balcony' | 'terrace' | 'kitchen' | 'hall' | 'living_room' | 'dining_room' | 'entrance'
+export type SpaceSharing = 'shared' | 'not_shared'
+
+export interface SpaceDetail {
+  type: SpaceType
+  count: number
+  sharing: SpaceSharing
+}
+
 export interface PropertyImage {
   id: string
   property_id: string
@@ -25,6 +34,7 @@ export interface Property {
   bedrooms: number
   bathrooms: number
   bathrooms_detail: BathroomDetail[]
+  spaces_detail: SpaceDetail[]
   city: string
   state: string
   country: string
