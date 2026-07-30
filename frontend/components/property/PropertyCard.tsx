@@ -207,7 +207,9 @@ export default function PropertyCard({ property }: Props) {
 
           {/* Amenities */}
           {(() => {
-            const displayAmenities = (property.amenities ?? []).filter(a => typeof a === 'string' && !a.startsWith('__space__:'))
+            const displayAmenities = (property.amenities ?? []).filter(
+              a => typeof a === 'string' && !a.startsWith('__space__:') && !a.trim().startsWith('{') && !a.includes('"type":')
+            )
             return (
               <div style={{ display: 'flex', gap: '6px', marginTop: 'auto', flexWrap: 'wrap' }}>
                 {displayAmenities.slice(0, 3).map(amenity => (

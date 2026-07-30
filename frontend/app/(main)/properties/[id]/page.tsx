@@ -583,7 +583,7 @@ export default function PropertyDetailPage() {
           {activeTab === 'amenities' && (
             <div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px' }}>
-                {(property.amenities ?? []).filter(a => typeof a === 'string' && !a.startsWith('__space__:')).map(amenity => (
+                {(property.amenities ?? []).filter(a => typeof a === 'string' && !a.startsWith('__space__:') && !a.trim().startsWith('{') && !a.includes('"type":')).map(amenity => (
                   <div key={amenity} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 16px', backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
                     <Check size={16} style={{ color: 'var(--color-gold)', flexShrink: 0 }} />
                     <span style={{ fontSize: '14px', color: 'var(--color-text-primary)' }}>{amenity}</span>
