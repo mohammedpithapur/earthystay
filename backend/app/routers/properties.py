@@ -30,7 +30,11 @@ async def list_properties(
     limit: int = Query(12, ge=1, le=200),
     db: AsyncSession = Depends(get_db),
 ):
-    await auto_cleanup_expired_bookings(db)
+    try:
+        await auto_cleanup_expired_bookings(db)
+    except Exception:
+        pass
+
     cache_payload = {
         "city": city,
         "state": state,
@@ -44,9 +48,12 @@ async def list_properties(
     }
     cache_hash = hashlib.sha256(json.dumps(cache_payload, sort_keys=True).encode()).hexdigest()
     cache_key = f"properties:list:{cache_hash}"
-    cached = await cache_get_json(cache_key)
-    if cached:
-        return cached
+    try:
+        cached = await cache_get_json(cache_key)
+        if cached and isinstance(cached, dict) and "items" in cached:
+            return cached
+    except Exception:
+        pass
 
     amenity_list = amenities.split(",") if amenities else None
     result = await get_property_filters(
@@ -55,7 +62,10 @@ async def list_properties(
         page=page, limit=limit,
     )
     response = PropertyListOut.model_validate(result).model_dump(mode="json")
-    await cache_set_json(cache_key, response, ttl_seconds=300)
+    try:
+        await cache_set_json(cache_key, response, ttl_seconds=300)
+    except Exception:
+        pass
     return response
 
 

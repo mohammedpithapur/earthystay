@@ -36,6 +36,26 @@ app.add_exception_handler(
         content={"detail": "Rate limit exceeded"},
     ),
 )
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error(f"Global exception on {request.method} {request.url.path}: {exc}", exc_info=True)
+    origin = request.headers.get("origin", "*")
+    headers = {
+        "Access-Control-Allow-Credentials": "true",
+    }
+    if origin and origin != "*":
+        headers["Access-Control-Allow-Origin"] = origin
+    else:
+        headers["Access-Control-Allow-Origin"] = "*"
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+        headers=headers,
+    )
+
+
 app.add_middleware(SlowAPIMiddleware)
 
 

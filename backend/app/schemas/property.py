@@ -8,10 +8,15 @@ from datetime import datetime
 # ── PropertyImage ──
 
 class PropertyImageOut(BaseModel):
-    id: UUID
-    image_url: str
-    is_primary: bool
-    display_order: int
+    id: Any
+    image_url: str = ""
+    is_primary: bool = False
+    display_order: int = 0
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def ensure_str_id(cls, v: Any) -> str:
+        return str(v) if v is not None else ""
 
     model_config = {"from_attributes": True}
 
@@ -30,44 +35,83 @@ class PropertyImageUpdate(BaseModel):
 # ── Property ──
 
 class PropertyOut(BaseModel):
-    id: UUID
-    owner_id: UUID
-    name: str
-    description: str
-    address: str
-    city: str
-    state: str
-    country: str
-    latitude: float
-    longitude: float
-    contact_phone: str
-    contact_email: str
-    check_in_time: str
-    check_out_time: str
-    house_rules: list[str]
-    price_per_night: int
-    cleaning_fee: int
+    id: Any
+    owner_id: Any
+    name: str = ""
+    description: str = ""
+    address: str = ""
+    city: str = ""
+    state: str = ""
+    country: str = "India"
+    latitude: float = 0.0
+    longitude: float = 0.0
+    contact_phone: str = ""
+    contact_email: str = ""
+    check_in_time: str = "2:00 PM"
+    check_out_time: str = "11:00 AM"
+    house_rules: list[str] = Field(default_factory=list)
+    price_per_night: int = 0
+    cleaning_fee: int = 0
     extra_guest_charge_per_night: int = 0
     base_guests: int = 2
-    max_guests: int
-    bedrooms: int
-    bathrooms: int
+    max_guests: int = 1
+    bedrooms: int = 1
+    bathrooms: int = 1
     bathrooms_detail: list[dict] = Field(default_factory=list)
     spaces_detail: list[dict] = Field(default_factory=list)
-    min_nights: int
-    pets_allowed: bool
-    max_pets: int
-    pet_charge_per_night: int
-    amenities: list[str]
-    is_published: bool
-    override_house_rules: bool
-    override_amenities: bool
-    override_details: bool
-    avg_rating: float
-    review_count: int
-    created_at: datetime
-    updated_at: datetime
+    min_nights: int = 1
+    pets_allowed: bool = False
+    max_pets: int = 0
+    pet_charge_per_night: int = 0
+    amenities: list[str] = Field(default_factory=list)
+    is_published: bool = True
+    override_house_rules: bool = False
+    override_amenities: bool = False
+    override_details: bool = False
+    avg_rating: float = 0.0
+    review_count: int = 0
+    created_at: Any = None
+    updated_at: Any = None
     images: list[PropertyImageOut] = Field(default_factory=list)
+
+    @field_validator("id", "owner_id", mode="before")
+    @classmethod
+    def ensure_str_uuid(cls, v: Any) -> str:
+        return str(v) if v is not None else ""
+
+    @field_validator(
+        "price_per_night", "cleaning_fee", "extra_guest_charge_per_night",
+        "base_guests", "max_guests", "bedrooms", "bathrooms",
+        "min_nights", "max_pets", "pet_charge_per_night", "review_count",
+        mode="before"
+    )
+    @classmethod
+    def ensure_int(cls, v: Any) -> int:
+        if v is None:
+            return 0
+        try:
+            return int(v)
+        except Exception:
+            return 0
+
+    @field_validator("latitude", "longitude", "avg_rating", mode="before")
+    @classmethod
+    def ensure_float(cls, v: Any) -> float:
+        if v is None:
+            return 0.0
+        try:
+            return float(v)
+        except Exception:
+            return 0.0
+
+    @field_validator(
+        "name", "description", "address", "city", "state", "country",
+        "contact_phone", "contact_email", "check_in_time", "check_out_time",
+        mode="before"
+    )
+    @classmethod
+    def ensure_string(cls, v: Any) -> str:
+        return str(v) if v is not None else ""
 
     @field_validator("spaces_detail", "bathrooms_detail", mode="before")
     @classmethod

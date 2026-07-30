@@ -321,10 +321,13 @@ async def create_property(
     db: AsyncSession = Depends(get_db),
 ):
     images = await normalize_property_images(data.images)
-    property_data = data.model_dump(exclude={"images"})
+    spaces = data.spaces_detail
+    property_data = data.model_dump(exclude={"images", "spaces_detail"})
     if "amenities" in property_data and isinstance(property_data["amenities"], list):
         property_data["amenities"] = [a for a in property_data["amenities"] if isinstance(a, str) and not a.startswith("__space__:") and not a.startswith("{")]
     property = Property(owner_id=admin.id, **property_data)
+    if spaces:
+        property.spaces_detail = spaces
     db.add(property)
 
     try:
@@ -363,12 +366,16 @@ async def update_property(
         raise HTTPException(status_code=404, detail="Property not found")
     images = await normalize_property_images(data.images)
     update_data = data.model_dump(exclude_unset=True, exclude={"images"})
+    spaces = update_data.pop("spaces_detail", None)
     if "amenities" in update_data and isinstance(update_data["amenities"], list):
         update_data["amenities"] = [a for a in update_data["amenities"] if isinstance(a, str) and not a.startswith("__space__:") and not a.startswith("{")]
 
     try:
         for key, val in update_data.items():
             setattr(property, key, val)
+
+        if spaces is not None:
+            property.spaces_detail = spaces
 
         await sync_property_images(db, property_id, images)
         await db.commit()
