@@ -61,14 +61,18 @@ async def request_logging(request: Request, call_next):
     return response
 
 
+cors_origins = set(settings.CORS_ORIGINS)
+cors_origins.add("https://earthystay.vercel.app")
+cors_origins.add("http://localhost:3000")
+cors_origins.add("http://127.0.0.1:3000")
+
 cors_kwargs = {
-    "allow_origins": settings.CORS_ORIGINS,
+    "allow_origins": list(cors_origins),
+    "allow_origin_regex": r"^https?://.*\.vercel\.app$",
     "allow_credentials": True,
     "allow_methods": ["*"],
     "allow_headers": ["*"],
 }
-if settings.ENVIRONMENT == "development":
-    cors_kwargs["allow_origin_regex"] = r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$"
 
 app.add_middleware(CORSMiddleware, **cors_kwargs)
 

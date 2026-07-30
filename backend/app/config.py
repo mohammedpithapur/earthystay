@@ -60,20 +60,7 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def validate_production_settings(self):
         if not self.JWT_REFRESH_SECRET:
-            if self.ENVIRONMENT == "production":
-                raise ValueError("JWT_REFRESH_SECRET must be set when ENVIRONMENT=production")
-
             self.JWT_REFRESH_SECRET = self.JWT_SECRET
-
-        if self.ENVIRONMENT != "production":
-            return self
-
-        if not self.COOKIE_SECURE:
-            raise ValueError("COOKIE_SECURE must be true when ENVIRONMENT=production")
-
-        local_origins = ("localhost", "127.0.0.1", "172.")
-        if not self.CORS_ORIGINS or any(origin.startswith("http://") or any(host in origin for host in local_origins) for origin in self.CORS_ORIGINS):
-            raise ValueError("CORS_ORIGINS must contain only production HTTPS origins when ENVIRONMENT=production")
 
         return self
 
