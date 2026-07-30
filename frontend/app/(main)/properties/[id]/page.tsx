@@ -392,7 +392,6 @@ export default function PropertyDetailPage() {
                 text: isBathShared ? 'Shared' : 'Not Shared',
                 color: isBathShared ? '#B45309' : '#15803D',
                 bg: isBathShared ? '#FEF3C7' : '#DCFCE7',
-                icon: isBathShared ? <Users size={12} /> : <User size={12} />
               } : undefined
             })
 
@@ -427,7 +426,6 @@ export default function PropertyDetailPage() {
                     text: isShared ? 'Shared' : 'Not Shared',
                     color: isShared ? '#B45309' : '#15803D',
                     bg: isShared ? '#FEF3C7' : '#DCFCE7',
-                    icon: isShared ? <Users size={12} /> : <User size={12} />
                   }
                 })
               }
@@ -452,8 +450,7 @@ export default function PropertyDetailPage() {
                     <span style={{ color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center' }}>{chip.icon}</span>
                     {chip.label}
                     {chip.tag && (
-                      <span style={{ fontSize: '11px', fontWeight: '600', color: chip.tag.color, backgroundColor: chip.tag.bg, padding: '2px 8px', borderRadius: '100px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        {chip.tag.icon}
+                      <span style={{ fontSize: '11px', fontWeight: '600', color: chip.tag.color, backgroundColor: chip.tag.bg, padding: '2px 8px', borderRadius: '100px', display: 'inline-flex', alignItems: 'center' }}>
                         {chip.tag.text}
                       </span>
                     )}
@@ -648,8 +645,7 @@ export default function PropertyDetailPage() {
                           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '14px 16px', backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
                             <span style={{ color: 'var(--color-gold)', flexShrink: 0, display: 'flex' }}>{cfg?.icon ?? <LayoutDashboard size={16} />}</span>
                             <span style={{ fontSize: '14px', color: 'var(--color-text-primary)', flex: 1 }}>{sp.count}x {cfg?.label ?? sp.type}</span>
-                            <span style={{ fontSize: '11px', fontWeight: '600', color: sp.sharing === 'shared' ? '#B45309' : '#15803D', backgroundColor: sp.sharing === 'shared' ? '#FEF3C7' : '#DCFCE7', padding: '2px 7px', borderRadius: '100px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                              {sp.sharing === 'shared' ? <Users size={12} /> : <User size={12} />}
+                            <span style={{ fontSize: '11px', fontWeight: '600', color: sp.sharing === 'shared' ? '#B45309' : '#15803D', backgroundColor: sp.sharing === 'shared' ? '#FEF3C7' : '#DCFCE7', padding: '2px 7px', borderRadius: '100px', display: 'inline-flex', alignItems: 'center' }}>
                               {sp.sharing === 'shared' ? 'Shared' : 'Not Shared'}
                             </span>
                           </div>

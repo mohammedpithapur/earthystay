@@ -122,13 +122,13 @@ export default function PropertyCard({ property }: Props) {
               text: `${property.bedrooms} Beds`
             })
 
-            // 3. Baths (with type icon)
+            // 3. Baths (with type label)
             const hasSharedBath = (property.bathrooms_detail ?? []).some(b => b.type === 'shared')
             const isBathShared = (property.bathrooms_detail ?? []).length > 0 ? hasSharedBath : false
+            const bathSharingText = (property.bathrooms_detail ?? []).length > 0 ? (isBathShared ? 'Shared' : 'Not Shared') : null
             slots.push({
               icon: <Bath style={{ width: '14px', height: '14px', strokeWidth: 1.8 }} />,
-              text: `${property.bathrooms} Baths`,
-              sharingIcon: isBathShared ? <Users style={{ width: '13px', height: '13px', color: '#B45309' }} title="Shared" /> : <User style={{ width: '13px', height: '13px', color: '#15803D' }} title="Not Shared" />
+              text: `${property.bathrooms} Baths${bathSharingText ? ` (${bathSharingText})` : ''}`
             })
 
             // 4. Spaces (Balcony, Terrace, Kitchen, Hall, Living Room, Dining Room, Entrance)
@@ -168,8 +168,7 @@ export default function PropertyCard({ property }: Props) {
                 const isShared = sp.sharing === 'shared'
                 slots.push({
                   icon: cfg.icon,
-                  text: `${sp.count} ${cfg.label}`,
-                  sharingIcon: isShared ? <Users style={{ width: '13px', height: '13px', color: '#B45309' }} title="Shared" /> : <User style={{ width: '13px', height: '13px', color: '#15803D' }} title="Not Shared" />
+                  text: `${sp.count} ${cfg.label} (${isShared ? 'Shared' : 'Not Shared'})`
                 })
               }
             }
@@ -180,11 +179,6 @@ export default function PropertyCard({ property }: Props) {
                   <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: 'var(--color-text-secondary)', fontWeight: '500' }}>
                     {slot.icon}
                     {slot.text}
-                    {slot.sharingIcon && (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', marginLeft: '1px' }}>
-                        {slot.sharingIcon}
-                      </span>
-                    )}
                   </span>
                 ))}
               </div>
