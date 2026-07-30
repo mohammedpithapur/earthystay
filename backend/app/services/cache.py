@@ -40,3 +40,15 @@ async def cache_set_json(key: str, value: Any, ttl_seconds: int) -> None:
         await client.setex(key, ttl_seconds, json.dumps(value))
     except Exception:
         logger.exception("Redis set failed")
+
+
+async def invalidate_properties_cache() -> None:
+    client = get_redis()
+    if client is None:
+        return
+    try:
+        keys = await client.keys("properties:*")
+        if keys:
+            await client.delete(*keys)
+    except Exception:
+        logger.exception("Redis invalidation failed")

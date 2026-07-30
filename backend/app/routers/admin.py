@@ -25,7 +25,7 @@ from app.services.upload import (
     UploadStorageError,
     UploadValidationError,
 )
-from app.services.cache import cache_get_json, cache_set_json
+from app.services.cache import cache_get_json, cache_set_json, invalidate_properties_cache
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -334,6 +334,7 @@ async def create_property(
         await db.flush()
         await sync_property_images(db, str(property.id), images)
         await db.commit()
+        await invalidate_properties_cache()
     except HTTPException:
         await db.rollback()
         raise
@@ -379,6 +380,7 @@ async def update_property(
 
         await sync_property_images(db, property_id, images)
         await db.commit()
+        await invalidate_properties_cache()
     except HTTPException:
         await db.rollback()
         raise
