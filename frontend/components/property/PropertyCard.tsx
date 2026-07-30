@@ -106,7 +106,7 @@ export default function PropertyCard({ property }: Props) {
 
           {/* Details Row — ONLY Guests, Beds, Baths, and spaces_detail (Balcony, Living Room, Kitchen, etc. with Shared/Not Shared) */}
           {(() => {
-            type Slot = { icon: React.ReactNode; text: string }
+            type Slot = { icon: React.ReactNode; text: string; sharingIcon?: React.ReactNode }
             const slots: Slot[] = []
             const spaces = property.spaces_detail ?? []
 
