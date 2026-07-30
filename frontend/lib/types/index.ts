@@ -34,7 +34,7 @@ export interface Property {
   bedrooms: number
   bathrooms: number
   bathrooms_detail: BathroomDetail[]
-  spaces_detail: SpaceDetail[]
+  spaces_detail?: SpaceDetail[]
   city: string
   state: string
   country: string

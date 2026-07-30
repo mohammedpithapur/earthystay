@@ -35,6 +35,7 @@ const E2E_SEED_PROPERTY: Property = {
   bedrooms: 2,
   bathrooms: 1,
   bathrooms_detail: [],
+  spaces_detail: [],
   city: 'Goa',
   state: 'Goa',
   country: 'India',
