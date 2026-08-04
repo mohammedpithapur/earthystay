@@ -48,7 +48,17 @@ def _set_refresh_cookie(response: Response, refresh_token: str) -> None:
 
 
 def _clear_refresh_cookie(response: Response) -> None:
-    response.delete_cookie(key="refresh_token", path="/auth")
+    is_production = settings.COOKIE_SECURE
+    response.set_cookie(
+        key="refresh_token",
+        value="",
+        httponly=True,
+        secure=is_production,
+        samesite="none" if is_production else "lax",
+        max_age=0,
+        domain=settings.COOKIE_DOMAIN,
+        path="/auth",
+    )
 
 
 # ── Register ──────────────────────────────────────────────────────────────────
