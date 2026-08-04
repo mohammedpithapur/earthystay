@@ -2,19 +2,30 @@ import type { NextConfig } from "next";
 
 function supabaseHostname(): string {
   if (process.env.NEXT_PUBLIC_SUPABASE_HOSTNAME) {
-    return process.env.NEXT_PUBLIC_SUPABASE_HOSTNAME;
+    return process.env.NEXT_PUBLIC_SUPABASE_HOSTNAME.trim();
   }
 
   if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
-    return new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname;
+    try {
+      const raw = process.env.NEXT_PUBLIC_SUPABASE_URL.trim();
+      const urlStr = raw.startsWith("http://") || raw.startsWith("https://") ? raw : `https://${raw}`;
+      return new URL(urlStr).hostname;
+    } catch {
+      return "xxxx.supabase.co";
+    }
   }
 
   return "xxxx.supabase.co";
 }
 
 function apiOrigin(): string {
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
-  return new URL(apiBase).origin;
+  const raw = (process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000").trim();
+  try {
+    const urlStr = raw.startsWith("http://") || raw.startsWith("https://") ? raw : `https://${raw}`;
+    return new URL(urlStr).origin;
+  } catch {
+    return "http://localhost:8000";
+  }
 }
 
 const securityHeaders = [

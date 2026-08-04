@@ -27,7 +27,7 @@ engine = create_async_engine(
     poolclass=NullPool if _IS_LAMBDA else AsyncAdaptedQueuePool,
     connect_args={
         "statement_cache_size": 0,
-        "server_settings": {"search_path": "main, public"},
+        "server_settings": {"search_path": "public"},
     },
     echo=False,
     **({} if _IS_LAMBDA else {
