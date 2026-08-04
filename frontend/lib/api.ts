@@ -1,6 +1,14 @@
 import type { Property, PropertyImage, Review } from "@/lib/types"
 
-export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000"
+function getCleanApiBase(): string {
+  const raw = (process.env.NEXT_PUBLIC_API_BASE || "").trim()
+  if (!raw || raw.includes("npx") || raw.includes("plugin") || (!raw.startsWith("http://") && !raw.startsWith("https://"))) {
+    return "https://3-6-235-122.sslip.io"
+  }
+  return raw.endsWith("/") ? raw.slice(0, -1) : raw
+}
+
+export const API_BASE = getCleanApiBase()
 
 export type ApiFetcher = (url: string, options?: RequestInit) => Promise<Response>
 
