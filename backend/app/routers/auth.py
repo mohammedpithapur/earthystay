@@ -13,7 +13,7 @@ from app.dependencies import get_current_user
 from app.models.password_reset import PasswordResetToken
 from app.models.user import User
 from app.rate_limit import limiter
-from app.schemas.user import RegisterIn, LoginIn, TokenOut, UserOut, ForgotPasswordIn, ResetPasswordIn
+from app.schemas.user import RegisterIn, LoginIn, TokenOut, UserOut, ForgotPasswordIn, ResetPasswordIn, SendOtpIn, VerifyOtpIn
 from app.services.auth import (
     hash_password, verify_password_async,
     create_access_token, create_refresh_token, decode_refresh_token,
