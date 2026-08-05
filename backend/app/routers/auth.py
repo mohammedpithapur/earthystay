@@ -110,9 +110,9 @@ async def verify_email_otp(request: Request, data: VerifyOtpIn, response: Respon
 
 # ── Register ──────────────────────────────────────────────────────────────────
 
-@router.post("/register")
+@router.post("/register", response_model=TokenOut)
 @limiter.limit("10/minute")
-async def register(request: Request, data: RegisterIn, db: AsyncSession = Depends(get_db)):
+async def register(request: Request, data: RegisterIn, response: Response, db: AsyncSession = Depends(get_db)):
     existing = await db.execute(select(User).where(User.email == data.email))
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -122,22 +122,15 @@ async def register(request: Request, data: RegisterIn, db: AsyncSession = Depend
         password_hash=hash_password(data.password),
         full_name=data.full_name,
         phone=data.phone,
-        is_email_verified=False,
+        is_email_verified=True,
     )
     db.add(user)
     await db.commit()
     await db.refresh(user)
 
-    # Automatically send 6-digit OTP code to user's email
-    code = f"{secrets.randbelow(1000000):06d}"
-    expires_at = utc_now() + timedelta(minutes=10)
-    _OTP_STORE[data.email.lower()] = (code, expires_at)
-    try:
-        await send_verification_otp_email(data.email, code)
-    except Exception as e:
-        logger.error("Failed to send verification email: %s", e)
-
-    return {"message": "Account created. Verification code sent to email.", "email": data.email, "requires_verification": True}
+    access_token = create_access_token(user)
+    _set_refresh_cookie(response, create_refresh_token(user))
+    return {"access_token": access_token, "user": user}
 
 
 # ── Login ─────────────────────────────────────────────────────────────────────

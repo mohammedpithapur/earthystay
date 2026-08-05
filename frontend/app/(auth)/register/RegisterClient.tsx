@@ -57,17 +57,8 @@ export default function RegisterClient() {
     setApiError('')
     setSubmitting(true)
     try {
-      const res = await fetch(`${API_BASE}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: form.email, password: form.password, full_name: form.full_name, phone: form.phone }),
-      })
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
-        throw new Error(err.detail || 'Registration failed')
-      }
-      setStep('verify')
-      setResendTimer(60)
+      await register(form.email, form.password, form.full_name, form.phone)
+      router.replace(next)
     } catch (err) {
       setApiError(err instanceof Error ? err.message : 'Registration failed')
     } finally {
@@ -165,54 +156,8 @@ export default function RegisterClient() {
         </div>
 
         <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: 'clamp(24px, 4vw, 40px)' }}>
-          {step === 'verify' ? (
-            <div>
-              <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '8px' }}>Verify Your Email</h2>
-              <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--color-gold)', marginBottom: '20px' }} />
-              <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', marginBottom: '24px', lineHeight: '1.6' }}>
-                We sent a 6-digit verification code to <strong style={{ color: 'var(--color-text-primary)' }}>{form.email}</strong>. Please enter the code below to complete your registration.
-              </p>
-
-              {otpError && (
-                <div style={{ backgroundColor: '#FFF5F5', border: '1px solid #FEB2B2', borderRadius: '8px', padding: '12px 16px', marginBottom: '20px', color: '#C53030', fontSize: '14px' }}>
-                  {otpError}
-                </div>
-              )}
-
-              <div style={{ marginBottom: '24px' }}>
-                <label style={labelStyle}>6-Digit Verification Code</label>
-                <input
-                  type="text"
-                  maxLength={6}
-                  placeholder="123456"
-                  value={otpCode}
-                  onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                  style={{ ...inputStyle('otp'), textAlign: 'center', fontSize: '24px', letterSpacing: '8px', fontWeight: '800' }}
-                />
-              </div>
-
-              <button
-                onClick={handleVerifyOtp}
-                disabled={verifyingOtp}
-                style={{ width: '100%', backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', border: 'none', padding: '16px', fontSize: '13px', letterSpacing: '2px', fontWeight: '700', textTransform: 'uppercase', cursor: verifyingOtp ? 'not-allowed' : 'pointer', marginBottom: '20px', borderRadius: '8px', opacity: verifyingOtp ? 0.7 : 1 }}
-              >
-                {verifyingOtp ? 'Verifying...' : 'Verify Email & Finish'}
-              </button>
-
-              <div style={{ textAlign: 'center' }}>
-                <button
-                  onClick={handleResendOtp}
-                  disabled={resendTimer > 0}
-                  style={{ background: 'none', border: 'none', color: resendTimer > 0 ? 'var(--color-text-muted)' : 'var(--color-gold)', fontSize: '13px', fontWeight: '700', cursor: resendTimer > 0 ? 'default' : 'pointer' }}
-                >
-                  {resendTimer > 0 ? `Resend Code in ${resendTimer}s` : 'Resend Verification Code'}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <>
-              <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '8px' }}>Create Account</h2>
-              <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--color-gold)', marginBottom: '28px' }} />
+          <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '8px' }}>Create Account</h2>
+          <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--color-gold)', marginBottom: '28px' }} />
 
           {apiError && (
             <div style={{ backgroundColor: '#FFF5F5', border: '1px solid #FEB2B2', borderRadius: '8px', padding: '12px 16px', marginBottom: '20px', color: '#C53030', fontSize: '14px' }}>
@@ -304,8 +249,6 @@ export default function RegisterClient() {
               Sign In
             </Link>
           </p>
-            </>
-          )}
         </div>
       </div>
     </div>
