@@ -83,6 +83,9 @@ async def request_logging(request: Request, call_next):
 
 cors_origins = set(settings.CORS_ORIGINS)
 cors_origins.add("https://earthystay.vercel.app")
+cors_origins.add("https://earthystay-delta.vercel.app")
+cors_origins.add("https://earthystays.com")
+cors_origins.add("https://www.earthystays.com")
 cors_origins.add("http://localhost:3000")
 cors_origins.add("http://127.0.0.1:3000")
 
