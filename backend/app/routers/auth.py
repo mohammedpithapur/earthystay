@@ -1,6 +1,9 @@
+import logging
 import secrets
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
+
+logger = logging.getLogger("earthystay.auth")
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
