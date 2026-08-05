@@ -57,6 +57,15 @@ class ResetPasswordIn(BaseModel):
     new_password: str = Field(min_length=8)
 
 
+class SendOtpIn(BaseModel):
+    email: EmailStr
+
+
+class VerifyOtpIn(BaseModel):
+    email: EmailStr
+    code: str = Field(min_length=6, max_length=6)
+
+
 # ── Dashboard ──
 
 class DashboardOut(BaseModel):

@@ -61,11 +61,55 @@ def _clear_refresh_cookie(response: Response) -> None:
     )
 
 
+_OTP_STORE: dict[str, tuple[str, datetime]] = {}
+
+
+@router.post("/send-verification-otp")
+@limiter.limit("5/minute")
+async def send_verification_otp(request: Request, data: SendOtpIn, db: AsyncSession = Depends(get_db)):
+    code = f"{secrets.randbelow(1000000):06d}"
+    expires_at = utc_now() + timedelta(minutes=10)
+    _OTP_STORE[data.email.lower()] = (code, expires_at)
+    sent = await send_verification_otp_email(data.email, code)
+    if not sent and settings.ENVIRONMENT != "development":
+        raise HTTPException(status_code=500, detail="Failed to send verification email")
+    return {"message": "Verification code sent to your email."}
+
+
+@router.post("/verify-email-otp", response_model=TokenOut)
+@limiter.limit("10/minute")
+async def verify_email_otp(request: Request, data: VerifyOtpIn, response: Response, db: AsyncSession = Depends(get_db)):
+    email_key = data.email.lower()
+    stored = _OTP_STORE.get(email_key)
+    if not stored:
+        raise HTTPException(status_code=400, detail="No verification code found. Please request a new one.")
+    code, expires_at = stored
+    if utc_now() > expires_at:
+        _OTP_STORE.pop(email_key, None)
+        raise HTTPException(status_code=400, detail="Verification code has expired. Please request a new one.")
+    if data.code != code:
+        raise HTTPException(status_code=400, detail="Invalid verification code.")
+
+    _OTP_STORE.pop(email_key, None)
+    result = await db.execute(select(User).where(User.email == data.email))
+    user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.is_email_verified = True
+    await db.commit()
+    await db.refresh(user)
+
+    access_token = create_access_token(user)
+    _set_refresh_cookie(response, create_refresh_token(user))
+    return {"access_token": access_token, "user": user}
+
+
 # ── Register ──────────────────────────────────────────────────────────────────
 
-@router.post("/register", response_model=TokenOut)
+@router.post("/register")
 @limiter.limit("10/minute")
-async def register(request: Request, data: RegisterIn, response: Response, db: AsyncSession = Depends(get_db)):
+async def register(request: Request, data: RegisterIn, db: AsyncSession = Depends(get_db)):
     existing = await db.execute(select(User).where(User.email == data.email))
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -75,14 +119,19 @@ async def register(request: Request, data: RegisterIn, response: Response, db: A
         password_hash=hash_password(data.password),
         full_name=data.full_name,
         phone=data.phone,
+        is_email_verified=False,
     )
     db.add(user)
     await db.commit()
     await db.refresh(user)
 
-    access_token = create_access_token(user)
-    _set_refresh_cookie(response, create_refresh_token(user))
-    return {"access_token": access_token, "user": user}
+    # Automatically send 6-digit OTP code to user's email
+    code = f"{secrets.randbelow(1000000):06d}"
+    expires_at = utc_now() + timedelta(minutes=10)
+    _OTP_STORE[data.email.lower()] = (code, expires_at)
+    await send_verification_otp_email(data.email, code)
+
+    return {"message": "Account created. Verification code sent to email.", "email": data.email, "requires_verification": True}
 
 
 # ── Login ─────────────────────────────────────────────────────────────────────
@@ -93,8 +142,14 @@ async def login(request: Request, data: LoginIn, response: Response, db: AsyncSe
     result = await db.execute(select(User).where(User.email == data.email))
     user = result.scalar_one_or_none()
 
-    if not user or not user.is_active or not await verify_password_async(data.password, user.password_hash):
-        raise HTTPException(status_code=401, detail="Invalid email or password")
+    if not user:
+        raise HTTPException(status_code=404, detail="No account found with this email. Please sign up or register first.")
+
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="User account is inactive.")
+
+    if not await verify_password_async(data.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Incorrect password. Please check your password or use 'Forgot Password'.")
 
     access_token = create_access_token(user)
     _set_refresh_cookie(response, create_refresh_token(user))
@@ -227,6 +282,7 @@ async def google_callback(
             # Random password — Google users authenticate via Google, not password
             password_hash=hash_password(secrets.token_urlsafe(32)),
             full_name=google_user.get("name") or email.split("@")[0],
+            is_email_verified=True,
         )
         db.add(user)
         await db.commit()

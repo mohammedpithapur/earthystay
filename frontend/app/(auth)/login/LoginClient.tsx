@@ -104,6 +104,16 @@ export default function LoginClient() {
           {apiError && (
             <div style={{ backgroundColor: '#FFF5F5', border: '1px solid #FEB2B2', borderRadius: '8px', padding: '12px 16px', marginBottom: '20px', color: '#C53030', fontSize: '14px' }}>
               {apiError}
+              {apiError.includes('No account found') && (
+                <div style={{ marginTop: '10px' }}>
+                  <Link
+                    href={`/register?next=${encodeURIComponent(next)}`}
+                    style={{ display: 'inline-block', backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', textDecoration: 'none', padding: '8px 16px', borderRadius: '6px', fontSize: '12px', fontWeight: '700' }}
+                  >
+                    Register / Sign Up Now
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 

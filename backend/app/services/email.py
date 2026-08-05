@@ -43,6 +43,32 @@ async def send_password_reset_email(to_email: str, reset_url: str) -> bool:
     return False
 
 
+async def send_verification_otp_email(to_email: str, code: str) -> bool:
+    if not settings.RESEND_API_KEY:
+        if settings.ENVIRONMENT == "development":
+            logger.info("Verification OTP for %s: %s", to_email, code)
+            return True
+        logger.error("RESEND_API_KEY is not configured")
+        return False
+
+    async with httpx.AsyncClient(timeout=10) as client:
+        html = _render_template("verification_otp.html", code=code)
+        response = await client.post(
+            "https://api.resend.com/emails",
+            headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}"},
+            json={
+                "from": settings.RESEND_FROM_EMAIL,
+                "to": [to_email],
+                "subject": f"{code} is your EarthyStay verification code",
+                "html": html,
+            },
+        )
+    if response.is_success:
+        return True
+    logger.error("Resend OTP verification email failed: %s %s", response.status_code, response.text)
+    return False
+
+
 async def send_booking_confirmation_email(
     to_email: str,
     guest_name: str,
