@@ -129,7 +129,10 @@ async def register(request: Request, data: RegisterIn, db: AsyncSession = Depend
     code = f"{secrets.randbelow(1000000):06d}"
     expires_at = utc_now() + timedelta(minutes=10)
     _OTP_STORE[data.email.lower()] = (code, expires_at)
-    await send_verification_otp_email(data.email, code)
+    try:
+        await send_verification_otp_email(data.email, code)
+    except Exception as e:
+        logger.error("Failed to send verification email: %s", e)
 
     return {"message": "Account created. Verification code sent to email.", "email": data.email, "requires_verification": True}
 
