@@ -523,7 +523,12 @@ async def update_image(
     admin: User = Depends(get_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    image = await db.get(PropertyImage, image_id)
+    try:
+        img_uuid = uuid.UUID(image_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid image ID format")
+
+    image = await db.get(PropertyImage, img_uuid)
     if not image:
         raise HTTPException(status_code=404, detail="Image not found")
     for key, val in data.model_dump(exclude_unset=True).items():
@@ -539,16 +544,25 @@ async def delete_image(
     admin: User = Depends(get_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    image = await db.get(PropertyImage, image_id)
+    try:
+        img_uuid = uuid.UUID(image_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid image ID format")
+
+    image = await db.get(PropertyImage, img_uuid)
     if not image:
         raise HTTPException(status_code=404, detail="Image not found")
+
+    # Delete physical file from Supabase Storage bucket
     try:
         delete_property_image_from_url(image.image_url)
-    except UploadStorageError as exc:
-        raise HTTPException(status_code=500, detail=f"Image delete failed: {exc}") from exc
+    except UploadStorageError:
+        pass  # If file was already deleted from bucket, continue deleting DB record
+
+    # Delete database record from PostgreSQL
     await db.delete(image)
     await db.commit()
-    return {"message": "Image deleted"}
+    return {"message": "Image deleted successfully"}
 
 
 # ── Property Groups ──
