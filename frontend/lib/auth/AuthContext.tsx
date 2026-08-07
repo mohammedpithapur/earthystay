@@ -212,7 +212,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           headers.delete('Authorization')
         }
 
-        return fetch(url, {
+        const fullUrl = url.startsWith('http') ? url : `${API_BASE}${url.startsWith('/') ? '' : '/'}${url}`
+
+        return fetch(fullUrl, {
           ...options,
           credentials: 'include',
           headers,
