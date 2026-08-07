@@ -1331,9 +1331,11 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
   const buildPropertyPayload = (): Property => {
     const propertyId = property?.id ?? getNextPropertyId()
 
-    const normalizedImages = form.images.map((img, index) => ({
+    const validImages = form.images.filter(img => img.image_url && !img.image_url.startsWith('blob:'))
+    const normalizedImages = validImages.map((img, index) => ({
       ...img,
       property_id: propertyId,
+      is_primary: index === 0,
       display_order: index + 1,
     }))
 
@@ -1342,7 +1344,7 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
       : [{
           id: `img-${propertyId}-1`,
           property_id: propertyId,
-          image_url: 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800',
+          image_url: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800',
           is_primary: true,
           display_order: 1,
         }]

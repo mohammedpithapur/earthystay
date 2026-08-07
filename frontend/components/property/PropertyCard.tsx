@@ -1,4 +1,5 @@
 "use client"
+import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Property } from '@/lib/types'
@@ -8,10 +9,13 @@ interface Props {
   property: Property
 }
 
-export default function PropertyCard({ property }: Props) {
-  const primaryImage = property.images.find(img => img.is_primary)?.image_url
-    || property.images[0]?.image_url
-    || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800'
+  const [imgSrc, setImgSrc] = useState(() => {
+    const raw = property.images?.find(img => img.is_primary)?.image_url || property.images?.[0]?.image_url
+    if (!raw || raw.startsWith('blob:')) {
+      return 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800'
+    }
+    return raw
+  })
 
   return (
     <Link href={`/properties/${property.id}`} style={{ textDecoration: 'none' }}>
@@ -39,12 +43,13 @@ export default function PropertyCard({ property }: Props) {
         {/* Image */}
         <div style={{ position: 'relative', overflow: 'hidden', width: '100%', aspectRatio: '4/3' }}>
           <Image
-            src={primaryImage}
+            src={imgSrc}
             alt={property.name}
             fill
             unoptimized
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             style={{ objectFit: 'cover', transition: 'transform 0.4s ease' }}
+            onError={() => setImgSrc('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800')}
             onMouseEnter={e => {
               const img = e.currentTarget as HTMLImageElement
               img.style.transform = 'scale(1.08)'
