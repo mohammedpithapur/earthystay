@@ -526,6 +526,7 @@ function PhotosSection({
 }: PhotosSectionProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dragIndexRef = React.useRef<number>(0)
+  const activeUploadCountRef = React.useRef(0)
 
   const handleReorder = (dropIdx: number) => {
     const dragIdx = dragIndexRef.current
@@ -534,65 +535,60 @@ function PhotosSection({
       const imgs = [...prev.images]
       const [moved] = imgs.splice(dragIdx, 1)
       imgs.splice(dropIdx, 0, moved)
-      // Ensure first image is always primary
       return { ...prev, images: imgs.map((img, i) => ({ ...img, is_primary: i === 0 })) }
     })
   }
+
   const uploadFilesRef = useRef<Record<string, File>>({})
 
   const appendFiles = async (files: File[]) => {
     if (files.length === 0) return
-
     setUploadNotice('')
-    setIsUploading(true)
 
-    try {
-      for (const [index, file] of files.entries()) {
-        const tempId = `upload-${Date.now()}-${index}-${Math.random().toString(16).slice(2)}`
-        const localPreviewUrl = URL.createObjectURL(file)
+    for (const [index, file] of files.entries()) {
+      const tempId = `upload-${Date.now()}-${index}-${Math.random().toString(16).slice(2)}`
+      const localPreviewUrl = URL.createObjectURL(file)
+      uploadFilesRef.current[tempId] = file
 
-        uploadFilesRef.current[tempId] = file
+      setForm(prev => ({
+        ...prev,
+        images: [
+          ...prev.images,
+          {
+            id: tempId,
+            property_id: '',
+            image_url: localPreviewUrl,
+            is_primary: prev.images.length === 0,
+            display_order: prev.images.length + 1,
+          },
+        ],
+      }))
+      setUploadProgress(prev => ({ ...prev, [tempId]: 0 }))
+      setUploadErrors(prev => { const n = { ...prev }; delete n[tempId]; return n })
 
-        setForm(prev => {
-          const startIndex = prev.images.length
-          return {
-            ...prev,
-            images: [
-              ...prev.images,
-              {
-                id: tempId,
-                property_id: '',
-                image_url: localPreviewUrl,
-                is_primary: prev.images.length === 0,
-                display_order: startIndex + 1,
-              },
-            ],
-          }
-        })
+      activeUploadCountRef.current += 1
+      setIsUploading(true)
 
-        setUploadProgress(prev => ({ ...prev, [tempId]: 0 }))
-        setUploadErrors(prev => {
-          if (!prev[tempId]) return prev
-          const next = { ...prev }
-          delete next[tempId]
-          return next
-        })
-
+      void (async () => {
         try {
           const publicUrl = await uploadPropertyImage(file, percent => {
             setUploadProgress(prev => ({ ...prev, [tempId]: percent }))
           }, fetchWithAuth)
 
+          try { URL.revokeObjectURL(localPreviewUrl) } catch {}
+
+          const realId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : tempId
           setForm(prev => ({
             ...prev,
             images: prev.images.map(img =>
-              img.id === tempId ? { ...img, image_url: publicUrl } : img
+              img.id === tempId
+                ? { ...img, id: realId, image_url: publicUrl }
+                : img
             ),
           }))
-          setUploadProgress(prev => ({ ...prev, [tempId]: 100 }))
+          setUploadProgress(prev => { const n = { ...prev }; delete n[tempId]; return n })
           delete uploadFilesRef.current[tempId]
         } catch (error) {
-          // Fallback: convert file to Base64 data URL so saving to backend will still succeed!
           try {
             const dataUrl = await new Promise<string>((resolve, reject) => {
               const reader = new FileReader()
@@ -600,23 +596,30 @@ function PhotosSection({
               reader.onerror = reject
               reader.readAsDataURL(file)
             })
+            try { URL.revokeObjectURL(localPreviewUrl) } catch {}
+            const realId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : tempId
             setForm(prev => ({
               ...prev,
               images: prev.images.map(img =>
-                img.id === tempId ? { ...img, image_url: dataUrl } : img
+                img.id === tempId
+                  ? { ...img, id: realId, image_url: dataUrl }
+                  : img
               ),
             }))
-            setUploadProgress(prev => ({ ...prev, [tempId]: 100 }))
+            setUploadProgress(prev => { const n = { ...prev }; delete n[tempId]; return n })
             delete uploadFilesRef.current[tempId]
           } catch {
             const message = error instanceof Error ? error.message : 'Image upload failed'
             setUploadErrors(prev => ({ ...prev, [tempId]: message }))
-            setUploadNotice('Image upload failed. Please ensure the backend container is rebuilt on EC2.')
+            setUploadNotice('Image upload failed. Please try again or use a smaller file.')
+          }
+        } finally {
+          activeUploadCountRef.current = Math.max(0, activeUploadCountRef.current - 1)
+          if (activeUploadCountRef.current === 0) {
+            setIsUploading(false)
           }
         }
-      }
-    } finally {
-      setIsUploading(false)
+      })()
     }
   }
 
@@ -628,6 +631,11 @@ function PhotosSection({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     void appendFiles(Array.from(e.target.files || []))
     e.target.value = ''
+  }
+
+  const openPicker = (e?: React.MouseEvent) => {
+    e?.stopPropagation()
+    if (!isUploading) fileInputRef.current?.click()
   }
 
   const setPrimary = (id: string) => {
@@ -649,29 +657,32 @@ function PhotosSection({
       }
       return { ...prev, images: remaining }
     })
-
     setUploadProgress(prev => { const n = { ...prev }; delete n[id]; return n })
     setUploadErrors(prev => { const n = { ...prev }; delete n[id]; return n })
   }
 
+  const isImgUploading = (img: { id: string; image_url: string }) =>
+    img.id.startsWith('upload-') && img.image_url.startsWith('blob:')
+
+  void uploadProgress; void uploadErrors
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      {/* Upload Zone */}
       <div
         onDragOver={e => e.preventDefault()}
         onDrop={handleDrop}
-        onClick={() => { if (!isUploading) fileInputRef.current?.click() }}
+        onClick={openPicker}
         style={{
           border: '2px dashed var(--color-border)', borderRadius: '12px',
           padding: '48px 24px', textAlign: 'center', cursor: isUploading ? 'not-allowed' : 'pointer',
           backgroundColor: 'var(--color-bg-card)', transition: 'all 0.2s ease',
           opacity: isUploading ? 0.6 : 1,
         }}
-        onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--color-gold)'; (e.currentTarget as HTMLDivElement).style.backgroundColor = 'var(--color-bg-card)' }}
-        onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--color-border)'; (e.currentTarget as HTMLDivElement).style.backgroundColor = 'var(--color-bg-card)' }}
+        onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--color-gold)' }}
+        onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--color-border)' }}
       >
         <div style={{ fontSize: '32px', marginBottom: '12px' }}>📸</div>
-        <p style={{ fontSize: '16px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '6px' }}>Drag & drop photos here</p>
+        <p style={{ fontSize: '16px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '6px' }}>Drag &amp; drop photos here</p>
         <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '16px' }}>JPG, PNG, WEBP only. Max 10MB each.</p>
         <div style={{
           display: 'inline-block', backgroundColor: 'var(--color-text-primary)', color: '#ffffff',
@@ -684,96 +695,108 @@ function PhotosSection({
       </div>
 
       {isUploading && (
-        <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>Uploading images to secure storage...</p>
+        <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>⏳ Uploading {activeUploadCountRef.current} photo{activeUploadCountRef.current !== 1 ? 's' : ''}... please wait.</p>
       )}
 
       {uploadNotice && (
-        <p style={{ fontSize: '12px', color: '#C62828' }}>{uploadNotice}</p>
+        <p style={{ fontSize: '12px', color: '#C62828', padding: '10px 14px', backgroundColor: '#fff0f0', borderRadius: '8px', border: '1px solid #ffcdd2' }}>{uploadNotice}</p>
       )}
 
-      {/* Airbnb-style Photo Grid */}
       {form.images.length > 0 && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <FieldLabel>Photos ({form.images.length} / 20)</FieldLabel>
             <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>Click a photo to set it as cover · Drag to reorder</p>
           </div>
-          {/* Hero + grid layout (Airbnb style) */}
+
           <div style={{ display: 'grid', gridTemplateColumns: form.images.length === 1 ? '1fr' : '3fr 2fr', gridTemplateRows: '240px 240px', gap: '8px', borderRadius: '16px', overflow: 'hidden', marginBottom: '12px' }}>
-            {/* Cover photo — spans 2 rows */}
-            {form.images[0] && (
-              <div
-                style={{ gridRow: '1 / 3', position: 'relative', cursor: 'grab', backgroundColor: 'var(--color-bg-card)' }}
-                draggable
-                onDragStart={() => form.images[0] && dragIndexRef.current !== undefined && (dragIndexRef.current = 0)}
-                onDrop={e => { e.preventDefault(); void handleReorder(0) }}
-                onDragOver={e => e.preventDefault()}
-                onClick={() => { void setPrimary(form.images[0].id) }}
-              >
-                {form.images[0].image_url ? (
-                  <Image src={form.images[0].image_url} alt="" fill sizes="60vw" style={{ objectFit: 'cover' }} />
-                ) : (
-                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--color-bg-card)', color: 'var(--color-text-muted)', fontSize: '32px' }}>📸</div>
-                )}
-                {/* Loading spinning wheel overlay while photo is uploading */}
-                {(form.images[0].id.startsWith('upload-') && (form.images[0].image_url.startsWith('blob:') || (uploadProgress[form.images[0].id] !== undefined && uploadProgress[form.images[0].id] < 100))) && (
-                  <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.65)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', zIndex: 5 }}>
-                    <div style={{ width: '32px', height: '32px', border: '3px solid var(--color-gold)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                    <span style={{ color: '#ffffff', fontSize: '12px', fontWeight: '700', letterSpacing: '0.5px' }}>Uploading photo...</span>
-                  </div>
-                )}
-                {/* COVER badge */}
-                <div style={{ position: 'absolute', top: '12px', left: '12px', backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', fontSize: '10px', fontWeight: '800', padding: '4px 10px', borderRadius: '4px', letterSpacing: '0.5px' }}>COVER</div>
-                {/* Drag indicator badge */}
-                <div style={{ position: 'absolute', bottom: '12px', left: '12px', backgroundColor: 'rgba(0,0,0,0.6)', color: '#ffffff', fontSize: '11px', fontWeight: '700', padding: '4px 8px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '4px', pointerEvents: 'none' }}>
-                  <span>⋮⋮</span> Drag to reorder
-                </div>
-                {/* Remove button */}
-                <button
-                  disabled={form.images[0].id.startsWith('upload-') || form.images[0].image_url.startsWith('blob:')}
-                  onClick={e => { e.stopPropagation(); removeImage(form.images[0].id) }}
-                  style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 6, width: '28px', height: '28px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.65)', border: 'none', color: '#fff', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: (form.images[0].id.startsWith('upload-') || form.images[0].image_url.startsWith('blob:')) ? 0.4 : 1 }}
-                >×</button>
-              </div>
-            )}
-            {/* Secondary slots 1–4 */}
-            {[1, 2, 3, 4].map(slotIdx => {
-              const img = form.images[slotIdx]
-              const isUploading = img ? (img.id.startsWith('upload-') && (img.image_url.startsWith('blob:') || (uploadProgress[img.id] !== undefined && uploadProgress[img.id] < 100))) : false
+            {form.images[0] && (() => {
+              const img0 = form.images[0]
+              const uploading0 = isImgUploading(img0)
               return (
                 <div
-                  key={slotIdx}
-                  style={{ position: 'relative', cursor: img ? 'grab' : 'default', backgroundColor: 'var(--color-bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  draggable={!!img && !isUploading}
+                  key={img0.id}
+                  style={{ gridRow: '1 / 3', position: 'relative', cursor: uploading0 ? 'default' : 'grab', backgroundColor: 'var(--color-bg-card)' }}
+                  draggable={!uploading0}
+                  onDragStart={() => { dragIndexRef.current = 0 }}
+                  onDrop={e => { e.preventDefault(); void handleReorder(0) }}
+                  onDragOver={e => e.preventDefault()}
+                  onClick={() => { if (!uploading0) setPrimary(img0.id) }}
+                >
+                  {img0.image_url ? (
+                    <Image
+                      src={img0.image_url}
+                      alt="Cover photo"
+                      fill
+                      sizes="60vw"
+                      style={{ objectFit: 'cover' }}
+                      unoptimized={img0.image_url.startsWith('data:') || img0.image_url.startsWith('blob:')}
+                    />
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--color-bg-card)', color: 'var(--color-text-muted)', fontSize: '32px' }}>📸</div>
+                  )}
+                  {uploading0 && (
+                    <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.65)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', zIndex: 5 }}>
+                      <div style={{ width: '32px', height: '32px', border: '3px solid var(--color-gold)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                      <span style={{ color: '#ffffff', fontSize: '12px', fontWeight: '700', letterSpacing: '0.5px' }}>Uploading photo...</span>
+                    </div>
+                  )}
+                  <div style={{ position: 'absolute', top: '12px', left: '12px', backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', fontSize: '10px', fontWeight: '800', padding: '4px 10px', borderRadius: '4px', letterSpacing: '0.5px', zIndex: 4 }}>COVER</div>
+                  {!uploading0 && <div style={{ position: 'absolute', bottom: '12px', left: '12px', backgroundColor: 'rgba(0,0,0,0.6)', color: '#ffffff', fontSize: '11px', fontWeight: '700', padding: '4px 8px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '4px', pointerEvents: 'none', zIndex: 4 }}><span>⋮⋮</span> Drag to reorder</div>}
+                  <button
+                    disabled={uploading0}
+                    onClick={e => { e.stopPropagation(); e.preventDefault(); removeImage(img0.id) }}
+                    style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 6, width: '28px', height: '28px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.65)', border: 'none', color: '#fff', fontSize: '16px', cursor: uploading0 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: uploading0 ? 0.4 : 1 }}
+                  >×</button>
+                </div>
+              )
+            })()}
+
+            {[1, 2, 3, 4].map(slotIdx => {
+              const img = form.images[slotIdx]
+              const uploading = img ? isImgUploading(img) : false
+              return (
+                <div
+                  key={img ? img.id : `empty-slot-${slotIdx}`}
+                  style={{ position: 'relative', cursor: img && !uploading ? 'grab' : img ? 'default' : 'pointer', backgroundColor: 'var(--color-bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  draggable={!!img && !uploading}
                   onDragStart={() => { dragIndexRef.current = slotIdx }}
                   onDrop={e => { e.preventDefault(); void handleReorder(slotIdx) }}
                   onDragOver={e => e.preventDefault()}
-                  onClick={() => img && !isUploading && setPrimary(img.id)}
+                  onClick={() => {
+                    if (!img) { openPicker() }
+                    else if (!uploading) { setPrimary(img.id) }
+                  }}
                 >
                   {img ? (
                     <>
                       {img.image_url ? (
-                        <Image src={img.image_url} alt="" fill sizes="30vw" style={{ objectFit: 'cover' }} />
+                        <Image
+                          src={img.image_url}
+                          alt=""
+                          fill
+                          sizes="30vw"
+                          style={{ objectFit: 'cover' }}
+                          unoptimized={img.image_url.startsWith('data:') || img.image_url.startsWith('blob:')}
+                        />
                       ) : (
                         <div style={{ width: '100%', height: '100%', backgroundColor: 'var(--color-bg-card)' }} />
                       )}
-                      {/* Spinning wheel overlay */}
-                      {isUploading && (
+                      {uploading && (
                         <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.65)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', zIndex: 5 }}>
                           <div style={{ width: '24px', height: '24px', border: '3px solid var(--color-gold)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
                           <span style={{ color: '#ffffff', fontSize: '10px', fontWeight: '700' }}>Uploading...</span>
                         </div>
                       )}
-                      {/* Drag handle icon on hover */}
-                      {!isUploading && <div style={{ position: 'absolute', bottom: '6px', left: '6px', backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '10px', padding: '2px 6px', borderRadius: '4px', pointerEvents: 'none' }}>⋮⋮ Drag</div>}
+                      {!uploading && <div style={{ position: 'absolute', bottom: '6px', left: '6px', backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '10px', padding: '2px 6px', borderRadius: '4px', pointerEvents: 'none', zIndex: 4 }}>⋮⋮ Drag</div>}
                       <button
-                        disabled={isUploading}
-                        onClick={e => { e.stopPropagation(); removeImage(img.id) }}
-                        style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 6, width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.65)', border: 'none', color: '#fff', fontSize: '14px', cursor: isUploading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: isUploading ? 0.4 : 1 }}
+                        disabled={uploading}
+                        onClick={e => { e.stopPropagation(); e.preventDefault(); removeImage(img.id) }}
+                        style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 6, width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.65)', border: 'none', color: '#fff', fontSize: '14px', cursor: uploading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: uploading ? 0.4 : 1 }}
                       >×</button>
                     </>
                   ) : (
-                    <div style={{ textAlign: 'center', color: 'var(--color-border)' }}>
+                    <div style={{ textAlign: 'center', color: 'var(--color-border)', pointerEvents: 'none' }}>
                       <div style={{ fontSize: '24px' }}>+</div>
                       <p style={{ fontSize: '11px', marginTop: '4px' }}>Add photo</p>
                     </div>
@@ -782,31 +805,36 @@ function PhotosSection({
               )
             })}
           </div>
-          {/* Remaining photos (5+) in a small grid */}
+
           {form.images.length > 5 && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '8px', marginBottom: '12px' }}>
               {form.images.slice(5).map((img, relIdx) => {
                 const absIdx = relIdx + 5
-                const isUploading = img.id.startsWith('upload-') && (img.image_url.startsWith('blob:') || (uploadProgress[img.id] !== undefined && uploadProgress[img.id] < 100))
+                const uploading = isImgUploading(img)
                 return (
-                  <div key={img.id} style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', aspectRatio: '4/3', cursor: isUploading ? 'default' : 'grab' }}
-                    draggable={!isUploading}
+                  <div
+                    key={img.id}
+                    style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', aspectRatio: '4/3', cursor: uploading ? 'default' : 'grab' }}
+                    draggable={!uploading}
                     onDragStart={() => { dragIndexRef.current = absIdx }}
                     onDrop={e => { e.preventDefault(); void handleReorder(absIdx) }}
                     onDragOver={e => e.preventDefault()}
-                    onClick={() => { if (!isUploading) setPrimary(img.id) }}
+                    onClick={() => { if (!uploading) setPrimary(img.id) }}
                   >
-                    {img.image_url ? <Image src={img.image_url} alt="" fill sizes="120px" style={{ objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', backgroundColor: 'var(--color-bg-card)' }} />}
-                    {isUploading && (
+                    {img.image_url
+                      ? <Image src={img.image_url} alt="" fill sizes="120px" style={{ objectFit: 'cover' }} unoptimized={img.image_url.startsWith('data:') || img.image_url.startsWith('blob:')} />
+                      : <div style={{ width: '100%', height: '100%', backgroundColor: 'var(--color-bg-card)' }} />
+                    }
+                    {uploading && (
                       <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5 }}>
                         <div style={{ width: '18px', height: '18px', border: '2.5px solid var(--color-gold)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
                       </div>
                     )}
-                    {!isUploading && <div style={{ position: 'absolute', bottom: '4px', left: '4px', backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '9px', padding: '2px 5px', borderRadius: '3px', pointerEvents: 'none' }}>⋮⋮</div>}
+                    {!uploading && <div style={{ position: 'absolute', bottom: '4px', left: '4px', backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '9px', padding: '2px 5px', borderRadius: '3px', pointerEvents: 'none', zIndex: 4 }}>⋮⋮</div>}
                     <button
-                      disabled={isUploading}
-                      onClick={e => { e.stopPropagation(); removeImage(img.id) }}
-                      style={{ position: 'absolute', top: '6px', right: '6px', zIndex: 6, width: '22px', height: '22px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.65)', border: 'none', color: '#fff', fontSize: '13px', cursor: isUploading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: isUploading ? 0.4 : 1 }}
+                      disabled={uploading}
+                      onClick={e => { e.stopPropagation(); e.preventDefault(); removeImage(img.id) }}
+                      style={{ position: 'absolute', top: '6px', right: '6px', zIndex: 6, width: '22px', height: '22px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.65)', border: 'none', color: '#fff', fontSize: '13px', cursor: uploading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: uploading ? 0.4 : 1 }}
                     >×</button>
                   </div>
                 )
@@ -1442,7 +1470,7 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
     }
 
     const hasActiveUploads = isUploadingImages || form.images.some(img =>
-      img.id.startsWith('upload-') || (imageUploadProgress[img.id] !== undefined && imageUploadProgress[img.id] < 100)
+      img.id.startsWith('upload-') && img.image_url.startsWith('blob:')
     )
 
     if (hasActiveUploads) {
