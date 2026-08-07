@@ -865,9 +865,32 @@ export default function AdminPage() {
                 {(apiProperties.slice(0, 3) || []).map(property => (
                   <div key={property.id} style={{ display: 'flex', gap: '12px', alignItems: 'center', padding: '16px', border: '1px solid var(--color-border)', borderRadius: '10px' }}>
                     {(() => {
-                      const src = property.images.find(i => i.is_primary)?.image_url || property.images[0]?.image_url
-                      if (src) return <Image src={src} alt={property.name} width={64} height={48} style={{ width: '64px', height: '48px', objectFit: 'cover', flexShrink: 0, borderRadius: '6px' }} />
-                      return <div style={{ width: 64, height: 48, borderRadius: 6, backgroundColor: 'var(--color-bg-card)' }} />
+                      const src = property.images?.find(i => i.is_primary)?.image_url || property.images?.[0]?.image_url
+                      if (src && !src.startsWith('blob:')) {
+                        return (
+                          <Image
+                            src={src}
+                            alt={property.name}
+                            width={64}
+                            height={48}
+                            unoptimized
+                            style={{ width: '64px', height: '48px', objectFit: 'cover', flexShrink: 0, borderRadius: '6px' }}
+                            onError={e => {
+                              (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800'
+                            }}
+                          />
+                        )
+                      }
+                      return (
+                        <Image
+                          src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800"
+                          alt={property.name}
+                          width={64}
+                          height={48}
+                          unoptimized
+                          style={{ width: '64px', height: '48px', objectFit: 'cover', flexShrink: 0, borderRadius: '6px' }}
+                        />
+                      )
                     })()}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: '700', marginBottom: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{property.name}</p>

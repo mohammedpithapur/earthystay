@@ -281,21 +281,21 @@ export default function PropertyDetailPage() {
       <div style={{ backgroundColor: 'var(--color-navbar)', padding: '6px' }}>
         <div style={{ position: 'relative', minHeight: 'clamp(300px, 60vw, 540px)', overflow: 'hidden', marginBottom: '8px', borderRadius: '4px' }}>
           {(() => {
-            const mainSrc = property.images[activeImage]?.image_url
-            if (mainSrc) {
-              return (
-                <Image
-                  src={mainSrc}
-                  alt={property.name}
-                  fill
-                  unoptimized
-                  sizes="100vw"
-                  style={{ objectFit: 'cover', transition: 'opacity 0.3s ease' }}
-                  priority
-                />
-              )
-            }
-            return <div style={{ width: '100%', height: '100%', backgroundColor: 'var(--color-bg-card)' }} />
+            const mainSrc = property.images[activeImage]?.image_url || 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1200'
+            return (
+              <Image
+                src={mainSrc}
+                alt={property.name}
+                fill
+                unoptimized
+                sizes="100vw"
+                style={{ objectFit: 'cover', transition: 'opacity 0.3s ease' }}
+                priority
+                onError={e => {
+                  (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=1200'
+                }}
+              />
+            )
           })()}
           {/* Gradient overlay for text */}
           <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '120px', background: 'linear-gradient(to top, rgba(0,0,0,0.6), transparent)', pointerEvents: 'none' }} />
@@ -323,17 +323,22 @@ export default function PropertyDetailPage() {
         {/* Thumbnail strip */}
         <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', padding: '4px 4px', scrollbarWidth: 'none' }}>
           {property.images.map((img, i) => (
-            img.image_url ? (
-              <div
-                key={img.id}
-                onClick={() => setActiveImage(i)}
-                style={{ position: 'relative', width: 84, height: 56, flexShrink: 0, cursor: 'pointer', borderRadius: 6, overflow: 'hidden', border: activeImage === i ? '2px solid var(--color-gold)' : '2px solid rgba(255,255,255,0.2)', transition: 'border-color 0.15s ease, transform 0.15s ease', transform: activeImage === i ? 'scale(1.05)' : 'scale(1)' }}
-              >
-                <Image src={img.image_url} alt={`${property.name} ${i + 1}`} fill unoptimized style={{ objectFit: 'cover', opacity: activeImage === i ? 1 : 0.7, transition: 'opacity 0.15s ease' }} />
-              </div>
-            ) : (
-              <div key={img.id} onClick={() => setActiveImage(i)} style={{ width: 84, height: 56, borderRadius: 6, backgroundColor: 'var(--color-bg-card)', cursor: 'pointer', opacity: activeImage === i ? 1 : 0.7, border: activeImage === i ? '2px solid var(--color-gold)' : '2px solid transparent', flexShrink: 0 }} />
-            )
+            <div
+              key={img.id || i}
+              onClick={() => setActiveImage(i)}
+              style={{ position: 'relative', width: 84, height: 56, flexShrink: 0, cursor: 'pointer', borderRadius: 6, overflow: 'hidden', border: activeImage === i ? '2px solid var(--color-gold)' : '2px solid rgba(255,255,255,0.2)', transition: 'border-color 0.15s ease, transform 0.15s ease', transform: activeImage === i ? 'scale(1.05)' : 'scale(1)' }}
+            >
+              <Image
+                src={img.image_url || 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=400'}
+                alt={`${property.name} ${i + 1}`}
+                fill
+                unoptimized
+                style={{ objectFit: 'cover', opacity: activeImage === i ? 1 : 0.7, transition: 'opacity 0.15s ease' }}
+                onError={e => {
+                  (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=400'
+                }}
+              />
+            </div>
           ))}
         </div>
       </div>

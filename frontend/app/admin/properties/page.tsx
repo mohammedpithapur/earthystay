@@ -1442,6 +1442,14 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
       return false
     }
 
+    const validImages = form.images.filter(img => img.image_url && !img.image_url.startsWith('blob:'))
+    if (validImages.length === 0) {
+      setImageUploadNotice('Please upload at least 1 photo for this property before saving.')
+      setActiveSection('photos')
+      setSaveStatus('idle')
+      return false
+    }
+
     setSaveStatus('saving')
     try {
       const payload = buildPropertyPayload()
