@@ -2,7 +2,9 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import type { User } from '@/lib/types'
 
-export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:8000'
+import { API_BASE } from '@/lib/api'
+
+export { API_BASE }
 const E2E_SKIP_AUTH = process.env.NEXT_PUBLIC_E2E_SKIP_AUTH === '1'
 
 const E2E_ADMIN_USER: User = {

@@ -541,67 +541,66 @@ function PhotosSection({
   const uploadFilesRef = useRef<Record<string, File>>({})
 
   const appendFiles = async (files: File[]) => {
-    if (files.length === 0) {
-      return
-    }
+    if (files.length === 0) return
 
     setUploadNotice('')
     setIsUploading(true)
 
-    for (const [index, file] of files.entries()) {
-      const tempId = `upload-${Date.now()}-${index}-${Math.random().toString(16).slice(2)}`
-      const localPreviewUrl = URL.createObjectURL(file)
+    try {
+      for (const [index, file] of files.entries()) {
+        const tempId = `upload-${Date.now()}-${index}-${Math.random().toString(16).slice(2)}`
+        const localPreviewUrl = URL.createObjectURL(file)
 
-      // keep the original File for retries
-      uploadFilesRef.current[tempId] = file
+        uploadFilesRef.current[tempId] = file
 
-      setForm(prev => {
-        const startIndex = prev.images.length
-        return {
-          ...prev,
-          images: [
-            ...prev.images,
-            {
-              id: tempId,
-              property_id: '',
-              image_url: localPreviewUrl,
-              is_primary: prev.images.length === 0,
-              display_order: startIndex + 1,
-            },
-          ],
+        setForm(prev => {
+          const startIndex = prev.images.length
+          return {
+            ...prev,
+            images: [
+              ...prev.images,
+              {
+                id: tempId,
+                property_id: '',
+                image_url: localPreviewUrl,
+                is_primary: prev.images.length === 0,
+                display_order: startIndex + 1,
+              },
+            ],
+          }
+        })
+
+        setUploadProgress(prev => ({ ...prev, [tempId]: 0 }))
+        setUploadErrors(prev => {
+          if (!prev[tempId]) return prev
+          const next = { ...prev }
+          delete next[tempId]
+          return next
+        })
+
+        try {
+          const publicUrl = await uploadPropertyImage(file, percent => {
+            setUploadProgress(prev => ({ ...prev, [tempId]: percent }))
+          }, fetchWithAuth)
+
+          // Update BOTH url and replace tempId with the real server ID after upload
+          setForm(prev => ({
+            ...prev,
+            images: prev.images.map(img =>
+              img.id === tempId ? { ...img, image_url: publicUrl, id: tempId } : img
+            ),
+          }))
+          setUploadProgress(prev => ({ ...prev, [tempId]: 100 }))
+          delete uploadFilesRef.current[tempId]
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Image upload failed'
+          setUploadErrors(prev => ({ ...prev, [tempId]: message }))
+          setUploadNotice('Some images failed to upload. Remove failed items and try again.')
         }
-      })
-
-      setUploadProgress(prev => ({ ...prev, [tempId]: 0 }))
-      setUploadErrors(prev => {
-        if (!prev[tempId]) {
-          return prev
-        }
-        const next = { ...prev }
-        delete next[tempId]
-        return next
-      })
-
-      try {
-        const publicUrl = await uploadPropertyImage(file, percent => {
-          setUploadProgress(prev => ({ ...prev, [tempId]: percent }))
-        }, fetchWithAuth)
-
-        setForm(prev => ({
-          ...prev,
-          images: prev.images.map(img => img.id === tempId ? { ...img, image_url: publicUrl } : img),
-        }))
-        // upload succeeded — no need to keep the original file
-        delete uploadFilesRef.current[tempId]
-      } catch (error) {
-        const message = error instanceof Error ? error.message : 'Image upload failed'
-        setUploadErrors(prev => ({ ...prev, [tempId]: message }))
-        setUploadNotice('Some images failed to upload. Retry failed items or remove them.')
-      } finally {
       }
+    } finally {
+      setIsUploading(false)
     }
-
-    setIsUploading(false)
   }
 
   const handleDrop = (e: React.DragEvent) => {
@@ -615,19 +614,18 @@ function PhotosSection({
   }
 
   const setPrimary = async (id: string) => {
+    // Use functional updater to avoid stale closure
+    setForm(prev => {
+      const selected = prev.images.find(img => img.id === id)
+      if (!selected) return prev
+      return { ...prev, images: prev.images.map(img => ({ ...img, is_primary: img.id === id })) }
+    })
+
     const selected = form.images.find(img => img.id === id)
-    if (!selected) {
-      return
-    }
-
-    const currentPrimary = form.images.find(img => img.is_primary)
-    setForm({ ...form, images: form.images.map(img => ({ ...img, is_primary: img.id === id })) })
-
-    if (id.startsWith('upload-') || selected.image_url.startsWith('blob:')) {
-      return
-    }
+    if (!selected || id.startsWith('upload-') || selected.image_url.startsWith('blob:')) return
 
     try {
+      const currentPrimary = form.images.find(img => img.is_primary)
       if (currentPrimary && currentPrimary.id !== id && !currentPrimary.id.startsWith('upload-') && !currentPrimary.image_url.startsWith('blob:')) {
         await updateAdminPropertyImage(currentPrimary.id, { is_primary: false }, fetchWithAuth)
       }
@@ -638,14 +636,18 @@ function PhotosSection({
   }
 
   const removeImage = async (id: string) => {
+    // Revoke object URL to prevent memory leaks
+    setForm(prev => {
+      const img = prev.images.find(i => i.id === id)
+      if (img?.image_url.startsWith('blob:')) URL.revokeObjectURL(img.image_url)
+      return prev
+    })
+
     const imageToRemove = form.images.find(img => img.id === id)
-    if (imageToRemove?.image_url.startsWith('blob:')) {
-      URL.revokeObjectURL(imageToRemove.image_url)
-    }
+    // Only call delete API if the image has a real server ID (not a temp upload- ID)
+    const isTemporaryOrBlobImage = id.startsWith('upload-') || imageToRemove?.image_url.startsWith('blob:')
 
-    const isTemporaryImage = id.startsWith('upload-') || imageToRemove?.image_url.startsWith('blob:')
-
-    if (!isTemporaryImage) {
+    if (!isTemporaryOrBlobImage) {
       try {
         await deleteAdminPropertyImage(id, fetchWithAuth)
       } catch (error) {
@@ -654,32 +656,22 @@ function PhotosSection({
       }
     }
 
-    const remaining = form.images.filter(img => img.id !== id)
-    if (remaining.length > 0 && !remaining.some(img => img.is_primary)) {
-      remaining[0].is_primary = true
-      if (!remaining[0].id.startsWith('upload-') && !remaining[0].image_url.startsWith('blob:')) {
-        void updateAdminPropertyImage(remaining[0].id, { is_primary: true }, fetchWithAuth).catch(error => {
-          setUploadNotice(error instanceof Error ? error.message : 'Failed to set replacement cover image')
-        })
+    // Use functional updater to avoid stale closure after the async await above
+    setForm(prev => {
+      const remaining = prev.images.filter(img => img.id !== id)
+      if (remaining.length > 0 && !remaining.some(img => img.is_primary)) {
+        remaining[0] = { ...remaining[0], is_primary: true }
+        if (!remaining[0].id.startsWith('upload-') && !remaining[0].image_url.startsWith('blob:')) {
+          void updateAdminPropertyImage(remaining[0].id, { is_primary: true }, fetchWithAuth).catch(err => {
+            setUploadNotice(err instanceof Error ? err.message : 'Failed to set replacement cover image')
+          })
+        }
       }
-    }
-    setUploadProgress(prev => {
-      if (!prev[id]) {
-        return prev
-      }
-      const next = { ...prev }
-      delete next[id]
-      return next
+      return { ...prev, images: remaining }
     })
-    setUploadErrors(prev => {
-      if (!prev[id]) {
-        return prev
-      }
-      const next = { ...prev }
-      delete next[id]
-      return next
-    })
-    setForm({ ...form, images: remaining })
+
+    setUploadProgress(prev => { const n = { ...prev }; delete n[id]; return n })
+    setUploadErrors(prev => { const n = { ...prev }; delete n[id]; return n })
   }
 
   return (
@@ -688,11 +680,12 @@ function PhotosSection({
       <div
         onDragOver={e => e.preventDefault()}
         onDrop={handleDrop}
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => { if (!isUploading) fileInputRef.current?.click() }}
         style={{
           border: '2px dashed var(--color-border)', borderRadius: '12px',
-          padding: '48px 24px', textAlign: 'center', cursor: 'pointer',
+          padding: '48px 24px', textAlign: 'center', cursor: isUploading ? 'not-allowed' : 'pointer',
           backgroundColor: 'var(--color-bg-card)', transition: 'all 0.2s ease',
+          opacity: isUploading ? 0.6 : 1,
         }}
         onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--color-gold)'; (e.currentTarget as HTMLDivElement).style.backgroundColor = 'var(--color-bg-card)' }}
         onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--color-border)'; (e.currentTarget as HTMLDivElement).style.backgroundColor = 'var(--color-bg-card)' }}
@@ -817,7 +810,11 @@ function PhotosSection({
               })}
             </div>
           )}
-          <button onClick={() => fileInputRef.current?.click()} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', border: '1.5px dashed var(--color-border)', borderRadius: '8px', backgroundColor: 'transparent', fontSize: '13px', cursor: 'pointer', color: 'var(--color-text-muted)', fontFamily: "'Figtree', sans-serif", fontWeight: '600' }}>+ Add more photos</button>
+          <button
+            onClick={() => { if (!isUploading) fileInputRef.current?.click() }}
+            disabled={isUploading}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', border: '1.5px dashed var(--color-border)', borderRadius: '8px', backgroundColor: 'transparent', fontSize: '13px', cursor: isUploading ? 'not-allowed' : 'pointer', color: 'var(--color-text-muted)', fontFamily: "'Figtree', sans-serif", fontWeight: '600', opacity: isUploading ? 0.5 : 1 }}
+          >+ Add more photos</button>
         </div>
       )}
     </div>
@@ -1439,6 +1436,27 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
 
     if (isUploadingImages) {
       setImageUploadNotice('Please wait for all image uploads to finish before saving.')
+      return false
+    }
+
+    if (!form.name.trim()) {
+      setImageUploadNotice('Please enter a title for the property.')
+      setActiveSection('basic')
+      setSaveStatus('idle')
+      return false
+    }
+
+    if (!form.city.trim() || !form.state.trim()) {
+      setImageUploadNotice('Please specify the city and state for the property location.')
+      setActiveSection('location')
+      setSaveStatus('idle')
+      return false
+    }
+
+    if (form.price_per_night <= 0) {
+      setImageUploadNotice('Please set a valid price per night (greater than ₹0).')
+      setActiveSection('pricing')
+      setSaveStatus('idle')
       return false
     }
 

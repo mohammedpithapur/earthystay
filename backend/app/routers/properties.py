@@ -1,5 +1,6 @@
 import hashlib
 import json
+import uuid
 
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,10 +8,12 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.database import get_db
+from app.dependencies import get_optional_current_user
 from app.models.booking import Booking, BookingStatus
 from app.models.property import Property
+from app.models.user import User, UserRole
 from app.schemas.property import PropertyListOut, PropertyOut
-from app.services.property import get_property_filters
+from app.services.property import get_property_filters, apply_property_inheritance
 from app.services.cache import cache_get_json, cache_set_json
 from app.services.booking import auto_cleanup_expired_bookings
 
@@ -97,12 +100,6 @@ async def get_unique_locations(db: AsyncSession = Depends(get_db)):
     return response
 
 
-from app.dependencies import get_optional_current_user
-from app.models.user import User, UserRole
-
-
-import uuid
-
 
 @router.get("/{property_id}", response_model=PropertyOut)
 async def get_property(
@@ -125,7 +122,6 @@ async def get_property(
     if not property:
         raise HTTPException(status_code=404, detail="Property not found")
     
-    from app.services.property import apply_property_inheritance
     return await apply_property_inheritance(db, property)
 
 
@@ -135,11 +131,17 @@ async def get_property_availability(
     db: AsyncSession = Depends(get_db),
     current_user: User | None = Depends(get_optional_current_user),
 ):
-    await auto_cleanup_expired_bookings(db)
+    # Validate UUID first before doing any DB work
     try:
         target_uuid = uuid.UUID(property_id)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid property ID format")
+
+    # Auto-cleanup only after UUID is valid
+    try:
+        await auto_cleanup_expired_bookings(db)
+    except Exception:
+        pass
 
     query = select(Property.id).where(Property.id == target_uuid)
     is_admin = current_user is not None and current_user.role == UserRole.admin
@@ -152,7 +154,7 @@ async def get_property_availability(
 
     result = await db.execute(
         select(Booking.check_in, Booking.check_out).where(
-            Booking.property_id == property_id,
+            Booking.property_id == target_uuid,
             Booking.status.in_([BookingStatus.confirmed, BookingStatus.pending]),
         )
     )

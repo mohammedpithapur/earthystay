@@ -1,3 +1,4 @@
+import asyncio
 import uuid
 from datetime import date, timedelta
 
@@ -39,23 +40,31 @@ async def fetch_group(db: AsyncSession, group_id: str) -> PropertyGroup | None:
     return result.scalar_one_or_none()
 
 
-async def sync_property_images(db: AsyncSession, property_id: str, images: list[PropertyImageCreate] | None) -> None:
+async def sync_property_images(db: AsyncSession, property_uuid: uuid.UUID, images: list[PropertyImageCreate] | None) -> None:
+    """Replace all images for a property. Deletes old DB records (storage files deleted separately by caller)."""
     if images is None:
         return
 
-    await db.execute(delete(PropertyImage).where(PropertyImage.property_id == property_id))
+    # Bulk delete all existing image records for this property
+    await db.execute(delete(PropertyImage).where(PropertyImage.property_id == property_uuid))
 
     if not images:
         return
 
+    # Filter out any blob: or empty URLs that should never reach the DB
+    valid_images = [img for img in images if img.image_url and not img.image_url.startswith("blob:")]
+
+    if not valid_images:
+        return
+
     normalized_images = []
     primary_assigned = False
-    for index, image_data in enumerate(images):
+    for index, image_data in enumerate(valid_images):
         is_primary = bool(image_data.is_primary) and not primary_assigned
         primary_assigned = primary_assigned or is_primary
         normalized_images.append(
             PropertyImage(
-                property_id=property_id,
+                property_id=property_uuid,
                 image_url=image_data.image_url,
                 is_primary=is_primary,
                 display_order=image_data.display_order or index + 1,
@@ -75,9 +84,13 @@ async def normalize_property_images(images: list[PropertyImageCreate] | None) ->
     normalized: list[PropertyImageCreate] = []
     for image in images:
         image_url = image.image_url
+        # Skip blob: URLs — they should have been uploaded client-side already
+        if image_url.startswith("blob:"):
+            continue
         if image_url.startswith("data:image"):
             try:
-                image_url = upload_property_image_from_data_url(image_url)
+                # Run blocking upload in a thread to avoid blocking the event loop
+                image_url = await asyncio.to_thread(upload_property_image_from_data_url, image_url)
             except UploadValidationError as exc:
                 raise HTTPException(status_code=400, detail=str(exc)) from exc
             except UploadStorageError as exc:
@@ -280,22 +293,6 @@ async def get_admin_analytics(admin: User = Depends(get_admin), db: AsyncSession
     return analytics_response
 
 
-@router.post("/upload-image")
-async def upload_image(
-    file: UploadFile = File(...),
-    admin: User = Depends(get_admin),
-):
-    try:
-        image_bytes = await file.read()
-        public_url = upload_property_image_from_bytes(image_bytes, file.content_type or "")
-        return {"url": public_url}
-    except UploadValidationError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except UploadStorageError as exc:
-        raise HTTPException(status_code=500, detail=f"Image upload failed: {exc}") from exc
-    finally:
-        await file.close()
-
 
 # ── Properties CRUD ──
 
@@ -376,7 +373,7 @@ async def update_property(
         if spaces is not None:
             property.spaces_detail = spaces
 
-        await sync_property_images(db, property_id, images)
+        await sync_property_images(db, property.id, images)
         await db.commit()
         await invalidate_properties_cache()
     except HTTPException:
@@ -400,11 +397,17 @@ async def delete_property(
     admin: User = Depends(get_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    property = await db.get(Property, property_id)
+    try:
+        prop_uuid = uuid.UUID(property_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid property ID format")
+
+    property = await db.get(Property, prop_uuid)
     if not property:
         raise HTTPException(status_code=404, detail="Property not found")
     await db.delete(property)
     await db.commit()
+    await invalidate_properties_cache()
     return {"message": "Property deleted"}
 
 
@@ -505,6 +508,7 @@ async def upload_image_file(
     file: UploadFile = File(...),
     admin: User = Depends(get_admin),
 ):
+    """Upload an image file to Supabase Storage and return the public URL."""
     if not file.content_type or file.content_type not in ("image/jpeg", "image/png", "image/webp"):
         raise HTTPException(status_code=400, detail="Unsupported image type. Please upload JPG, PNG, or WEBP.")
 
@@ -512,8 +516,10 @@ async def upload_image_file(
     if not image_bytes:
         raise HTTPException(status_code=400, detail="Image file is empty.")
 
+    # Use asyncio.to_thread to avoid blocking the event loop during Supabase HTTP upload
+
     try:
-        public_url = upload_property_image_from_bytes(image_bytes, file.content_type)
+        public_url = await asyncio.to_thread(upload_property_image_from_bytes, image_bytes, file.content_type)
         return {"url": public_url}
     except UploadValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -528,21 +534,28 @@ async def add_image(
     admin: User = Depends(get_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    property = await db.get(Property, property_id)
+    try:
+        prop_uuid = uuid.UUID(property_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid property ID format")
+
+    property = await db.get(Property, prop_uuid)
     if not property:
         raise HTTPException(status_code=404, detail="Property not found")
 
     image_url = data.image_url
+    if image_url.startswith("blob:"):
+        raise HTTPException(status_code=400, detail="Cannot save temporary blob URL. Please upload the image first.")
     if image_url.startswith("data:image"):
         try:
-            image_url = upload_property_image_from_data_url(image_url)
+            image_url = await asyncio.to_thread(upload_property_image_from_data_url, image_url)
         except UploadValidationError as exc:
             raise HTTPException(status_code=400, detail=str(exc)) from exc
         except UploadStorageError as exc:
             raise HTTPException(status_code=500, detail=f"Image upload failed: {exc}") from exc
 
     image = PropertyImage(
-        property_id=property_id,
+        property_id=prop_uuid,
         image_url=image_url,
         is_primary=data.is_primary,
         display_order=data.display_order,
@@ -637,11 +650,21 @@ async def add_group_member(
     admin: User = Depends(get_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    group = await db.get(PropertyGroup, group_id)
+    try:
+        group_uuid = uuid.UUID(group_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid group ID format")
+
+    group = await db.get(PropertyGroup, group_uuid)
     if not group:
         raise HTTPException(status_code=404, detail="Group not found")
 
-    property = await db.get(Property, data.property_id)
+    try:
+        prop_uuid = uuid.UUID(str(data.property_id))
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid property ID format")
+
+    property = await db.get(Property, prop_uuid)
     if not property:
         raise HTTPException(status_code=404, detail="Property not found")
 
@@ -661,13 +684,13 @@ async def add_group_member(
             raise HTTPException(status_code=409, detail="Group already has a whole-property listing")
 
     member = PropertyGroupMember(
-        group_id=group_id,
-        property_id=data.property_id,
+        group_id=group_uuid,
+        property_id=prop_uuid,
         is_whole_property=data.is_whole_property,
     )
     db.add(member)
     await db.commit()
-    return await fetch_group(db, group_id)
+    return await fetch_group(db, str(group_uuid))
 
 
 @router.delete("/groups/{group_id}/members/{member_id}", response_model=PropertyGroupOut)
@@ -677,7 +700,11 @@ async def remove_group_member(
     admin: User = Depends(get_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    member = await db.get(PropertyGroupMember, member_id)
+    try:
+        member_uuid = uuid.UUID(member_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid member ID format")
+    member = await db.get(PropertyGroupMember, member_uuid)
     if not member or str(member.group_id) != group_id:
         raise HTTPException(status_code=404, detail="Group member not found")
 
@@ -694,7 +721,11 @@ async def update_group_member(
     admin: User = Depends(get_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    member = await db.get(PropertyGroupMember, member_id)
+    try:
+        member_uuid = uuid.UUID(member_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid member ID format")
+    member = await db.get(PropertyGroupMember, member_uuid)
     if not member or str(member.group_id) != group_id:
         raise HTTPException(status_code=404, detail="Group member not found")
 
@@ -721,7 +752,11 @@ async def update_group(
     admin: User = Depends(get_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    group = await db.get(PropertyGroup, group_id)
+    try:
+        group_uuid = uuid.UUID(group_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid group ID format")
+    group = await db.get(PropertyGroup, group_uuid)
     if not group:
         raise HTTPException(status_code=404, detail="Group not found")
     group.name = data.name
@@ -735,7 +770,11 @@ async def delete_group(
     admin: User = Depends(get_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    group = await db.get(PropertyGroup, group_id)
+    try:
+        group_uuid = uuid.UUID(group_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid group ID format")
+    group = await db.get(PropertyGroup, group_uuid)
     if not group:
         raise HTTPException(status_code=404, detail="Group not found")
     await db.delete(group)
@@ -761,9 +800,14 @@ async def get_property_calendar(
     if to_date is None:
         to_date = (date.today().replace(day=1) + timedelta(days=62)).replace(day=1) - timedelta(days=1)
 
+    try:
+        prop_uuid = uuid.UUID(property_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid property ID format")
+
     result = await db.execute(
         select(Booking).where(
-            Booking.property_id == property_id,
+            Booking.property_id == prop_uuid,
             Booking.status.in_([BookingStatus.confirmed, BookingStatus.pending, BookingStatus.completed]),
             Booking.check_in < to_date,
             Booking.check_out > from_date,
@@ -812,21 +856,26 @@ async def create_admin_block(
     db: AsyncSession = Depends(get_db),
 ):
     """Create an admin date block. Automatically shadow-blocks grouped sibling properties."""
-    property_obj = await db.get(Property, property_id)
+    try:
+        prop_uuid = uuid.UUID(property_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid property ID format")
+
+    property_obj = await db.get(Property, prop_uuid)
     if not property_obj:
         raise HTTPException(status_code=404, detail="Property not found")
 
     # Check for overlap with real guest bookings on this property
     overlap_result = await db.execute(
         select(Booking).where(
-            Booking.property_id == property_id,
+            Booking.property_id == prop_uuid,
             Booking.status.in_([BookingStatus.confirmed, BookingStatus.pending]),
             Booking.is_admin_block == False,  # Only check real guest bookings
             Booking.check_in < data.check_out,
             Booking.check_out > data.check_in,
         )
     )
-    conflicting = overlap_result.scalar_one_or_none()
+    conflicting = overlap_result.scalars().first()
     if conflicting:
         raise HTTPException(
             status_code=409,
@@ -879,7 +928,11 @@ async def delete_admin_block(
     db: AsyncSession = Depends(get_db),
 ):
     """Delete an admin date block and remove all associated group shadow blocks."""
-    block = await db.get(Booking, block_id)
+    try:
+        block_uuid = uuid.UUID(block_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid block ID format")
+    block = await db.get(Booking, block_uuid)
     if not block:
         raise HTTPException(status_code=404, detail="Block not found")
     if str(block.property_id) != property_id:

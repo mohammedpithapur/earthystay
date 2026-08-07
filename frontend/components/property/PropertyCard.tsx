@@ -1,5 +1,5 @@
 "use client"
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Property } from '@/lib/types'
@@ -10,13 +10,18 @@ interface Props {
 }
 
 export default function PropertyCard({ property }: Props) {
-  const [imgSrc, setImgSrc] = useState(() => {
+  const getPrimaryImg = () => {
     const raw = property.images?.find(img => img.is_primary)?.image_url || property.images?.[0]?.image_url
-    if (!raw || raw.startsWith('blob:')) {
-      return 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800'
-    }
+    if (!raw || raw.startsWith('blob:')) return 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800'
     return raw
-  })
+  }
+  const [imgSrc, setImgSrc] = useState(getPrimaryImg)
+
+  // Sync imgSrc when property prop changes (e.g. after edit/save)
+  useEffect(() => {
+    setImgSrc(getPrimaryImg())
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [property.images])
 
   return (
     <Link href={`/properties/${property.id}`} style={{ textDecoration: 'none' }}>
@@ -75,7 +80,9 @@ export default function PropertyCard({ property }: Props) {
             gap: '4px',
           }}>
             <Star style={{ width: '13px', height: '13px', fill: 'var(--color-gold)', strokeWidth: 0 }} />
-            {property.avg_rating}
+            {typeof property.avg_rating === 'number' && !isNaN(property.avg_rating)
+              ? property.avg_rating > 0 ? property.avg_rating.toFixed(1) : 'New'
+              : 'New'}
           </div>
 
           {/* Location Badge */}
@@ -119,13 +126,13 @@ export default function PropertyCard({ property }: Props) {
             // 1. Guests (Always)
             slots.push({
               icon: <Users style={{ width: '14px', height: '14px', strokeWidth: 1.8 }} />,
-              text: `${property.max_guests} Guests`
+              text: `${property.max_guests ?? 0} Guests`
             })
 
             // 2. Beds (Always)
             slots.push({
               icon: <Bed style={{ width: '14px', height: '14px', strokeWidth: 1.8 }} />,
-              text: `${property.bedrooms} Beds`
+              text: `${property.bedrooms ?? 0} Beds`
             })
 
             // 3. Baths (with type label)
@@ -134,7 +141,7 @@ export default function PropertyCard({ property }: Props) {
             const bathSharingText = (property.bathrooms_detail ?? []).length > 0 ? (isBathShared ? 'Shared' : 'Not Shared') : null
             slots.push({
               icon: <Bath style={{ width: '14px', height: '14px', strokeWidth: 1.8 }} />,
-              text: `${property.bathrooms} Baths${bathSharingText ? ` (${bathSharingText})` : ''}`
+              text: `${property.bathrooms ?? 0} Baths${bathSharingText ? ` (${bathSharingText})` : ''}`
             })
 
             // 4. Spaces (Balcony, Terrace, Kitchen, Hall, Living Room, Dining Room, Entrance)
@@ -198,7 +205,7 @@ export default function PropertyCard({ property }: Props) {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
             <div>
               <span style={{ fontSize: '20px', fontWeight: '700', color: 'var(--color-text-primary)' }}>
-                ₹{property.price_per_night.toLocaleString('en-IN')}
+                ₹{(property.price_per_night ?? 0).toLocaleString('en-IN')}
               </span>
               <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginLeft: '4px' }}>/ night</span>
             </div>

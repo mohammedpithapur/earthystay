@@ -1,7 +1,7 @@
 import { buildApiUrl, type ApiFetcher } from '@/lib/api'
 
 const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024
 
 function parseUploadError(responseText: string, status: number): string {
   if (!responseText) {
