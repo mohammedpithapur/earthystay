@@ -500,6 +500,27 @@ async def duplicate_property(
 
 # ── Property Images ──
 
+@router.post("/upload-image")
+async def upload_image_file(
+    file: UploadFile = File(...),
+    admin: User = Depends(get_admin),
+):
+    if not file.content_type or file.content_type not in ("image/jpeg", "image/png", "image/webp"):
+        raise HTTPException(status_code=400, detail="Unsupported image type. Please upload JPG, PNG, or WEBP.")
+
+    image_bytes = await file.read()
+    if not image_bytes:
+        raise HTTPException(status_code=400, detail="Image file is empty.")
+
+    try:
+        public_url = upload_property_image_from_bytes(image_bytes, file.content_type)
+        return {"url": public_url}
+    except UploadValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except UploadStorageError as exc:
+        raise HTTPException(status_code=500, detail=f"Image upload failed: {exc}") from exc
+
+
 @router.post("/properties/{property_id}/images", response_model=PropertyImageOut)
 async def add_image(
     property_id: str,
