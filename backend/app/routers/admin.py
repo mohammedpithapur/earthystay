@@ -3,7 +3,7 @@ from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_
+from sqlalchemy import select, func, and_, delete
 from sqlalchemy.orm import selectinload
 
 from app.database import get_db
@@ -43,9 +43,7 @@ async def sync_property_images(db: AsyncSession, property_id: str, images: list[
     if images is None:
         return
 
-    existing_result = await db.execute(select(PropertyImage).where(PropertyImage.property_id == property_id))
-    for image in existing_result.scalars().all():
-        await db.delete(image)
+    await db.execute(delete(PropertyImage).where(PropertyImage.property_id == property_id))
 
     if not images:
         return
