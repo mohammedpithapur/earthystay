@@ -1334,20 +1334,25 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
   }
 
   const buildPropertyPayload = (): Property => {
-    const propertyId = property?.id ?? getNextPropertyId()
+    const propertyId = property?.id ?? (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : '00000000-0000-0000-0000-000000000000')
 
-    const validImages = form.images.filter(img => img.image_url && !img.image_url.startsWith('blob:'))
-    const normalizedImages = validImages.map((img, index) => ({
-      ...img,
-      property_id: propertyId,
-      is_primary: index === 0,
-      display_order: index + 1,
-    }))
+    const validImages = form.images.filter(
+      img => img.image_url && (!img.image_url.startsWith('blob:') || img.image_url.startsWith('data:image'))
+    )
+    const normalizedImages = validImages.map((img, index) => {
+      const isRealUuid = img.id && !img.id.startsWith('upload-') && !img.id.startsWith('img-')
+      return {
+        ...(isRealUuid ? { id: img.id } : {}),
+        property_id: propertyId,
+        image_url: img.image_url,
+        is_primary: index === 0,
+        display_order: index + 1,
+      }
+    })
 
     const images = normalizedImages.length
       ? normalizedImages
       : [{
-          id: `img-${propertyId}-1`,
           property_id: propertyId,
           image_url: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800',
           is_primary: true,
