@@ -123,7 +123,8 @@ async def get_user_from_token(token_str: str, db: AsyncSession) -> User | None:
         user_id = payload.get("sub")
         if not user_id:
             return None
-    except JWTError:
+        user_uuid = uuid.UUID(user_id) if isinstance(user_id, str) else user_id
+    except (JWTError, ValueError):
         return None
 
     cache_key = f"user:{user_id}"
@@ -131,7 +132,7 @@ async def get_user_from_token(token_str: str, db: AsyncSession) -> User | None:
     if cached:
         return _deserialize_user(cached)
 
-    result = await db.execute(select(User).where(User.id == user_id))
+    result = await db.execute(select(User).where(User.id == user_uuid))
     user = result.scalar_one_or_none()
     if user:
         await cache_set_json(cache_key, _serialize_user(user), ttl_seconds=60)

@@ -101,13 +101,21 @@ from app.dependencies import get_optional_current_user
 from app.models.user import User, UserRole
 
 
+import uuid
+
+
 @router.get("/{property_id}", response_model=PropertyOut)
 async def get_property(
     property_id: str,
     db: AsyncSession = Depends(get_db),
     current_user: User | None = Depends(get_optional_current_user),
 ):
-    query = select(Property).options(selectinload(Property.images)).where(Property.id == property_id)
+    try:
+        target_uuid = uuid.UUID(property_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid property ID format")
+
+    query = select(Property).options(selectinload(Property.images)).where(Property.id == target_uuid)
     is_admin = current_user is not None and current_user.role == UserRole.admin
     if not is_admin:
         query = query.where(Property.is_published == True)
@@ -128,7 +136,12 @@ async def get_property_availability(
     current_user: User | None = Depends(get_optional_current_user),
 ):
     await auto_cleanup_expired_bookings(db)
-    query = select(Property.id).where(Property.id == property_id)
+    try:
+        target_uuid = uuid.UUID(property_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid property ID format")
+
+    query = select(Property.id).where(Property.id == target_uuid)
     is_admin = current_user is not None and current_user.role == UserRole.admin
     if not is_admin:
         query = query.where(Property.is_published == True)
