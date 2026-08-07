@@ -95,8 +95,10 @@ def upload_property_image_from_bytes(image_bytes: bytes, mime_type: str, folder:
             resp = client.post(upload_url, content=image_bytes, headers=headers)
             if resp.status_code not in (200, 201):
                 raise UploadStorageError(f"Supabase upload error ({resp.status_code}): {resp.text}")
+    except UploadStorageError:
+        raise
     except Exception as exc:
-        raise UploadStorageError("Failed to upload image to Supabase Storage") from exc
+        raise UploadStorageError(f"Failed to upload image to Supabase Storage: {exc}") from exc
 
     return f"{base_url}/storage/v1/object/public/{bucket}/{object_path}"
 
@@ -126,5 +128,7 @@ def delete_property_image_from_url(image_url: str) -> None:
             resp = client.request("DELETE", delete_url, json={"prefixes": [object_path]}, headers=headers)
             if resp.status_code not in (200, 204):
                 raise UploadStorageError(f"Supabase delete error ({resp.status_code}): {resp.text}")
+    except UploadStorageError:
+        raise
     except Exception as exc:
-        raise UploadStorageError("Failed to delete image from Supabase Storage") from exc
+        raise UploadStorageError(f"Failed to delete image from Supabase Storage: {exc}") from exc
