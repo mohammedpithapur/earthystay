@@ -583,19 +583,36 @@ function PhotosSection({
             setUploadProgress(prev => ({ ...prev, [tempId]: percent }))
           }, fetchWithAuth)
 
-          // Update BOTH url and replace tempId with the real server ID after upload
           setForm(prev => ({
             ...prev,
             images: prev.images.map(img =>
-              img.id === tempId ? { ...img, image_url: publicUrl, id: tempId } : img
+              img.id === tempId ? { ...img, image_url: publicUrl } : img
             ),
           }))
           setUploadProgress(prev => ({ ...prev, [tempId]: 100 }))
           delete uploadFilesRef.current[tempId]
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Image upload failed'
-          setUploadErrors(prev => ({ ...prev, [tempId]: message }))
-          setUploadNotice('Some images failed to upload. Remove failed items and try again.')
+          // Fallback: convert file to Base64 data URL so saving to backend will still succeed!
+          try {
+            const dataUrl = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader()
+              reader.onload = () => resolve(reader.result as string)
+              reader.onerror = reject
+              reader.readAsDataURL(file)
+            })
+            setForm(prev => ({
+              ...prev,
+              images: prev.images.map(img =>
+                img.id === tempId ? { ...img, image_url: dataUrl } : img
+              ),
+            }))
+            setUploadProgress(prev => ({ ...prev, [tempId]: 100 }))
+            delete uploadFilesRef.current[tempId]
+          } catch {
+            const message = error instanceof Error ? error.message : 'Image upload failed'
+            setUploadErrors(prev => ({ ...prev, [tempId]: message }))
+            setUploadNotice('Image upload failed. Please ensure the backend container is rebuilt on EC2.')
+          }
         }
       }
     } finally {
@@ -1460,9 +1477,15 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
       return false
     }
 
-    const validImages = form.images.filter(img => img.image_url && !img.image_url.startsWith('blob:'))
+    const validImages = form.images.filter(
+      img => img.image_url && (!img.image_url.startsWith('blob:') || img.image_url.startsWith('data:image'))
+    )
     if (validImages.length === 0) {
-      setImageUploadNotice('Please upload at least 1 photo for this property before saving.')
+      if (form.images.length > 0) {
+        setImageUploadNotice('Photo upload is still processing or failed. Please wait a second or re-select your photo.')
+      } else {
+        setImageUploadNotice('Please upload at least 1 photo for this property before saving.')
+      }
       setActiveSection('photos')
       setSaveStatus('idle')
       return false
