@@ -339,7 +339,21 @@ export async function saveProperty(
     method: isEdit ? "PATCH" : "POST",
     body: JSON.stringify(property),
   })
-  if (!response.ok) throw new Error(`Failed to save property (${response.status})`)
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => '')
+    let errorMessage = `Failed to save property (${response.status})`
+    if (errorText) {
+      try {
+        const parsed = JSON.parse(errorText)
+        if (parsed.detail) {
+          errorMessage = typeof parsed.detail === 'string' ? parsed.detail : JSON.stringify(parsed.detail)
+        }
+      } catch {
+        errorMessage = errorText
+      }
+    }
+    throw new Error(errorMessage)
+  }
   return response.json() as Promise<Property>
 }
 

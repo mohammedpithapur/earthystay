@@ -40,13 +40,15 @@ async def fetch_group(db: AsyncSession, group_id: str) -> PropertyGroup | None:
     return result.scalar_one_or_none()
 
 
-async def sync_property_images(db: AsyncSession, property_uuid: uuid.UUID, images: list[PropertyImageCreate] | None) -> None:
+async def sync_property_images(db: AsyncSession, property_id_val: uuid.UUID | str, images: list[PropertyImageCreate] | None) -> None:
     """Replace all images for a property. Deletes old DB records (storage files deleted separately by caller)."""
     if images is None:
         return
 
+    prop_uuid = property_id_val if isinstance(property_id_val, uuid.UUID) else uuid.UUID(str(property_id_val))
+
     # Bulk delete all existing image records for this property
-    await db.execute(delete(PropertyImage).where(PropertyImage.property_id == property_uuid))
+    await db.execute(delete(PropertyImage).where(PropertyImage.property_id == prop_uuid))
 
     if not images:
         return
@@ -64,7 +66,7 @@ async def sync_property_images(db: AsyncSession, property_uuid: uuid.UUID, image
         primary_assigned = primary_assigned or is_primary
         normalized_images.append(
             PropertyImage(
-                property_id=property_uuid,
+                property_id=prop_uuid,
                 image_url=image_data.image_url,
                 is_primary=is_primary,
                 display_order=image_data.display_order or index + 1,
@@ -149,26 +151,19 @@ async def dashboard(admin: User = Depends(get_admin), db: AsyncSession = Depends
             b.total for b in bookings_data 
             if b.created_at and b.created_at.year == target_month_year and b.created_at.month == target_month
         )
-        m_count = sum(
-            1 for b in bookings_data 
-            if b.created_at and b.created_at.year == target_month_year and b.created_at.month == target_month
-        )
+        monthly_stats.append({"month": month_label, "revenue": m_rev})
 
-        monthly_stats.append({
-            "month": month_label,
-            "revenue": m_rev,
-            "bookings": m_count
-        })
-
-    response_data = {
-        "total_bookings": total_bookings,
-        "total_properties": total_properties,
-        "total_revenue": revenue,
-        "pending_bookings": pending,
-        "monthly_stats": monthly_stats,
+    res_data = {
+        "stats": {
+            "total_bookings": total_bookings or 0,
+            "total_properties": total_properties or 0,
+            "total_revenue": revenue or 0,
+            "pending_bookings": pending or 0,
+        },
+        "monthly_revenue": monthly_stats
     }
-    await cache_set_json(cache_key, response_data, ttl_seconds=30)
-    return response_data
+    await cache_set_json(cache_key, res_data, ttl_seconds=300)
+    return res_data
 
 
 @router.get("/analytics")
@@ -327,7 +322,7 @@ async def create_property(
 
     try:
         await db.flush()
-        await sync_property_images(db, str(property.id), images)
+        await sync_property_images(db, property.id, images)
         await db.commit()
         await invalidate_properties_cache()
     except HTTPException:
@@ -335,7 +330,7 @@ async def create_property(
         raise
     except Exception as exc:
         await db.rollback()
-        raise HTTPException(status_code=500, detail="Failed to save property") from exc
+        raise HTTPException(status_code=500, detail=f"Failed to save property: {exc}") from exc
 
     result = await db.execute(
         select(Property)
@@ -352,10 +347,15 @@ async def update_property(
     admin: User = Depends(get_admin),
     db: AsyncSession = Depends(get_db),
 ):
+    try:
+        prop_uuid = uuid.UUID(property_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid property ID format")
+
     result = await db.execute(
         select(Property)
         .options(selectinload(Property.images))
-        .where(Property.id == property_id)
+        .where(Property.id == prop_uuid)
     )
     property = result.scalar_one_or_none()
     if not property:
@@ -381,12 +381,12 @@ async def update_property(
         raise
     except Exception as exc:
         await db.rollback()
-        raise HTTPException(status_code=500, detail="Failed to update property") from exc
+        raise HTTPException(status_code=500, detail=f"Failed to update property: {exc}") from exc
 
     result = await db.execute(
         select(Property)
         .options(selectinload(Property.images))
-        .where(Property.id == property.id)
+        .where(Property.id == prop_uuid)
     )
     return result.scalar_one()
 
