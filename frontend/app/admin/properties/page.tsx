@@ -1752,35 +1752,41 @@ function AdminPropertiesPageContent() {
   const { user, loading } = useRequireAuth({ requireAdmin: true })
   const [properties, setProperties] = useState<Property[] | null>(null)
 
+  const load = useCallback(async () => {
+    try {
+      const list = await listAdminProperties(fetchWithAuth)
+      setProperties(list)
+    } catch {
+      setProperties([])
+    }
+  }, [fetchWithAuth])
+
   useEffect(() => {
     if (loading || !user || user.role !== 'admin') {
       return
     }
-
-    let mounted = true
-    const load = async () => {
-      try {
-        const list = await listAdminProperties(fetchWithAuth)
-        if (mounted) setProperties(list)
-      } catch {
-        if (mounted) setProperties([])
-      }
-    }
     void load()
-    return () => { mounted = false }
-  }, [fetchWithAuth, loading, user])
+  }, [fetchWithAuth, loading, user, load])
 
-  if (loading || !user || user.role !== 'admin') {
-    return null
+  if (loading || !user || user.role !== 'admin' || properties === null) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', backgroundColor: 'var(--color-bg-subtle)' }}>
+        <div style={{ width: '40px', height: '40px', border: '3px solid var(--color-gold)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    )
   }
 
-  const property = propertyId && properties ? (properties.find(item => item.id === propertyId) ?? null) : null
+  const property = propertyId ? (properties.find(item => item.id === propertyId) ?? null) : null
 
   return (
     <PropertyEditorModal
       property={property}
       onClose={() => router.push('/admin')}
-      onSave={() => {}}
+      onSave={() => {
+        void load()
+        router.push('/admin')
+      }}
     />
   )
 }
