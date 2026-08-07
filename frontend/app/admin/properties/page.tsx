@@ -1,6 +1,6 @@
 'use client'
 import Image from 'next/image'
-import React, { Suspense, useState, useEffect, useRef } from 'react'
+import React, { Suspense, useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { addPropertyGroupMember, createPropertyGroup, deleteAdminProperty, deleteAdminPropertyImage, listAdminProperties, listPropertyGroups, saveProperty, updateAdminPropertyImage, updatePropertyGroupMember, type ApiFetcher } from '@/lib/api'
 import CalendarModal from './CalendarModal'
@@ -8,7 +8,7 @@ import { useAuth } from '@/lib/auth/AuthContext'
 import { useRequireAuth } from '@/lib/auth/useRequireAuth'
 import { uploadPropertyImage } from '@/lib/supabase/storage'
 // NOTE: admin UI now loads properties from the API via `listAdminProperties`
-import { Property, type BathroomDetail, type SpaceDetail } from '@/lib/types'
+import { Property, type PropertyImage, type BathroomDetail, type SpaceDetail } from '@/lib/types'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -1339,10 +1339,10 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
     const validImages = form.images.filter(
       img => img.image_url && (!img.image_url.startsWith('blob:') || img.image_url.startsWith('data:image'))
     )
-    const normalizedImages = validImages.map((img, index) => {
+    const normalizedImages: PropertyImage[] = validImages.map((img, index) => {
       const isRealUuid = img.id && !img.id.startsWith('upload-') && !img.id.startsWith('img-')
       return {
-        ...(isRealUuid ? { id: img.id } : {}),
+        id: isRealUuid ? img.id : (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `img-${propertyId}-${index + 1}`),
         property_id: propertyId,
         image_url: img.image_url,
         is_primary: index === 0,
@@ -1350,9 +1350,10 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
       }
     })
 
-    const images = normalizedImages.length
+    const images: PropertyImage[] = normalizedImages.length
       ? normalizedImages
       : [{
+          id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `img-${propertyId}-1`,
           property_id: propertyId,
           image_url: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800',
           is_primary: true,
