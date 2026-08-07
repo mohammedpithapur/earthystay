@@ -730,7 +730,7 @@ function PhotosSection({
             {/* Cover photo — spans 2 rows */}
             {form.images[0] && (
               <div
-                style={{ gridRow: '1 / 3', position: 'relative', cursor: 'pointer', backgroundColor: 'var(--color-bg-card)' }}
+                style={{ gridRow: '1 / 3', position: 'relative', cursor: 'grab', backgroundColor: 'var(--color-bg-card)' }}
                 draggable
                 onDragStart={() => form.images[0] && dragIndexRef.current !== undefined && (dragIndexRef.current = 0)}
                 onDrop={e => { e.preventDefault(); void handleReorder(0) }}
@@ -744,6 +744,10 @@ function PhotosSection({
                 )}
                 {/* COVER badge */}
                 <div style={{ position: 'absolute', top: '12px', left: '12px', backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', fontSize: '10px', fontWeight: '800', padding: '4px 10px', borderRadius: '4px', letterSpacing: '0.5px' }}>COVER</div>
+                {/* Drag indicator badge */}
+                <div style={{ position: 'absolute', bottom: '12px', left: '12px', backgroundColor: 'rgba(0,0,0,0.6)', color: '#ffffff', fontSize: '11px', fontWeight: '700', padding: '4px 8px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '4px', pointerEvents: 'none' }}>
+                  <span>⋮⋮</span> Drag to reorder
+                </div>
                 {/* Remove button */}
                 <button onClick={e => { e.stopPropagation(); void removeImage(form.images[0].id) }} style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 2, width: '28px', height: '28px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.65)', border: 'none', color: '#fff', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
                 {/* Progress bar */}
@@ -758,7 +762,7 @@ function PhotosSection({
               return (
                 <div
                   key={slotIdx}
-                  style={{ position: 'relative', cursor: img ? 'pointer' : 'default', backgroundColor: 'var(--color-bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                  style={{ position: 'relative', cursor: img ? 'grab' : 'default', backgroundColor: 'var(--color-bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                   draggable={!!img}
                   onDragStart={() => { dragIndexRef.current = slotIdx }}
                   onDrop={e => { e.preventDefault(); void handleReorder(slotIdx) }}
@@ -772,6 +776,8 @@ function PhotosSection({
                       ) : (
                         <div style={{ width: '100%', height: '100%', backgroundColor: 'var(--color-bg-card)' }} />
                       )}
+                      {/* Drag handle icon on hover */}
+                      <div style={{ position: 'absolute', bottom: '6px', left: '6px', backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '10px', padding: '2px 6px', borderRadius: '4px', pointerEvents: 'none' }}>⋮⋮ Drag</div>
                       <button onClick={e => { e.stopPropagation(); void removeImage(img.id) }} style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 2, width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.65)', border: 'none', color: '#fff', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
                       {uploadProgress[img.id] !== undefined && uploadProgress[img.id] < 100 && (
                         <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '6px', backgroundColor: 'rgba(0,0,0,0.18)' }}><div style={{ height: '100%', width: `${uploadProgress[img.id]}%`, backgroundColor: 'var(--color-gold)', transition: 'width 0.15s ease' }} /></div>
@@ -793,7 +799,7 @@ function PhotosSection({
               {form.images.slice(5).map((img, relIdx) => {
                 const absIdx = relIdx + 5
                 return (
-                  <div key={img.id} style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', aspectRatio: '4/3', cursor: 'pointer' }}
+                  <div key={img.id} style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', aspectRatio: '4/3', cursor: 'grab' }}
                     draggable
                     onDragStart={() => { dragIndexRef.current = absIdx }}
                     onDrop={e => { e.preventDefault(); void handleReorder(absIdx) }}
@@ -801,6 +807,7 @@ function PhotosSection({
                     onClick={() => { void setPrimary(img.id) }}
                   >
                     {img.image_url ? <Image src={img.image_url} alt="" fill sizes="120px" style={{ objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', backgroundColor: 'var(--color-bg-card)' }} />}
+                    <div style={{ position: 'absolute', bottom: '4px', left: '4px', backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '9px', padding: '2px 5px', borderRadius: '3px', pointerEvents: 'none' }}>⋮⋮</div>
                     <button onClick={e => { e.stopPropagation(); void removeImage(img.id) }} style={{ position: 'absolute', top: '6px', right: '6px', zIndex: 2, width: '22px', height: '22px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.65)', border: 'none', color: '#fff', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
                     {uploadProgress[img.id] !== undefined && uploadProgress[img.id] < 100 && (
                       <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: '5px', backgroundColor: 'rgba(0,0,0,0.18)' }}><div style={{ height: '100%', width: `${uploadProgress[img.id]}%`, backgroundColor: 'var(--color-gold)' }} /></div>

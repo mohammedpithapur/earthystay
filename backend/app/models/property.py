@@ -103,7 +103,12 @@ class Property(Base):
                     clean.append(f"__space__:{json.dumps(sp)}")
         self.amenities = clean
 
-    images: Mapped[list["PropertyImage"]] = relationship("PropertyImage", back_populates="property", cascade="all, delete-orphan")
+    images: Mapped[list["PropertyImage"]] = relationship(
+        "PropertyImage",
+        back_populates="property",
+        cascade="all, delete-orphan",
+        order_by="PropertyImage.display_order",
+    )
     group_memberships: Mapped[list["PropertyGroupMember"]] = relationship(
         "PropertyGroupMember",
         back_populates="property",
