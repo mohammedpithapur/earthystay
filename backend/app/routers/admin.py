@@ -416,11 +416,16 @@ async def duplicate_property(
     admin: User = Depends(get_admin),
     db: AsyncSession = Depends(get_db),
 ):
-    """Clone a property as a new unpublished draft (images re-used, bookings/reviews not copied)."""
+    """Clone a property as a new unpublished draft with all images duplicated."""
+    try:
+        source_uuid = uuid.UUID(property_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid property ID format")
+
     result = await db.execute(
         select(Property)
         .options(selectinload(Property.images))
-        .where(Property.id == property_id)
+        .where(Property.id == source_uuid)
     )
     source = result.scalar_one_or_none()
     if not source:
@@ -461,15 +466,28 @@ async def duplicate_property(
     db.add(new_property)
     await db.flush()
 
-    # Copy images (reuse same URLs — no file copy needed)
-    for img in source.images:
-        new_img = PropertyImage(
+    # Copy all images from source property
+    copied_count = 0
+    for img in (source.images or []):
+        if img.image_url and not img.image_url.startswith("blob:"):
+            new_img = PropertyImage(
+                property_id=new_property.id,
+                image_url=img.image_url,
+                is_primary=img.is_primary,
+                display_order=img.display_order,
+            )
+            db.add(new_img)
+            copied_count += 1
+
+    if copied_count == 0:
+        # Fallback cover photo if source had no valid photos
+        fallback_img = PropertyImage(
             property_id=new_property.id,
-            image_url=img.image_url,
-            is_primary=img.is_primary,
-            display_order=img.display_order,
+            image_url="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800",
+            is_primary=True,
+            display_order=1,
         )
-        db.add(new_img)
+        db.add(fallback_img)
 
     await db.commit()
 

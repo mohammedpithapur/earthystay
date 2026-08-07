@@ -1425,7 +1425,16 @@ export default function AdminPage() {
                     const heroImg = vProp?.images?.find(i => i.is_primary)?.image_url || vProp?.images?.[0]?.image_url
                     return heroImg ? (
                       <div style={{ position: 'relative', height: '160px', width: '100%' }}>
-                        <Image src={heroImg} alt={vProp?.name ?? ''} fill style={{ objectFit: 'cover' }} unoptimized />
+                        <Image
+                          src={heroImg}
+                          alt={vProp?.name ?? ''}
+                          fill
+                          style={{ objectFit: 'cover' }}
+                          unoptimized
+                          onError={e => {
+                            (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800'
+                          }}
+                        />
                         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 55%)' }}>
                           <div style={{ position: 'absolute', bottom: '16px', left: '20px', right: '52px' }}>
                             <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '10px', letterSpacing: '2px', textTransform: 'uppercase', fontWeight: '700', marginBottom: '4px' }}>{vProp?.city}, {vProp?.state}</p>
@@ -1630,12 +1639,29 @@ export default function AdminPage() {
                 const thumbSrc = property.images?.find(i => i.is_primary)?.image_url || property.images?.[0]?.image_url
                 return (
                   <div key={property.id} style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '24px' }} className="flex flex-col md:flex-row gap-5 items-stretch md:items-center">
-                    {thumbSrc ? (
+                    {thumbSrc && !thumbSrc.startsWith('blob:') ? (
                       <div className="relative w-full h-48 md:w-[120px] md:h-[90px] flex-shrink-0 rounded-lg overflow-hidden">
-                        <Image src={thumbSrc} alt={property.name} fill style={{ objectFit: 'cover' }} unoptimized />
+                        <Image
+                          src={thumbSrc}
+                          alt={property.name}
+                          fill
+                          style={{ objectFit: 'cover' }}
+                          unoptimized
+                          onError={e => {
+                            (e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800'
+                          }}
+                        />
                       </div>
                     ) : (
-                      <div className="w-full h-48 md:w-[120px] md:h-[90px] rounded-lg bg-[var(--color-bg-card)] flex-shrink-0" />
+                      <div className="relative w-full h-48 md:w-[120px] md:h-[90px] flex-shrink-0 rounded-lg overflow-hidden">
+                        <Image
+                          src="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800"
+                          alt={property.name}
+                          fill
+                          style={{ objectFit: 'cover' }}
+                          unoptimized
+                        />
+                      </div>
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap' }}>
