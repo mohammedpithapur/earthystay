@@ -630,59 +630,22 @@ function PhotosSection({
     e.target.value = ''
   }
 
-  const setPrimary = async (id: string) => {
-    // Use functional updater to avoid stale closure
-    setForm(prev => {
-      const selected = prev.images.find(img => img.id === id)
-      if (!selected) return prev
-      return { ...prev, images: prev.images.map(img => ({ ...img, is_primary: img.id === id })) }
-    })
-
-    const selected = form.images.find(img => img.id === id)
-    if (!selected || id.startsWith('upload-') || selected.image_url.startsWith('blob:')) return
-
-    try {
-      const currentPrimary = form.images.find(img => img.is_primary)
-      if (currentPrimary && currentPrimary.id !== id && !currentPrimary.id.startsWith('upload-') && !currentPrimary.image_url.startsWith('blob:')) {
-        await updateAdminPropertyImage(currentPrimary.id, { is_primary: false }, fetchWithAuth)
-      }
-      await updateAdminPropertyImage(id, { is_primary: true }, fetchWithAuth)
-    } catch (error) {
-      setUploadNotice(error instanceof Error ? error.message : 'Failed to update cover image')
-    }
+  const setPrimary = (id: string) => {
+    setForm(prev => ({
+      ...prev,
+      images: prev.images.map(img => ({ ...img, is_primary: img.id === id })),
+    }))
   }
 
-  const removeImage = async (id: string) => {
-    // Revoke object URL to prevent memory leaks
+  const removeImage = (id: string) => {
     setForm(prev => {
       const img = prev.images.find(i => i.id === id)
-      if (img?.image_url.startsWith('blob:')) URL.revokeObjectURL(img.image_url)
-      return prev
-    })
-
-    const imageToRemove = form.images.find(img => img.id === id)
-    // Only call delete API if the image has a real server ID (not a temp upload- ID)
-    const isTemporaryOrBlobImage = id.startsWith('upload-') || imageToRemove?.image_url.startsWith('blob:')
-
-    if (!isTemporaryOrBlobImage) {
-      try {
-        await deleteAdminPropertyImage(id, fetchWithAuth)
-      } catch (error) {
-        setUploadNotice(error instanceof Error ? error.message : 'Failed to delete image')
-        return
+      if (img?.image_url.startsWith('blob:')) {
+        try { URL.revokeObjectURL(img.image_url) } catch {}
       }
-    }
-
-    // Use functional updater to avoid stale closure after the async await above
-    setForm(prev => {
-      const remaining = prev.images.filter(img => img.id !== id)
-      if (remaining.length > 0 && !remaining.some(img => img.is_primary)) {
+      const remaining = prev.images.filter(i => i.id !== id)
+      if (remaining.length > 0 && !remaining.some(i => i.is_primary)) {
         remaining[0] = { ...remaining[0], is_primary: true }
-        if (!remaining[0].id.startsWith('upload-') && !remaining[0].image_url.startsWith('blob:')) {
-          void updateAdminPropertyImage(remaining[0].id, { is_primary: true }, fetchWithAuth).catch(err => {
-            setUploadNotice(err instanceof Error ? err.message : 'Failed to set replacement cover image')
-          })
-        }
       }
       return { ...prev, images: remaining }
     })
@@ -1291,19 +1254,17 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
   const [imageUploadNotice, setImageUploadNotice] = useState('')
   const [isUploadingImages, setIsUploadingImages] = useState(false)
 
+  const propId = property?.id
   useEffect(() => {
-    // schedule updates asynchronously to avoid cascading synchronous state updates
-    const t = setTimeout(() => {
-      setForm(createFormFromProperty(property))
-      setActiveSection('basic')
-      setSaveStatus('idle')
-      setImageUploadProgress({})
-      setImageUploadErrors({})
-      setImageUploadNotice('')
-      setIsUploadingImages(false)
-    })
-    return () => clearTimeout(t)
-  }, [property])
+    setForm(createFormFromProperty(property))
+    setActiveSection('basic')
+    setSaveStatus('idle')
+    setImageUploadProgress({})
+    setImageUploadErrors({})
+    setImageUploadNotice('')
+    setIsUploadingImages(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propId])
 
   useEffect(() => {
     let isMounted = true
