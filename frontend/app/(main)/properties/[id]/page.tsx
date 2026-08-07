@@ -7,6 +7,7 @@ import MapWrapper from '@/components/shared/MapWrapper'
 import { buildApiUrl, fetchPropertyReviews } from '@/lib/api'
 import type { Property, Review } from '@/lib/types'
 import type { DateRange } from 'react-day-picker'
+import { useAuth } from '@/lib/auth/AuthContext'
 import { Star, MapPin, Users, User, Bed, Bath, Calendar, Moon, Dog, Check, Phone, Mail, Clock, ShieldAlert, Sparkles, ChevronLeft, ChevronRight, Armchair, Sofa, Utensils, UtensilsCrossed, DoorOpen, LayoutDashboard, TreePalm } from 'lucide-react'
 
 const bathroomLabel: Record<string, string> = {
@@ -38,6 +39,8 @@ export default function PropertyDetailPage() {
   const [reviews, setReviews] = useState<Review[]>([])
   const [reviewsLoading, setReviewsLoading] = useState(false)
 
+  const { fetchWithAuth } = useAuth()
+
   useEffect(() => {
     if (!propertyId) return
     let isMounted = true
@@ -46,7 +49,7 @@ export default function PropertyDetailPage() {
       try {
         setLoading(true)
         setLoadError(null)
-        const response = await fetch(buildApiUrl(`/properties/${propertyId}`), { cache: 'no-store' })
+        const response = await fetchWithAuth(`/properties/${propertyId}`)
         if (!response.ok) {
           throw new Error(`Failed to load property (${response.status})`)
         }

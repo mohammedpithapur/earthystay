@@ -97,16 +97,22 @@ async def get_unique_locations(db: AsyncSession = Depends(get_db)):
     return response
 
 
+from app.dependencies import get_optional_current_user
+from app.models.user import User, UserRole
+
+
 @router.get("/{property_id}", response_model=PropertyOut)
 async def get_property(
     property_id: str,
     db: AsyncSession = Depends(get_db),
+    current_user: User | None = Depends(get_optional_current_user),
 ):
-    result = await db.execute(
-        select(Property)
-        .options(selectinload(Property.images))
-        .where(Property.id == property_id, Property.is_published == True)
-    )
+    query = select(Property).options(selectinload(Property.images)).where(Property.id == property_id)
+    is_admin = current_user is not None and current_user.role == UserRole.admin
+    if not is_admin:
+        query = query.where(Property.is_published == True)
+
+    result = await db.execute(query)
     property = result.scalar_one_or_none()
     if not property:
         raise HTTPException(status_code=404, detail="Property not found")
@@ -119,11 +125,15 @@ async def get_property(
 async def get_property_availability(
     property_id: str,
     db: AsyncSession = Depends(get_db),
+    current_user: User | None = Depends(get_optional_current_user),
 ):
     await auto_cleanup_expired_bookings(db)
-    result = await db.execute(
-        select(Property.id).where(Property.id == property_id, Property.is_published == True)
-    )
+    query = select(Property.id).where(Property.id == property_id)
+    is_admin = current_user is not None and current_user.role == UserRole.admin
+    if not is_admin:
+        query = query.where(Property.is_published == True)
+
+    result = await db.execute(query)
     if not result.scalar_one_or_none():
         raise HTTPException(status_code=404, detail="Property not found")
 
