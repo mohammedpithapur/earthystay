@@ -9,6 +9,7 @@ interface Props {
   property: Property
 }
 
+export default function PropertyCard({ property }: Props) {
   const [imgSrc, setImgSrc] = useState(() => {
     const raw = property.images?.find(img => img.is_primary)?.image_url || property.images?.[0]?.image_url
     if (!raw || raw.startsWith('blob:')) {
