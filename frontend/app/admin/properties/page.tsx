@@ -716,7 +716,7 @@ function PhotosSection({
                   <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--color-bg-card)', color: 'var(--color-text-muted)', fontSize: '32px' }}>📸</div>
                 )}
                 {/* Loading spinning wheel overlay while photo is uploading */}
-                {(form.images[0].id.startsWith('upload-') || form.images[0].image_url.startsWith('blob:') || (uploadProgress[form.images[0].id] !== undefined && uploadProgress[form.images[0].id] < 100)) && (
+                {(form.images[0].id.startsWith('upload-') && (form.images[0].image_url.startsWith('blob:') || (uploadProgress[form.images[0].id] !== undefined && uploadProgress[form.images[0].id] < 100))) && (
                   <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.65)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', zIndex: 5 }}>
                     <div style={{ width: '32px', height: '32px', border: '3px solid var(--color-gold)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
                     <span style={{ color: '#ffffff', fontSize: '12px', fontWeight: '700', letterSpacing: '0.5px' }}>Uploading photo...</span>
@@ -739,7 +739,7 @@ function PhotosSection({
             {/* Secondary slots 1–4 */}
             {[1, 2, 3, 4].map(slotIdx => {
               const img = form.images[slotIdx]
-              const isUploading = img ? (img.id.startsWith('upload-') || img.image_url.startsWith('blob:') || (uploadProgress[img.id] !== undefined && uploadProgress[img.id] < 100)) : false
+              const isUploading = img ? (img.id.startsWith('upload-') && (img.image_url.startsWith('blob:') || (uploadProgress[img.id] !== undefined && uploadProgress[img.id] < 100))) : false
               return (
                 <div
                   key={slotIdx}
@@ -787,7 +787,7 @@ function PhotosSection({
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '8px', marginBottom: '12px' }}>
               {form.images.slice(5).map((img, relIdx) => {
                 const absIdx = relIdx + 5
-                const isUploading = img.id.startsWith('upload-') || img.image_url.startsWith('blob:') || (uploadProgress[img.id] !== undefined && uploadProgress[img.id] < 100)
+                const isUploading = img.id.startsWith('upload-') && (img.image_url.startsWith('blob:') || (uploadProgress[img.id] !== undefined && uploadProgress[img.id] < 100))
                 return (
                   <div key={img.id} style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', aspectRatio: '4/3', cursor: isUploading ? 'default' : 'grab' }}
                     draggable={!isUploading}
@@ -1816,6 +1816,7 @@ function AdminPropertiesPageContent() {
 
   return (
     <PropertyEditorModal
+      key={propertyId ?? 'new'}
       property={property}
       onClose={() => router.push('/admin')}
       onSave={() => {
