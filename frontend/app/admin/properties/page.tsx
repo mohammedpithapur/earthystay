@@ -1291,10 +1291,25 @@ function calcCompletion(form: typeof EMPTY_FORM, sectionId: SectionId): number {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const { user, loading } = useRequireAuth({ requireAdmin: true })
   const { fetchWithAuth } = useAuth()
   const isEdit = Boolean(property)
-  const [activeSection, setActiveSection] = useState<SectionId>('basic')
+
+  const sectionParam = searchParams.get('section') as SectionId | null
+  const validInitialSection = SECTIONS.some(s => s.id === sectionParam) ? sectionParam! : 'basic'
+  const [activeSection, setActiveSection] = useState<SectionId>(validInitialSection)
+
+  const changeSection = useCallback((sec: SectionId) => {
+    setActiveSection(sec)
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href)
+      url.searchParams.set('section', sec)
+      window.history.replaceState(null, '', url.toString())
+    }
+  }, [])
+
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [form, setForm] = useState<typeof EMPTY_FORM>(() => createFormFromProperty(property))
   const [availableProperties, setAvailableProperties] = useState<Property[]>([])
@@ -1308,7 +1323,6 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
   const propId = property?.id
   useEffect(() => {
     setForm(createFormFromProperty(property))
-    setActiveSection('basic')
     setSaveStatus('idle')
     setImageUploadProgress({})
     setImageUploadErrors({})
@@ -1475,28 +1489,28 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
 
     if (hasActiveUploads) {
       setImageUploadNotice('Photos are currently uploading (see spinning wheel). Please wait a moment for uploads to complete before saving.')
-      setActiveSection('photos')
+      changeSection('photos')
       setSaveStatus('idle')
       return false
     }
 
     if (!form.name.trim()) {
       setImageUploadNotice('Please enter a title for the property.')
-      setActiveSection('basic')
+      changeSection('basic')
       setSaveStatus('idle')
       return false
     }
 
     if (!form.city.trim() || !form.state.trim()) {
       setImageUploadNotice('Please specify the city and state for the property location.')
-      setActiveSection('location')
+      changeSection('location')
       setSaveStatus('idle')
       return false
     }
 
     if (form.price_per_night <= 0) {
       setImageUploadNotice('Please set a valid price per night (greater than ₹0).')
-      setActiveSection('pricing')
+      changeSection('pricing')
       setSaveStatus('idle')
       return false
     }
@@ -1510,7 +1524,7 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
       } else {
         setImageUploadNotice('Please upload at least 1 photo for this property before saving.')
       }
-      setActiveSection('photos')
+      changeSection('photos')
       setSaveStatus('idle')
       return false
     }
@@ -1650,7 +1664,7 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
               return (
                 <button
                   key={section.id}
-                  onClick={() => setActiveSection(section.id)}
+                  onClick={() => changeSection(section.id)}
                   style={{
                     width: '100%', padding: '14px 20px',
                     border: 'none', textAlign: 'left',
@@ -1744,7 +1758,7 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
               {/* Prev / Next section navigation */}
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '48px', paddingTop: '24px', borderTop: '1px solid var(--color-border)' }}>
                 <button
-                  onClick={() => setActiveSection(SECTIONS[Math.max(0, activeIdx - 1)].id)}
+                  onClick={() => changeSection(SECTIONS[Math.max(0, activeIdx - 1)].id)}
                   disabled={activeIdx === 0}
                   style={{
                     display: 'flex', alignItems: 'center', gap: '8px',
@@ -1761,14 +1775,11 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
                 <button
                   onClick={async () => {
                     if (isLastSection) {
-                      const savedResult = await handleSave()
-                      if (savedResult) {
-                        closeEditor()
-                      }
+                      await handleSave()
                       return
                     }
 
-                    setActiveSection(SECTIONS[Math.min(SECTIONS.length - 1, activeIdx + 1)].id)
+                    changeSection(SECTIONS[Math.min(SECTIONS.length - 1, activeIdx + 1)].id)
                   }}
                   disabled={disableSaveActions}
                   style={{
@@ -1849,7 +1860,6 @@ function AdminPropertiesPageContent() {
       onClose={() => router.push('/admin')}
       onSave={() => {
         void load()
-        router.push('/admin')
       }}
     />
   )
