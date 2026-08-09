@@ -80,6 +80,12 @@ async def send_booking_confirmation_email(
     guests: str,
     nights: str,
     total: str,
+    booking_email_instructions: str = "",
+    contact_phone: str = "",
+    contact_email: str = "",
+    contact_whatsapp: str = "",
+    contact_spare_phone: str = "",
+    house_rules: list[str] = None,
 ) -> bool:
     dashboard_url = f"{settings.FRONTEND_BASE_URL}/dashboard"
     html = _render_template(
@@ -93,6 +99,12 @@ async def send_booking_confirmation_email(
         nights=nights,
         total=total,
         dashboard_url=dashboard_url,
+        booking_email_instructions=booking_email_instructions,
+        contact_phone=contact_phone,
+        contact_email=contact_email,
+        contact_whatsapp=contact_whatsapp,
+        contact_spare_phone=contact_spare_phone,
+        house_rules=house_rules or [],
     )
     subject = f"Booking Confirmed: {property_name} ({booking_ref})"
 

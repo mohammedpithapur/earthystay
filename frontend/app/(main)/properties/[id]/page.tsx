@@ -16,6 +16,21 @@ const bathroomLabel: Record<string, string> = {
   shared: 'Shared',
 }
 
+const DEFAULT_STANDARD_RULES = [
+  'Check-in: 2:00 PM onwards | Check-out: By 10:00 AM',
+  'No smoking indoors. Smoking is allowed only in designated balcony/terrace areas. Indoor smoking penalty: ₹10,000.',
+  'Only registered guests are allowed to stay. Visitors require prior approval (10:00 AM–8:00 PM, maximum 2 visitors).',
+  'Government-issued photo ID is mandatory for all guests at check-in.',
+  'Parties require prior approval and must end by 9:00 PM. Please maintain quiet hours after 9:00 PM.',
+  'No food inside bedrooms. Please use the dining area for meals.',
+  'Please keep towels and bedsheets clean. Charges of 10,000 will apply for stains or damage.',
+  'If you use the kitchen, kindly wash and return all utensils after use.',
+  'Guests are responsible for any damage, missing items, or excessive mess.',
+  'Please use the dustbins provided. Do not throw garbage or cigarette butts from balconies or windows.',
+  'Before leaving, switch off lights, ACs, fans, geysers, lock all doors/windows, and return the keys.',
+  'Any payment made to staff or the caretaker must be immediately reported to the host with payment proof. Host: Megha  +91 98748 27631 on whatsapp',
+]
+
 export default function PropertyDetailPage() {
   const { id } = useParams()
   const router = useRouter()
@@ -397,7 +412,7 @@ export default function PropertyDetailPage() {
               icon: <Bath size={16} />,
               label: `${property.bathrooms} Baths`,
               tag: (property.bathrooms_detail ?? []).length > 0 ? {
-                text: isBathShared ? 'Shared' : 'Not Shared',
+                text: isBathShared ? 'Shared' : 'Private',
                 color: isBathShared ? '#B45309' : '#15803D',
                 bg: isBathShared ? '#FEF3C7' : '#DCFCE7',
               } : undefined
@@ -410,7 +425,7 @@ export default function PropertyDetailPage() {
             const activeSpacesMap = new Map<string, { type: string; count: number; sharing: string }>()
             for (const sp of property.spaces_detail ?? []) {
               if (Number(sp.count) > 0 && spaceConfig[sp.type]) {
-                activeSpacesMap.set(sp.type, { type: sp.type, count: Number(sp.count), sharing: sp.sharing || 'not_shared' })
+                activeSpacesMap.set(sp.type, { type: sp.type, count: Number(sp.count), sharing: sp.sharing || 'private' })
               }
             }
             const cleanAmenities = (property.amenities ?? []).filter(a => typeof a === 'string' && !a.startsWith('__space__:'))
@@ -418,7 +433,7 @@ export default function PropertyDetailPage() {
               if (!activeSpacesMap.has(key)) {
                 const foundInAmenities = cleanAmenities.some(a => cfg.matchKeywords.some(kw => a.toLowerCase().includes(kw)))
                 if (foundInAmenities) {
-                  activeSpacesMap.set(key, { type: key, count: 1, sharing: 'not_shared' })
+                  activeSpacesMap.set(key, { type: key, count: 1, sharing: 'private' })
                 }
               }
             }
@@ -431,7 +446,7 @@ export default function PropertyDetailPage() {
                   icon: cfg.icon,
                   label: `${sp.count} ${cfg.label}`,
                   tag: {
-                    text: isShared ? 'Shared' : 'Not Shared',
+                    text: isShared ? 'Shared' : 'Private',
                     color: isShared ? '#B45309' : '#15803D',
                     bg: isShared ? '#FEF3C7' : '#DCFCE7',
                   }
@@ -654,7 +669,7 @@ export default function PropertyDetailPage() {
                             <span style={{ color: 'var(--color-gold)', flexShrink: 0, display: 'flex' }}>{cfg?.icon ?? <LayoutDashboard size={16} />}</span>
                             <span style={{ fontSize: '14px', color: 'var(--color-text-primary)', flex: 1 }}>{sp.count}x {cfg?.label ?? sp.type}</span>
                             <span style={{ fontSize: '11px', fontWeight: '600', color: sp.sharing === 'shared' ? '#B45309' : '#15803D', backgroundColor: sp.sharing === 'shared' ? '#FEF3C7' : '#DCFCE7', padding: '2px 7px', borderRadius: '100px', display: 'inline-flex', alignItems: 'center' }}>
-                              {sp.sharing === 'shared' ? 'Shared' : 'Not Shared'}
+                              {sp.sharing === 'shared' ? 'Shared' : 'Private'}
                             </span>
                           </div>
                         )
@@ -690,12 +705,19 @@ export default function PropertyDetailPage() {
                 <h3 style={{ fontSize: '22px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '8px' }}>House Rules</h3>
                 <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--color-gold)', marginBottom: '24px' }} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  {property.house_rules.map((rule, i) => (
-                    <div key={i} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', paddingBottom: '16px', borderBottom: i < property.house_rules.length - 1 ? '1px solid var(--color-border)' : 'none' }}>
-                      <Check size={16} style={{ color: 'var(--color-gold)', flexShrink: 0, marginTop: '3px' }} />
-                      <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>{rule}</p>
-                    </div>
-                  ))}
+                  {(() => {
+                    const existing = property.house_rules ?? []
+                    const combined = [
+                      ...DEFAULT_STANDARD_RULES,
+                      ...existing.filter(r => !DEFAULT_STANDARD_RULES.includes(r))
+                    ]
+                    return combined.map((rule, i) => (
+                      <div key={i} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', paddingBottom: '16px', borderBottom: i < combined.length - 1 ? '1px solid var(--color-border)' : 'none' }}>
+                        <Check size={16} style={{ color: 'var(--color-gold)', flexShrink: 0, marginTop: '3px' }} />
+                        <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>{rule}</p>
+                      </div>
+                    ))
+                  })()}
                 </div>
               </div>
 

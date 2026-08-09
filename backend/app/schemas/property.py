@@ -47,6 +47,9 @@ class PropertyOut(BaseModel):
     longitude: float = 0.0
     contact_phone: str = ""
     contact_email: str = ""
+    contact_whatsapp: str = ""
+    contact_spare_phone: str = ""
+    booking_email_instructions: str = ""
     check_in_time: str = "2:00 PM"
     check_out_time: str = "11:00 AM"
     house_rules: list[str] = Field(default_factory=list)
@@ -106,7 +109,8 @@ class PropertyOut(BaseModel):
 
     @field_validator(
         "name", "description", "address", "city", "state", "country",
-        "contact_phone", "contact_email", "check_in_time", "check_out_time",
+        "contact_phone", "contact_email", "contact_whatsapp", "contact_spare_phone",
+        "booking_email_instructions", "check_in_time", "check_out_time",
         mode="before"
     )
     @classmethod
@@ -159,6 +163,9 @@ class PropertyCreate(BaseModel):
     longitude: float
     contact_phone: str
     contact_email: str
+    contact_whatsapp: str = ""
+    contact_spare_phone: str = ""
+    booking_email_instructions: str = ""
     check_in_time: str = "2:00 PM"
     check_out_time: str = "11:00 AM"
     house_rules: list[str] = []
@@ -194,6 +201,9 @@ class PropertyUpdate(BaseModel):
     longitude: float | None = None
     contact_phone: str | None = None
     contact_email: str | None = None
+    contact_whatsapp: str | None = None
+    contact_spare_phone: str | None = None
+    booking_email_instructions: str | None = None
     check_in_time: str | None = None
     check_out_time: str | None = None
     house_rules: list[str] | None = None

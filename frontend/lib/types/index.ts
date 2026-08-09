@@ -6,7 +6,7 @@ export interface BathroomDetail {
 }
 
 export type SpaceType = 'balcony' | 'terrace' | 'kitchen' | 'hall' | 'living_room' | 'dining_room' | 'entrance'
-export type SpaceSharing = 'shared' | 'not_shared'
+export type SpaceSharing = 'shared' | 'not_shared' | 'private'
 
 export interface SpaceDetail {
   type: SpaceType
@@ -51,8 +51,11 @@ export interface Property {
   review_count: number
   created_at: string
   address: string        // full address
-  contact_phone: string  // property contact number
+  contact_phone: string  // property contact call number
   contact_email: string  // property contact email
+  contact_whatsapp?: string    // property contact whatsapp number
+  contact_spare_phone?: string // property contact spare number (optional)
+  booking_email_instructions?: string // custom email instructions sent to guest in booking confirmation email
   check_in_time: string  // e.g. "2:00 PM"
   check_out_time: string // e.g. "11:00 AM"
   house_rules: string[]  // list of rules

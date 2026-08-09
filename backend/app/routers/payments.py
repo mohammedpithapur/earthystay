@@ -210,6 +210,12 @@ async def verify_payment(
     # Trigger notifications in the background
     property_obj = await db.get(Property, booking.property_id)
     property_name = property_obj.name if property_obj else "EarthyStay Property"
+    email_instructions = getattr(property_obj, 'booking_email_instructions', '') if property_obj else ""
+    c_phone = property_obj.contact_phone if property_obj else ""
+    c_email = property_obj.contact_email if property_obj else ""
+    c_whatsapp = getattr(property_obj, 'contact_whatsapp', '') if property_obj else ""
+    c_spare = getattr(property_obj, 'contact_spare_phone', '') if property_obj else ""
+    h_rules = property_obj.house_rules if (property_obj and property_obj.house_rules) else []
 
     background_tasks.add_task(
         send_booking_confirmation_email,
@@ -222,6 +228,12 @@ async def verify_payment(
         guests=str(booking.guests),
         nights=str(booking.nights),
         total=str(booking.total),
+        booking_email_instructions=email_instructions,
+        contact_phone=c_phone,
+        contact_email=c_email,
+        contact_whatsapp=c_whatsapp,
+        contact_spare_phone=c_spare,
+        house_rules=h_rules,
     )
 
     admin_email = property_obj.contact_email if (property_obj and property_obj.contact_email) else "admin@earthystay.com"
@@ -305,6 +317,12 @@ async def razorpay_webhook(
                     # Trigger notifications
                     property_obj = await db.get(Property, booking.property_id)
                     property_name = property_obj.name if property_obj else "EarthyStay Property"
+                    email_instructions = getattr(property_obj, 'booking_email_instructions', '') if property_obj else ""
+                    c_phone = property_obj.contact_phone if property_obj else ""
+                    c_email = property_obj.contact_email if property_obj else ""
+                    c_whatsapp = getattr(property_obj, 'contact_whatsapp', '') if property_obj else ""
+                    c_spare = getattr(property_obj, 'contact_spare_phone', '') if property_obj else ""
+                    h_rules = property_obj.house_rules if (property_obj and property_obj.house_rules) else []
 
                     background_tasks.add_task(
                         send_booking_confirmation_email,
@@ -317,6 +335,12 @@ async def razorpay_webhook(
                         guests=str(booking.guests),
                         nights=str(booking.nights),
                         total=str(booking.total),
+                        booking_email_instructions=email_instructions,
+                        contact_phone=c_phone,
+                        contact_email=c_email,
+                        contact_whatsapp=c_whatsapp,
+                        contact_spare_phone=c_spare,
+                        house_rules=h_rules,
                     )
 
                     admin_email = property_obj.contact_email if (property_obj and property_obj.contact_email) else "admin@earthystay.com"

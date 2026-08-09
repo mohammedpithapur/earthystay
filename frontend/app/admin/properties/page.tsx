@@ -54,13 +54,24 @@ const AMENITY_GROUPS: Record<string, string[]> = {
 }
 const AMENITY_OPTIONS = Object.values(AMENITY_GROUPS).flat()
 
+const DEFAULT_STANDARD_RULES = [
+  'Check-in: 2:00 PM onwards | Check-out: By 10:00 AM',
+  'No smoking indoors. Smoking is allowed only in designated balcony/terrace areas. Indoor smoking penalty: ₹10,000.',
+  'Only registered guests are allowed to stay. Visitors require prior approval (10:00 AM–8:00 PM, maximum 2 visitors).',
+  'Government-issued photo ID is mandatory for all guests at check-in.',
+  'Parties require prior approval and must end by 9:00 PM. Please maintain quiet hours after 9:00 PM.',
+  'No food inside bedrooms. Please use the dining area for meals.',
+  'Please keep towels and bedsheets clean. Charges of 10,000 will apply for stains or damage.',
+  'If you use the kitchen, kindly wash and return all utensils after use.',
+  'Guests are responsible for any damage, missing items, or excessive mess.',
+  'Please use the dustbins provided. Do not throw garbage or cigarette butts from balconies or windows.',
+  'Before leaving, switch off lights, ACs, fans, geysers, lock all doors/windows, and return the keys.',
+  'Any payment made to staff or the caretaker must be immediately reported to the host with payment proof. Host: Megha  +91 98748 27631 on whatsapp',
+]
+
 const PREDEFINED_RULES = [
-  'No smoking inside the property',
-  'No loud music after 10:00 PM',
-  'No parties or events',
+  ...DEFAULT_STANDARD_RULES,
   'Pets must be leashed in common areas',
-  'No smoking or alcohol on the property',
-  'Quiet hours after 10:00 PM',
   'Please respect the natural surroundings',
   'No pets allowed',
   'Heritage artefacts must not be touched',
@@ -87,6 +98,9 @@ type PropertyFormState = {
   check_out_time: string
   contact_phone: string
   contact_email: string
+  contact_whatsapp: string
+  contact_spare_phone: string
+  booking_email_instructions: string
   address: string
   city: string
   state: string
@@ -126,7 +140,8 @@ const EMPTY_FORM: PropertyFormState = {
   bathrooms_detail: [{ type: 'ensuite' as const, count: 1 }],
   spaces_detail: [] as SpaceDetail[],
   max_guests: 2, check_in_time: '2:00 PM', check_out_time: '11:00 AM',
-  contact_phone: '', contact_email: '',
+  contact_phone: '', contact_email: '', contact_whatsapp: '', contact_spare_phone: '',
+  booking_email_instructions: '',
   address: '', city: '', state: '', country: 'India',
   latitude: 20.5937, longitude: 78.9629,
   images: [] as { id: string; property_id: string; image_url: string; is_primary: boolean; display_order: number }[],
@@ -153,6 +168,9 @@ function createFormFromProperty(property?: Property | null): PropertyFormState {
     check_out_time: property.check_out_time,
     contact_phone: property.contact_phone,
     contact_email: property.contact_email,
+    contact_whatsapp: property.contact_whatsapp ?? '',
+    contact_spare_phone: property.contact_spare_phone ?? '',
+    booking_email_instructions: property.booking_email_instructions ?? '',
     address: property.address,
     city: property.city,
     state: property.state,
@@ -170,7 +188,7 @@ function createFormFromProperty(property?: Property | null): PropertyFormState {
     pets_allowed: property.pets_allowed,
     max_pets: (property as { max_pets?: number }).max_pets ?? 0,
     is_published: property.is_published,
-    house_rules: [...property.house_rules],
+    house_rules: [...(property.house_rules ?? [])],
   }
 }
 
@@ -358,7 +376,7 @@ function BasicInfoSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm:
       {/* Spaces Detail Section */}
       <div>
         <FieldLabel>Spaces & Areas ({form.spaces_detail.reduce((s, sp) => s + sp.count, 0)} total)</FieldLabel>
-        <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '16px' }}>Add spaces available at your property and specify if they are shared or private</p>
+        <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '16px' }}>Add spaces available at your property and specify if they are private or shared</p>
         {form.spaces_detail.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '14px' }}>
             {form.spaces_detail.map((sp, idx) => {
@@ -386,7 +404,7 @@ function BasicInfoSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm:
                     <option value="entrance">Entrance</option>
                   </select>
                   <select
-                    value={sp.sharing}
+                    value={sp.sharing === 'not_shared' ? 'private' : sp.sharing}
                     onChange={e => {
                       const updated = [...form.spaces_detail]
                       updated[idx] = { ...updated[idx], sharing: e.target.value as SpaceDetail['sharing'] }
@@ -394,7 +412,7 @@ function BasicInfoSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm:
                     }}
                     style={{ ...selectStyle, flex: '1 1 120px', minWidth: '100px' }}
                   >
-                    <option value="not_shared">Not Shared</option>
+                    <option value="private">Private</option>
                     <option value="shared">Shared</option>
                   </select>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: '0 0 auto' }}>
@@ -427,7 +445,7 @@ function BasicInfoSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm:
             }
             return (
               <button key={type} onClick={() => {
-                const updated = [...form.spaces_detail, { type, count: 1, sharing: 'not_shared' as const }]
+                const updated = [...form.spaces_detail, { type, count: 1, sharing: 'private' as const }]
                 setForm({ ...form, spaces_detail: updated })
               }} style={{ padding: '7px 14px', border: '1px dashed var(--color-border)', borderRadius: '8px', backgroundColor: 'transparent', fontSize: '12px', cursor: 'pointer', color: 'var(--color-text-muted)', fontWeight: '600' }}>{labels[type]}</button>
             )
@@ -453,19 +471,202 @@ function BasicInfoSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm:
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
         <div>
-          <FieldLabel>Contact Phone</FieldLabel>
+          <FieldLabel>Contact Call (Phone)</FieldLabel>
           <input style={inputStyle} value={form.contact_phone} placeholder="+91 9874827631" onChange={e => setForm({ ...form, contact_phone: e.target.value })} />
         </div>
         <div>
           <FieldLabel>Contact Email</FieldLabel>
           <input style={inputStyle} value={form.contact_email} placeholder="staysearthy@gmail.com" onChange={e => setForm({ ...form, contact_email: e.target.value })} />
         </div>
+        <div>
+          <FieldLabel>Contact WhatsApp</FieldLabel>
+          <input style={inputStyle} value={form.contact_whatsapp} placeholder="+91 9874827631" onChange={e => setForm({ ...form, contact_whatsapp: e.target.value })} />
+        </div>
+        <div>
+          <FieldLabel>Contact Spare Number (Optional)</FieldLabel>
+          <input style={inputStyle} value={form.contact_spare_phone} placeholder="+91 9874827630 (Optional)" onChange={e => setForm({ ...form, contact_spare_phone: e.target.value })} />
+        </div>
+      </div>
+
+      {/* Booking Confirmation Email Instructions (Visual WYSIWYG Editor) */}
+      <div style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+          <FieldLabel>Booking Confirmation Email Notes / Instructions</FieldLabel>
+          <span style={{ fontSize: '11px', backgroundColor: '#FEF3C7', color: '#B45309', padding: '2px 8px', borderRadius: '100px', fontWeight: '700' }}>Sent to Guest via Email</span>
+        </div>
+        <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '14px', lineHeight: '1.5' }}>
+          Type check-in instructions or notes for the guest. Select text and click the buttons below to visually bold text or create bullet lists—no code required!
+        </p>
+
+        <VisualWysiwygEditor
+          value={form.booking_email_instructions}
+          onChange={html => setForm({ ...form, booking_email_instructions: html })}
+        />
       </div>
     </div>
   )
 }
 
+function VisualWysiwygEditor({ value, onChange }: { value: string; onChange: (html: string) => void }) {
+  const editorRef = useRef<HTMLDivElement>(null)
+
+  // Only sync from outside when value changes externally (not from user typing)
+  const lastHtml = useRef<string>(value || '')
+  useEffect(() => {
+    if (editorRef.current && value !== lastHtml.current) {
+      editorRef.current.innerHTML = value || ''
+      lastHtml.current = value || ''
+    }
+  }, [value])
+
+  // Ensure editor has focus and cursor is inside it
+  const ensureFocused = () => {
+    const editor = editorRef.current
+    if (!editor) return
+    editor.focus()
+    // If editor is empty or cursor not inside, move cursor to end
+    const sel = window.getSelection()
+    if (!sel || sel.rangeCount === 0 || !editor.contains(sel.getRangeAt(0).commonAncestorContainer)) {
+      const range = document.createRange()
+      range.selectNodeContents(editor)
+      range.collapse(false) // collapse to end
+      sel?.removeAllRanges()
+      sel?.addRange(range)
+    }
+  }
+
+  const insertAtCursor = (htmlSnippet: string) => {
+    ensureFocused()
+    const sel = window.getSelection()
+    const editor = editorRef.current
+    if (!editor) return
+
+    if (sel && sel.rangeCount > 0) {
+      const range = sel.getRangeAt(0)
+      if (editor.contains(range.commonAncestorContainer)) {
+        range.deleteContents()
+        const temp = document.createElement('div')
+        temp.innerHTML = htmlSnippet
+        const frag = document.createDocumentFragment()
+        let lastNode: Node | null = null
+        let node: ChildNode | null
+        while ((node = temp.firstChild)) {
+          lastNode = frag.appendChild(node)
+        }
+        range.insertNode(frag)
+        if (lastNode) {
+          const newRange = document.createRange()
+          newRange.setStartAfter(lastNode)
+          newRange.collapse(true)
+          sel.removeAllRanges()
+          sel.addRange(newRange)
+        }
+        lastHtml.current = editor.innerHTML
+        onChange(editor.innerHTML)
+        return
+      }
+    }
+    // Fallback: append to end
+    editor.innerHTML += htmlSnippet
+    lastHtml.current = editor.innerHTML
+    onChange(editor.innerHTML)
+  }
+
+  const execFormat = (cmd: string) => {
+    ensureFocused()
+    document.execCommand(cmd, false)
+    if (editorRef.current) {
+      lastHtml.current = editorRef.current.innerHTML
+      onChange(editorRef.current.innerHTML)
+    }
+  }
+
+  const toolbarBtn = (label: React.ReactNode, title: string, handler: (e: React.MouseEvent) => void, extraStyle?: React.CSSProperties) => (
+    <button
+      type="button"
+      title={title}
+      onMouseDown={(e: React.MouseEvent) => { e.preventDefault(); handler(e) }}
+      style={{
+        padding: '6px 13px',
+        fontSize: '13px',
+        fontWeight: '700',
+        border: '1px solid #d0c9be',
+        borderRadius: '6px',
+        backgroundColor: '#ffffff',
+        cursor: 'pointer',
+        lineHeight: '1.4',
+        ...extraStyle,
+      }}
+    >
+      {label}
+    </button>
+  )
+
+  return (
+    <div style={{ border: '1px solid var(--color-border)', borderRadius: '10px', overflow: 'hidden', backgroundColor: '#ffffff' }}>
+      {/* Toolbar */}
+      <div style={{ display: 'flex', gap: '6px', padding: '8px 12px', backgroundColor: 'var(--color-bg-soft)', borderBottom: '1px solid var(--color-border)', flexWrap: 'wrap', alignItems: 'center' }}>
+        {toolbarBtn(<><b>B</b> Bold</>, 'Bold', () => execFormat('bold'))}
+        {toolbarBtn(<><i>I</i> Italic</>, 'Italic', () => execFormat('italic'), { fontStyle: 'italic' })}
+
+        {toolbarBtn('🔗 Insert Link', 'Insert Link', () => {
+          const url = prompt('Enter URL (e.g. https://maps.google.com):')
+          if (!url) return
+          ensureFocused()
+          const sel = window.getSelection()
+          const selectedText = sel?.toString().trim() || ''
+          const label = selectedText || url
+          insertAtCursor(`<a href="${url}" target="_blank" style="color:#9a7a2f;text-decoration:underline;font-weight:600">${label}</a>&nbsp;`)
+        }, { fontWeight: '600' })}
+        {toolbarBtn('🧹 Clear', 'Clear Formatting', () => {
+          ensureFocused()
+          document.execCommand('removeFormat', false)
+          if (editorRef.current) {
+            lastHtml.current = editorRef.current.innerHTML
+            onChange(editorRef.current.innerHTML)
+          }
+        }, { color: '#888', marginLeft: 'auto' })}
+      </div>
+
+      {/* Editable Area */}
+      <div
+        ref={editorRef}
+        contentEditable
+        suppressContentEditableWarning
+        data-placeholder="Type your instructions here, or use the toolbar buttons above to format text, add bullet lists, numbered steps, or links..."
+        onInput={() => {
+          if (editorRef.current) {
+            lastHtml.current = editorRef.current.innerHTML
+            onChange(editorRef.current.innerHTML)
+          }
+        }}
+        style={{
+          minHeight: '150px',
+          maxHeight: '350px',
+          overflowY: 'auto',
+          padding: '14px 16px',
+          fontSize: '14px',
+          lineHeight: '1.7',
+          outline: 'none',
+          color: 'var(--color-text-primary)',
+          backgroundColor: '#ffffff',
+        }}
+      />
+      <style>{`
+        [contenteditable]:empty:before {
+          content: attr(data-placeholder);
+          color: #b0a898;
+          pointer-events: none;
+        }
+      `}</style>
+    </div>
+  )
+}
+
+
+
 function LocationSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: (f: typeof EMPTY_FORM) => void }) {
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div>
@@ -1415,6 +1616,9 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
       check_out_time: form.check_out_time,
       contact_phone: form.contact_phone.trim(),
       contact_email: form.contact_email.trim(),
+      contact_whatsapp: form.contact_whatsapp.trim(),
+      contact_spare_phone: form.contact_spare_phone.trim(),
+      booking_email_instructions: form.booking_email_instructions.trim(),
       address: form.address.trim(),
       city: form.city.trim(),
       state: form.state.trim(),

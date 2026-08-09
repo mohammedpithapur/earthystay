@@ -39,6 +39,61 @@
           </table>
         </div>
 
+        {% if booking_email_instructions %}
+        <!-- Host Custom Email Instructions & Check-in Notes -->
+        <div style="background:#f9f6f0;border-left:4px solid #c9a84a;border-radius:6px;padding:20px;margin-bottom:24px;">
+          <h3 style="margin:0 0 10px;font-size:15px;color:#9a7a2f;">Host Instructions & Important Notes:</h3>
+          <div style="font-size:14px;line-height:1.6;color:#2f2a23;">
+            {{ booking_email_instructions | safe }}
+          </div>
+        </div>
+        {% endif %}
+
+        {% if contact_phone or contact_email or contact_whatsapp or contact_spare_phone %}
+        <!-- Property Contact & Caretaker Info -->
+        <div style="background:#fcfbf9;border:1px solid #efeae0;border-radius:6px;padding:20px;margin-bottom:24px;">
+          <h3 style="margin:0 0 12px;font-size:15px;color:#9a7a2f;">📞 Property & Caretaker Contacts:</h3>
+          <table style="width:100%;border-collapse:collapse;font-size:14px;color:#2f2a23;">
+            {% if contact_phone %}
+            <tr>
+              <td style="padding:4px 0;font-weight:700;width:40%;">Contact Call:</td>
+              <td style="padding:4px 0;color:#5f574d;">{{ contact_phone }}</td>
+            </tr>
+            {% endif %}
+            {% if contact_whatsapp %}
+            <tr>
+              <td style="padding:4px 0;font-weight:700;">WhatsApp:</td>
+              <td style="padding:4px 0;color:#5f574d;">{{ contact_whatsapp }}</td>
+            </tr>
+            {% endif %}
+            {% if contact_email %}
+            <tr>
+              <td style="padding:4px 0;font-weight:700;">Email:</td>
+              <td style="padding:4px 0;color:#5f574d;">{{ contact_email }}</td>
+            </tr>
+            {% endif %}
+            {% if contact_spare_phone %}
+            <tr>
+              <td style="padding:4px 0;font-weight:700;">Spare Number:</td>
+              <td style="padding:4px 0;color:#5f574d;">{{ contact_spare_phone }}</td>
+            </tr>
+            {% endif %}
+          </table>
+        </div>
+        {% endif %}
+
+        {% if house_rules and house_rules|length > 0 %}
+        <!-- House Rules Card -->
+        <div style="background:#fcfbf9;border:1px solid #efeae0;border-radius:6px;padding:20px;margin-bottom:24px;">
+          <h3 style="margin:0 0 12px;font-size:15px;color:#9a7a2f;">📜 Property House Rules:</h3>
+          <ul style="margin:0;padding-left:20px;font-size:13px;line-height:1.6;color:#5f574d;">
+            {% for rule in house_rules %}
+            <li style="margin-bottom:6px;">{{ rule }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+
         <div style="text-align:center;margin-bottom:24px;">
           <a href="{{ dashboard_url }}" style="display:inline-block;background:#c9a84a;color:#2f2a23;text-decoration:none;border-radius:6px;padding:14px 22px;font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">
             View Your Dashboard
