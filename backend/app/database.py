@@ -18,7 +18,7 @@ def utc_now() -> datetime:
 # On a traditional server (local dev / Docker) we use AsyncAdaptedQueuePool for performance.
 _IS_LAMBDA = os.environ.get("AWS_LAMBDA_FUNCTION_NAME") is not None
 
-db_url = settings.DATABASE_URL
+db_url = settings.DATABASE_URL.strip('"').strip("'")
 if db_url.startswith("postgresql://"):
     db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 

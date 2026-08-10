@@ -64,12 +64,14 @@ async def sync_property_images(db: AsyncSession, property_id_val: uuid.UUID | st
     for index, image_data in enumerate(valid_images):
         is_primary = bool(image_data.is_primary) and not primary_assigned
         primary_assigned = primary_assigned or is_primary
+        album_name = getattr(image_data, "album_name", "General") or "General"
         normalized_images.append(
             PropertyImage(
                 property_id=prop_uuid,
                 image_url=image_data.image_url,
                 is_primary=is_primary,
                 display_order=image_data.display_order or index + 1,
+                album_name=album_name,
             )
         )
 
@@ -98,11 +100,13 @@ async def normalize_property_images(images: list[PropertyImageCreate] | None) ->
             except UploadStorageError as exc:
                 raise HTTPException(status_code=500, detail=f"Image upload failed: {exc}") from exc
 
+        album_name = getattr(image, "album_name", "General") or "General"
         normalized.append(
             PropertyImageCreate(
                 image_url=image_url,
                 is_primary=image.is_primary,
                 display_order=image.display_order,
+                album_name=album_name,
             )
         )
 
@@ -444,11 +448,16 @@ async def duplicate_property(
         longitude=source.longitude,
         contact_phone=source.contact_phone,
         contact_email=source.contact_email,
+        contact_whatsapp=source.contact_whatsapp,
+        contact_spare_phone=source.contact_spare_phone,
+        booking_email_instructions=source.booking_email_instructions,
         check_in_time=source.check_in_time,
         check_out_time=source.check_out_time,
         house_rules=list(source.house_rules) if source.house_rules else [],
         price_per_night=source.price_per_night,
         cleaning_fee=source.cleaning_fee,
+        extra_guest_charge_per_night=source.extra_guest_charge_per_night,
+        base_guests=source.base_guests,
         max_guests=source.max_guests,
         bedrooms=source.bedrooms,
         bathrooms=source.bathrooms,
@@ -456,6 +465,7 @@ async def duplicate_property(
         min_nights=source.min_nights,
         pets_allowed=source.pets_allowed,
         pet_charge_per_night=source.pet_charge_per_night,
+        max_pets=source.max_pets,
         amenities=list(source.amenities) if source.amenities else [],
         is_published=False,
         override_house_rules=source.override_house_rules,
@@ -464,11 +474,14 @@ async def duplicate_property(
         avg_rating=0.0,
         review_count=0,
     )
+    if source.spaces_detail:
+        new_property.spaces_detail = [dict(s) for s in source.spaces_detail]
     db.add(new_property)
     await db.flush()
 
-    # Copy all images from source property
+    # Copy all images from source property including album_name
     copied_count = 0
+    cloned_images = []
     for img in (source.images or []):
         if img.image_url and not img.image_url.startswith("blob:"):
             new_img = PropertyImage(
@@ -476,8 +489,9 @@ async def duplicate_property(
                 image_url=img.image_url,
                 is_primary=img.is_primary,
                 display_order=img.display_order,
+                album_name=getattr(img, "album_name", "General") or "General",
             )
-            db.add(new_img)
+            cloned_images.append(new_img)
             copied_count += 1
 
     if copied_count == 0:
@@ -487,9 +501,11 @@ async def duplicate_property(
             image_url="https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800",
             is_primary=True,
             display_order=1,
+            album_name="General",
         )
-        db.add(fallback_img)
+        cloned_images.append(fallback_img)
 
+    db.add_all(cloned_images)
     await db.commit()
 
     result = await db.execute(

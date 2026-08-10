@@ -20,6 +20,7 @@ export interface PropertyImage {
   image_url: string
   is_primary: boolean
   display_order: number
+  album_name?: string
 }
 
 export interface Property {

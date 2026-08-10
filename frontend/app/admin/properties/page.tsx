@@ -1,6 +1,6 @@
 'use client'
 import Image from 'next/image'
-import React, { Suspense, useState, useEffect, useRef, useCallback } from 'react'
+import React, { Suspense, useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { addPropertyGroupMember, createPropertyGroup, deleteAdminProperty, deleteAdminPropertyImage, listAdminProperties, listPropertyGroups, saveProperty, updateAdminPropertyImage, updatePropertyGroupMember, type ApiFetcher } from '@/lib/api'
 import CalendarModal from './CalendarModal'
@@ -107,7 +107,7 @@ type PropertyFormState = {
   country: string
   latitude: number
   longitude: number
-  images: { id: string; property_id: string; image_url: string; is_primary: boolean; display_order: number }[]
+  images: { id: string; property_id: string; image_url: string; is_primary: boolean; display_order: number; album_name?: string }[]
   amenities: string[]
   price_per_night: number
   cleaning_fee: number
@@ -144,7 +144,7 @@ const EMPTY_FORM: PropertyFormState = {
   booking_email_instructions: '',
   address: '', city: '', state: '', country: 'India',
   latitude: 20.5937, longitude: 78.9629,
-  images: [] as { id: string; property_id: string; image_url: string; is_primary: boolean; display_order: number }[],
+  images: [] as { id: string; property_id: string; image_url: string; is_primary: boolean; display_order: number; album_name?: string }[],
   amenities: [] as string[],
   price_per_night: 5000, cleaning_fee: 800, extra_guest_charge_per_night: 0, base_guests: 2, pet_charge_per_night: 300,
   min_nights: 1, pets_allowed: false, max_pets: 0, is_published: true,
@@ -177,7 +177,7 @@ function createFormFromProperty(property?: Property | null): PropertyFormState {
     country: property.country,
     latitude: property.latitude,
     longitude: property.longitude,
-    images: property.images.map(image => ({ ...image })),
+    images: (property.images || []).map(image => ({ ...image, album_name: image.album_name || 'General' })),
     amenities: [...property.amenities],
     price_per_night: property.price_per_night,
     cleaning_fee: property.cleaning_fee,
@@ -293,7 +293,7 @@ const selectStyle = {
 
 // ─── Section Components ───────────────────────────────────────────────────────
 
-function BasicInfoSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: (f: typeof EMPTY_FORM) => void }) {
+function BasicInfoSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: React.Dispatch<React.SetStateAction<typeof EMPTY_FORM>> }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div>
@@ -314,10 +314,107 @@ function BasicInfoSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm:
       </div>
 
       <div>
-        <FieldLabel>Space Details</FieldLabel>
-        <div style={{ border: '1px solid var(--color-border)', borderRadius: '12px', padding: '0 20px' }}>
-          <Stepper label="Bedrooms" value={form.bedrooms} onChange={v => setForm({ ...form, bedrooms: v })} min={1} max={20} />
-          <Stepper label="Max Guests" value={form.max_guests} onChange={v => setForm({ ...form, max_guests: v })} min={1} max={30} />
+        <FieldLabel>Space &amp; Guest Details</FieldLabel>
+        <div style={{ border: '1px solid var(--color-border)', borderRadius: '12px', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--color-text-primary)' }}>Bedrooms</div>
+              <div style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>Number of private bedrooms</div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => setForm(f => ({ ...f, bedrooms: Math.max(1, f.bedrooms - 1) }))}
+                style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-border)', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '16px' }}
+              >−</button>
+              <input
+                type="number"
+                min={1}
+                max={50}
+                value={form.bedrooms}
+                onChange={e => {
+                  const v = parseInt(e.target.value, 10) || 1
+                  setForm(f => ({ ...f, bedrooms: Math.max(1, v) }))
+                }}
+                style={{ width: '60px', textAlign: 'center', fontWeight: '700', padding: '6px', border: '1px solid var(--color-border)', borderRadius: '8px' }}
+              />
+              <button
+                type="button"
+                onClick={() => setForm(f => ({ ...f, bedrooms: f.bedrooms + 1 }))}
+                style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-border)', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '16px' }}
+              >+</button>
+            </div>
+          </div>
+
+          <div style={{ height: '1px', backgroundColor: 'var(--color-border)' }} />
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--color-text-primary)' }}>Standard Guest Capacity (Base Guests)</div>
+              <div style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>Guests included in base price (e.g. 2, 4, 6)</div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => setForm(f => {
+                  const nextBase = Math.max(1, f.base_guests - 1)
+                  return { ...f, base_guests: nextBase, max_guests: Math.max(f.max_guests, nextBase) }
+                })}
+                style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-border)', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '16px' }}
+              >−</button>
+              <input
+                type="number"
+                min={1}
+                max={100}
+                value={form.base_guests}
+                onChange={e => {
+                  const v = parseInt(e.target.value, 10) || 1
+                  setForm(f => ({ ...f, base_guests: v, max_guests: Math.max(f.max_guests, v) }))
+                }}
+                style={{ width: '60px', textAlign: 'center', fontWeight: '700', padding: '6px', border: '1px solid var(--color-border)', borderRadius: '8px' }}
+              />
+              <button
+                type="button"
+                onClick={() => setForm(f => {
+                  const nextBase = f.base_guests + 1
+                  return { ...f, base_guests: nextBase, max_guests: Math.max(f.max_guests, nextBase) }
+                })}
+                style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-border)', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '16px' }}
+              >+</button>
+            </div>
+          </div>
+
+          <div style={{ height: '1px', backgroundColor: 'var(--color-border)' }} />
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--color-text-primary)' }}>Maximum Guest Capacity</div>
+              <div style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>Total maximum guests allowed at the property</div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => setForm(f => ({ ...f, max_guests: Math.max(f.base_guests, f.max_guests - 1) }))}
+                style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-border)', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '16px' }}
+              >−</button>
+              <input
+                type="number"
+                min={form.base_guests}
+                max={100}
+                value={form.max_guests}
+                onChange={e => {
+                  const v = parseInt(e.target.value, 10) || form.base_guests
+                  setForm(f => ({ ...f, max_guests: Math.max(f.base_guests, v) }))
+                }}
+                style={{ width: '60px', textAlign: 'center', fontWeight: '700', padding: '6px', border: '1px solid var(--color-border)', borderRadius: '8px' }}
+              />
+              <button
+                type="button"
+                onClick={() => setForm(f => ({ ...f, max_guests: f.max_guests + 1 }))}
+                style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-border)', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '16px' }}
+              >+</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -490,17 +587,14 @@ function BasicInfoSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm:
 
       {/* Booking Confirmation Email Instructions (Visual WYSIWYG Editor) */}
       <div style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
           <FieldLabel>Booking Confirmation Email Notes / Instructions</FieldLabel>
           <span style={{ fontSize: '11px', backgroundColor: '#FEF3C7', color: '#B45309', padding: '2px 8px', borderRadius: '100px', fontWeight: '700' }}>Sent to Guest via Email</span>
         </div>
-        <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '14px', lineHeight: '1.5' }}>
-          Type check-in instructions or notes for the guest. Select text and click the buttons below to visually bold text or create bullet lists—no code required!
-        </p>
 
         <VisualWysiwygEditor
           value={form.booking_email_instructions}
-          onChange={html => setForm({ ...form, booking_email_instructions: html })}
+          onChange={html => setForm(prev => ({ ...prev, booking_email_instructions: html }))}
         />
       </div>
     </div>
@@ -602,6 +696,14 @@ function VisualWysiwygEditor({ value, onChange }: { value: string; onChange: (ht
     </button>
   )
 
+  const syncContent = () => {
+    if (editorRef.current) {
+      const html = editorRef.current.innerHTML
+      lastHtml.current = html
+      onChange(html)
+    }
+  }
+
   return (
     <div style={{ border: '1px solid var(--color-border)', borderRadius: '10px', overflow: 'hidden', backgroundColor: '#ffffff' }}>
       {/* Toolbar */}
@@ -621,10 +723,7 @@ function VisualWysiwygEditor({ value, onChange }: { value: string; onChange: (ht
         {toolbarBtn('🧹 Clear', 'Clear Formatting', () => {
           ensureFocused()
           document.execCommand('removeFormat', false)
-          if (editorRef.current) {
-            lastHtml.current = editorRef.current.innerHTML
-            onChange(editorRef.current.innerHTML)
-          }
+          syncContent()
         }, { color: '#888', marginLeft: 'auto' })}
       </div>
 
@@ -633,13 +732,10 @@ function VisualWysiwygEditor({ value, onChange }: { value: string; onChange: (ht
         ref={editorRef}
         contentEditable
         suppressContentEditableWarning
-        data-placeholder="Type your instructions here, or use the toolbar buttons above to format text, add bullet lists, numbered steps, or links..."
-        onInput={() => {
-          if (editorRef.current) {
-            lastHtml.current = editorRef.current.innerHTML
-            onChange(editorRef.current.innerHTML)
-          }
-        }}
+        data-placeholder="Type your instructions here..."
+        onInput={syncContent}
+        onBlur={syncContent}
+        onKeyUp={syncContent}
         style={{
           minHeight: '150px',
           maxHeight: '350px',
@@ -729,6 +825,88 @@ function PhotosSection({
   const dragIndexRef = React.useRef<number>(0)
   const activeUploadCountRef = React.useRef(0)
 
+  // Folder Management State
+  const [activeFolder, setActiveFolder] = useState<string>('All')
+  const [createdFolders, setCreatedFolders] = useState<string[]>([])
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false)
+  const [newFolderName, setNewFolderName] = useState('')
+  const [renamingFolder, setRenamingFolder] = useState<string | null>(null)
+  const [renameInput, setRenameInput] = useState('')
+
+  // Derive all active folders from photos and created folders
+  const allFolders = useMemo(() => {
+    const fromPhotos = form.images.map(img => img.album_name || 'General')
+    const combined = Array.from(new Set(['General', ...createdFolders, ...fromPhotos])).filter(Boolean)
+    return combined
+  }, [form.images, createdFolders])
+
+  // Count photos per folder
+  const folderCounts = useMemo(() => {
+    const counts: Record<string, number> = { All: form.images.length }
+    for (const f of allFolders) counts[f] = 0
+    for (const img of form.images) {
+      const alb = img.album_name || 'General'
+      counts[alb] = (counts[alb] || 0) + 1
+    }
+    return counts
+  }, [form.images, allFolders])
+
+  // Filter photos to show based on active tab
+  const displayedImages = useMemo(() => {
+    if (activeFolder === 'All') return form.images
+    return form.images.filter(img => (img.album_name || 'General') === activeFolder)
+  }, [form.images, activeFolder])
+
+  const handleCreateFolder = () => {
+    const trimmed = newFolderName.trim()
+    if (!trimmed) return
+    if (!allFolders.includes(trimmed)) {
+      setCreatedFolders(prev => [...prev, trimmed])
+    }
+    setActiveFolder(trimmed)
+    setNewFolderName('')
+    setIsCreatingFolder(false)
+  }
+
+  const handleRenameFolder = (oldName: string) => {
+    const trimmed = renameInput.trim()
+    if (!trimmed || trimmed === oldName) {
+      setRenamingFolder(null)
+      return
+    }
+    setForm(prev => ({
+      ...prev,
+      images: prev.images.map(img =>
+        (img.album_name || 'General') === oldName ? { ...img, album_name: trimmed } : img
+      ),
+    }))
+    setCreatedFolders(prev => prev.map(f => (f === oldName ? trimmed : f)))
+    if (activeFolder === oldName) setActiveFolder(trimmed)
+    setRenamingFolder(null)
+    setRenameInput('')
+  }
+
+  const handleDeleteFolder = (folderToDelete: string) => {
+    if (folderToDelete === 'General' || folderToDelete === 'All') return
+    if (window.confirm(`Delete folder "${folderToDelete}"? Photos in this folder will be moved to "General".`)) {
+      setForm(prev => ({
+        ...prev,
+        images: prev.images.map(img =>
+          img.album_name === folderToDelete ? { ...img, album_name: 'General' } : img
+        ),
+      }))
+      setCreatedFolders(prev => prev.filter(f => f !== folderToDelete))
+      setActiveFolder('All')
+    }
+  }
+
+  const changeImageFolder = (imageId: string, newAlbum: string) => {
+    setForm(prev => ({
+      ...prev,
+      images: prev.images.map(img => (img.id === imageId ? { ...img, album_name: newAlbum } : img)),
+    }))
+  }
+
   const handleReorder = (dropIdx: number) => {
     const dragIdx = dragIndexRef.current
     if (dragIdx === dropIdx) return
@@ -745,6 +923,7 @@ function PhotosSection({
   const appendFiles = async (files: File[]) => {
     if (files.length === 0) return
     setUploadNotice('')
+    const targetAlbum = activeFolder === 'All' ? 'General' : activeFolder
 
     for (const [index, file] of files.entries()) {
       const tempId = `upload-${Date.now()}-${index}-${Math.random().toString(16).slice(2)}`
@@ -761,6 +940,7 @@ function PhotosSection({
             image_url: localPreviewUrl,
             is_primary: prev.images.length === 0,
             display_order: prev.images.length + 1,
+            album_name: targetAlbum,
           },
         ],
       }))
@@ -869,26 +1049,164 @@ function PhotosSection({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      {/* Photo Folders Header / Tab Bar */}
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+          <div>
+            <FieldLabel>Photo Folders &amp; Albums</FieldLabel>
+            <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', margin: '2px 0 0 0' }}>
+              Create room/space folders (e.g. &quot;Living room&quot;, &quot;Master bedroom&quot;, &quot;Balcony&quot;) for the Airbnb-style Photo Tour.
+            </p>
+          </div>
+          {!isCreatingFolder && (
+            <button
+              type="button"
+              onClick={() => setIsCreatingFolder(true)}
+              style={{
+                padding: '8px 14px', backgroundColor: 'var(--color-text-primary)', color: '#ffffff',
+                border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: '700', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: '6px',
+              }}
+            >
+              + Add Photo Folder
+            </button>
+          )}
+        </div>
+
+        {/* Inline Add Folder Input */}
+        {isCreatingFolder && (
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', padding: '12px 16px', backgroundColor: 'var(--color-bg-soft)', borderRadius: '10px', marginBottom: '12px', border: '1px solid var(--color-border)' }}>
+            <span style={{ fontSize: '16px' }}>📁</span>
+            <input
+              style={{ ...inputStyle, flex: 1, padding: '8px 12px', fontSize: '13px' }}
+              value={newFolderName}
+              placeholder="e.g. Shared Living Room, Master Bedroom, Pool Area..."
+              onChange={e => setNewFolderName(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleCreateFolder()}
+              autoFocus
+            />
+            <button
+              type="button"
+              onClick={handleCreateFolder}
+              disabled={!newFolderName.trim()}
+              style={{ padding: '8px 16px', backgroundColor: 'var(--color-text-primary)', color: '#ffffff', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: '700', cursor: newFolderName.trim() ? 'pointer' : 'not-allowed' }}
+            >
+              Create
+            </button>
+            <button
+              type="button"
+              onClick={() => { setIsCreatingFolder(false); setNewFolderName('') }}
+              style={{ padding: '8px 12px', backgroundColor: 'transparent', color: 'var(--color-text-muted)', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}
+            >
+              Cancel
+            </button>
+          </div>
+        )}
+
+        {/* Folder Pills Bar */}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <button
+            type="button"
+            onClick={() => setActiveFolder('All')}
+            style={{
+              padding: '7px 14px', borderRadius: '20px',
+              border: activeFolder === 'All' ? '1.5px solid var(--color-gold)' : '1px solid var(--color-border)',
+              backgroundColor: activeFolder === 'All' ? 'var(--color-text-primary)' : '#ffffff',
+              color: activeFolder === 'All' ? '#ffffff' : 'var(--color-text-secondary)',
+              fontSize: '13px', fontWeight: activeFolder === 'All' ? '700' : '500', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.15s ease',
+            }}
+          >
+            <span>All Photos</span>
+            <span style={{ fontSize: '11px', opacity: 0.8, backgroundColor: activeFolder === 'All' ? 'rgba(255,255,255,0.25)' : 'var(--color-bg-soft)', padding: '1px 6px', borderRadius: '10px' }}>
+              {folderCounts.All || 0}
+            </span>
+          </button>
+
+          {allFolders.map(folder => {
+            const isActive = activeFolder === folder
+            const count = folderCounts[folder] || 0
+            return (
+              <div key={folder} style={{ display: 'flex', alignItems: 'center', position: 'relative' }}>
+                {renamingFolder === folder ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <input
+                      style={{ padding: '4px 8px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--color-gold)', width: '130px' }}
+                      value={renameInput}
+                      onChange={e => setRenameInput(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleRenameFolder(folder)}
+                      autoFocus
+                    />
+                    <button type="button" onClick={() => handleRenameFolder(folder)} style={{ padding: '4px 8px', fontSize: '11px', fontWeight: '700', borderRadius: '4px', border: 'none', backgroundColor: 'var(--color-text-primary)', color: '#fff', cursor: 'pointer' }}>Save</button>
+                    <button type="button" onClick={() => setRenamingFolder(null)} style={{ padding: '4px 6px', fontSize: '11px', borderRadius: '4px', border: '1px solid var(--color-border)', backgroundColor: '#fff', cursor: 'pointer' }}>✕</button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setActiveFolder(folder)}
+                      style={{
+                        padding: '7px 14px', borderRadius: '20px',
+                        border: isActive ? '1.5px solid var(--color-gold)' : '1px solid var(--color-border)',
+                        backgroundColor: isActive ? 'var(--color-text-primary)' : '#ffffff',
+                        color: isActive ? '#ffffff' : 'var(--color-text-secondary)',
+                        fontSize: '13px', fontWeight: isActive ? '700' : '500', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <span>📁 {folder}</span>
+                      <span style={{ fontSize: '11px', opacity: 0.8, backgroundColor: isActive ? 'rgba(255,255,255,0.25)' : 'var(--color-bg-soft)', padding: '1px 6px', borderRadius: '10px' }}>
+                        {count}
+                      </span>
+                    </button>
+
+                    {folder !== 'General' && (
+                      <div style={{ display: 'flex', gap: '2px', marginLeft: '-4px' }}>
+                        <button
+                          type="button"
+                          title="Rename Folder"
+                          onClick={() => { setRenamingFolder(folder); setRenameInput(folder) }}
+                          style={{ border: 'none', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '11px', opacity: 0.6, padding: '2px 4px' }}
+                        >✏️</button>
+                        <button
+                          type="button"
+                          title="Delete Folder"
+                          onClick={() => handleDeleteFolder(folder)}
+                          style={{ border: 'none', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '11px', opacity: 0.6, padding: '2px 4px' }}
+                        >🗑️</button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Upload Zone */}
       <div
         onDragOver={e => e.preventDefault()}
         onDrop={handleDrop}
         onClick={openPicker}
         style={{
           border: '2px dashed var(--color-border)', borderRadius: '12px',
-          padding: '48px 24px', textAlign: 'center', cursor: isUploading ? 'not-allowed' : 'pointer',
+          padding: '36px 24px', textAlign: 'center', cursor: isUploading ? 'not-allowed' : 'pointer',
           backgroundColor: 'var(--color-bg-card)', transition: 'all 0.2s ease',
           opacity: isUploading ? 0.6 : 1,
         }}
         onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--color-gold)' }}
         onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--color-border)' }}
       >
-        <div style={{ fontSize: '32px', marginBottom: '12px' }}>📸</div>
-        <p style={{ fontSize: '16px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '6px' }}>Drag &amp; drop photos here</p>
-        <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '16px' }}>JPG, PNG, WEBP only. Max 10MB each.</p>
+        <div style={{ fontSize: '28px', marginBottom: '8px' }}>📸</div>
+        <p style={{ fontSize: '15px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '4px' }}>
+          {activeFolder === 'All' ? 'Upload photos to General folder' : `Upload photos to "${activeFolder}"`}
+        </p>
+        <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '14px' }}>Drag &amp; drop or click to choose. JPG, PNG, WEBP (max 10MB each).</p>
         <div style={{
           display: 'inline-block', backgroundColor: 'var(--color-text-primary)', color: '#ffffff',
-          padding: '10px 24px', borderRadius: '8px', fontSize: '13px', fontWeight: '700',
-          letterSpacing: '1px', textTransform: 'uppercase',
+          padding: '8px 20px', borderRadius: '8px', fontSize: '12px', fontWeight: '700',
+          letterSpacing: '0.8px', textTransform: 'uppercase',
         }}>
           Choose Photos
         </div>
@@ -903,150 +1221,107 @@ function PhotosSection({
         <p style={{ fontSize: '12px', color: '#C62828', padding: '10px 14px', backgroundColor: '#fff0f0', borderRadius: '8px', border: '1px solid #ffcdd2' }}>{uploadNotice}</p>
       )}
 
-      {form.images.length > 0 && (
+      {/* Photo Cards Grid */}
+      {displayedImages.length > 0 ? (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <FieldLabel>Photos ({form.images.length} / 20)</FieldLabel>
-            <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>Click a photo to set it as cover · Drag to reorder</p>
+            <FieldLabel>
+              {activeFolder === 'All' ? `All Photos (${form.images.length})` : `Photos in "${activeFolder}" (${displayedImages.length})`}
+            </FieldLabel>
+            <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>Click to set cover · Change folder dropdown on any photo</p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: form.images.length === 1 ? '1fr' : '3fr 2fr', gridTemplateRows: '240px 240px', gap: '8px', borderRadius: '16px', overflow: 'hidden', marginBottom: '12px' }}>
-            {form.images[0] && (() => {
-              const img0 = form.images[0]
-              const uploading0 = isImgUploading(img0)
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '14px', marginBottom: '12px' }}>
+            {displayedImages.map((img, relIdx) => {
+              const globalIdx = form.images.findIndex(i => i.id === img.id)
+              const uploading = isImgUploading(img)
               return (
                 <div
-                  key={img0.id}
-                  style={{ gridRow: '1 / 3', position: 'relative', cursor: uploading0 ? 'default' : 'grab', backgroundColor: 'var(--color-bg-card)' }}
-                  draggable={!uploading0}
-                  onDragStart={() => { dragIndexRef.current = 0 }}
-                  onDrop={e => { e.preventDefault(); void handleReorder(0) }}
-                  onDragOver={e => e.preventDefault()}
-                  onClick={() => { if (!uploading0) setPrimary(img0.id) }}
-                >
-                  {img0.image_url ? (
-                    <Image
-                      src={img0.image_url}
-                      alt="Cover photo"
-                      fill
-                      sizes="60vw"
-                      style={{ objectFit: 'cover' }}
-                      unoptimized={img0.image_url.startsWith('data:') || img0.image_url.startsWith('blob:')}
-                    />
-                  ) : (
-                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--color-bg-card)', color: 'var(--color-text-muted)', fontSize: '32px' }}>📸</div>
-                  )}
-                  {uploading0 && (
-                    <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.65)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', zIndex: 5 }}>
-                      <div style={{ width: '32px', height: '32px', border: '3px solid var(--color-gold)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                      <span style={{ color: '#ffffff', fontSize: '12px', fontWeight: '700', letterSpacing: '0.5px' }}>Uploading photo...</span>
-                    </div>
-                  )}
-                  <div style={{ position: 'absolute', top: '12px', left: '12px', backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', fontSize: '10px', fontWeight: '800', padding: '4px 10px', borderRadius: '4px', letterSpacing: '0.5px', zIndex: 4 }}>COVER</div>
-                  {!uploading0 && <div style={{ position: 'absolute', bottom: '12px', left: '12px', backgroundColor: 'rgba(0,0,0,0.6)', color: '#ffffff', fontSize: '11px', fontWeight: '700', padding: '4px 8px', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '4px', pointerEvents: 'none', zIndex: 4 }}><span>⋮⋮</span> Drag to reorder</div>}
-                  <button
-                    disabled={uploading0}
-                    onClick={e => { e.stopPropagation(); e.preventDefault(); removeImage(img0.id) }}
-                    style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 6, width: '28px', height: '28px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.65)', border: 'none', color: '#fff', fontSize: '16px', cursor: uploading0 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: uploading0 ? 0.4 : 1 }}
-                  >×</button>
-                </div>
-              )
-            })()}
-
-            {[1, 2, 3, 4].map(slotIdx => {
-              const img = form.images[slotIdx]
-              const uploading = img ? isImgUploading(img) : false
-              return (
-                <div
-                  key={img ? img.id : `empty-slot-${slotIdx}`}
-                  style={{ position: 'relative', cursor: img && !uploading ? 'grab' : img ? 'default' : 'pointer', backgroundColor: 'var(--color-bg-card)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                  draggable={!!img && !uploading}
-                  onDragStart={() => { dragIndexRef.current = slotIdx }}
-                  onDrop={e => { e.preventDefault(); void handleReorder(slotIdx) }}
-                  onDragOver={e => e.preventDefault()}
-                  onClick={() => {
-                    if (!img) { openPicker() }
-                    else if (!uploading) { setPrimary(img.id) }
+                  key={img.id}
+                  style={{
+                    position: 'relative', borderRadius: '10px', overflow: 'hidden',
+                    border: img.is_primary ? '2.5px solid var(--color-gold)' : '1px solid var(--color-border)',
+                    backgroundColor: 'var(--color-bg-card)', display: 'flex', flexDirection: 'column',
                   }}
+                  draggable={!uploading}
+                  onDragStart={() => { dragIndexRef.current = globalIdx >= 0 ? globalIdx : 0 }}
+                  onDrop={e => { e.preventDefault(); if (globalIdx >= 0) void handleReorder(globalIdx) }}
+                  onDragOver={e => e.preventDefault()}
                 >
-                  {img ? (
-                    <>
-                      {img.image_url ? (
-                        <Image
-                          src={img.image_url}
-                          alt=""
-                          fill
-                          sizes="30vw"
-                          style={{ objectFit: 'cover' }}
-                          unoptimized={img.image_url.startsWith('data:') || img.image_url.startsWith('blob:')}
-                        />
-                      ) : (
-                        <div style={{ width: '100%', height: '100%', backgroundColor: 'var(--color-bg-card)' }} />
-                      )}
-                      {uploading && (
-                        <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.65)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', zIndex: 5 }}>
-                          <div style={{ width: '24px', height: '24px', border: '3px solid var(--color-gold)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                          <span style={{ color: '#ffffff', fontSize: '10px', fontWeight: '700' }}>Uploading...</span>
-                        </div>
-                      )}
-                      {!uploading && <div style={{ position: 'absolute', bottom: '6px', left: '6px', backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '10px', padding: '2px 6px', borderRadius: '4px', pointerEvents: 'none', zIndex: 4 }}>⋮⋮ Drag</div>}
-                      <button
-                        disabled={uploading}
-                        onClick={e => { e.stopPropagation(); e.preventDefault(); removeImage(img.id) }}
-                        style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 6, width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.65)', border: 'none', color: '#fff', fontSize: '14px', cursor: uploading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: uploading ? 0.4 : 1 }}
-                      >×</button>
-                    </>
-                  ) : (
-                    <div style={{ textAlign: 'center', color: 'var(--color-border)', pointerEvents: 'none' }}>
-                      <div style={{ fontSize: '24px' }}>+</div>
-                      <p style={{ fontSize: '11px', marginTop: '4px' }}>Add photo</p>
-                    </div>
-                  )}
+                  {/* Photo Preview */}
+                  <div
+                    style={{ position: 'relative', width: '100%', aspectRatio: '16/10', cursor: uploading ? 'default' : 'pointer' }}
+                    onClick={() => { if (!uploading) setPrimary(img.id) }}
+                  >
+                    {img.image_url ? (
+                      <Image
+                        src={img.image_url}
+                        alt=""
+                        fill
+                        sizes="240px"
+                        style={{ objectFit: 'cover' }}
+                        unoptimized={img.image_url.startsWith('data:') || img.image_url.startsWith('blob:')}
+                      />
+                    ) : (
+                      <div style={{ width: '100%', height: '100%', backgroundColor: 'var(--color-bg-card)' }} />
+                    )}
+
+                    {uploading && (
+                      <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.65)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', zIndex: 5 }}>
+                        <div style={{ width: '22px', height: '22px', border: '2.5px solid var(--color-gold)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                        <span style={{ color: '#ffffff', fontSize: '10px', fontWeight: '700' }}>Uploading...</span>
+                      </div>
+                    )}
+
+                    {img.is_primary && (
+                      <div style={{ position: 'absolute', top: '8px', left: '8px', backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', fontSize: '10px', fontWeight: '800', padding: '3px 8px', borderRadius: '4px', letterSpacing: '0.5px', zIndex: 4 }}>
+                        COVER
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      disabled={uploading}
+                      onClick={e => { e.stopPropagation(); e.preventDefault(); removeImage(img.id) }}
+                      style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 6, width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.65)', border: 'none', color: '#fff', fontSize: '14px', cursor: uploading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: uploading ? 0.4 : 1 }}
+                    >×</button>
+                  </div>
+
+                  {/* Folder Selector Footer */}
+                  <div style={{ padding: '8px 10px', backgroundColor: '#ffffff', borderTop: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', fontWeight: '600' }}>📁 Folder:</span>
+                    <select
+                      value={img.album_name || 'General'}
+                      onChange={e => changeImageFolder(img.id, e.target.value)}
+                      style={{
+                        padding: '3px 6px', fontSize: '11px', fontWeight: '600',
+                        borderRadius: '6px', border: '1px solid var(--color-border)',
+                        backgroundColor: 'var(--color-bg-soft)', color: 'var(--color-text-primary)',
+                        maxWidth: '120px', cursor: 'pointer',
+                      }}
+                    >
+                      {allFolders.map(f => (
+                        <option key={f} value={f}>{f}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               )
             })}
           </div>
 
-          {form.images.length > 5 && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: '8px', marginBottom: '12px' }}>
-              {form.images.slice(5).map((img, relIdx) => {
-                const absIdx = relIdx + 5
-                const uploading = isImgUploading(img)
-                return (
-                  <div
-                    key={img.id}
-                    style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', aspectRatio: '4/3', cursor: uploading ? 'default' : 'grab' }}
-                    draggable={!uploading}
-                    onDragStart={() => { dragIndexRef.current = absIdx }}
-                    onDrop={e => { e.preventDefault(); void handleReorder(absIdx) }}
-                    onDragOver={e => e.preventDefault()}
-                    onClick={() => { if (!uploading) setPrimary(img.id) }}
-                  >
-                    {img.image_url
-                      ? <Image src={img.image_url} alt="" fill sizes="120px" style={{ objectFit: 'cover' }} unoptimized={img.image_url.startsWith('data:') || img.image_url.startsWith('blob:')} />
-                      : <div style={{ width: '100%', height: '100%', backgroundColor: 'var(--color-bg-card)' }} />
-                    }
-                    {uploading && (
-                      <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5 }}>
-                        <div style={{ width: '18px', height: '18px', border: '2.5px solid var(--color-gold)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-                      </div>
-                    )}
-                    {!uploading && <div style={{ position: 'absolute', bottom: '4px', left: '4px', backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '9px', padding: '2px 5px', borderRadius: '3px', pointerEvents: 'none', zIndex: 4 }}>⋮⋮</div>}
-                    <button
-                      disabled={uploading}
-                      onClick={e => { e.stopPropagation(); e.preventDefault(); removeImage(img.id) }}
-                      style={{ position: 'absolute', top: '6px', right: '6px', zIndex: 6, width: '22px', height: '22px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.65)', border: 'none', color: '#fff', fontSize: '13px', cursor: uploading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: uploading ? 0.4 : 1 }}
-                    >×</button>
-                  </div>
-                )
-              })}
-            </div>
-          )}
           <button
+            type="button"
             onClick={() => { if (!isUploading) fileInputRef.current?.click() }}
             disabled={isUploading}
             style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', border: '1.5px dashed var(--color-border)', borderRadius: '8px', backgroundColor: 'transparent', fontSize: '13px', cursor: isUploading ? 'not-allowed' : 'pointer', color: 'var(--color-text-muted)', fontFamily: "'Figtree', sans-serif", fontWeight: '600', opacity: isUploading ? 0.5 : 1 }}
-          >+ Add more photos</button>
+          >
+            + Add more photos {activeFolder !== 'All' ? `to "${activeFolder}"` : ''}
+          </button>
+        </div>
+      ) : (
+        <div style={{ textAlign: 'center', padding: '24px', color: 'var(--color-text-muted)', fontSize: '13px' }}>
+          No photos in &quot;{activeFolder}&quot; yet. Use the upload box above to add photos to this folder.
         </div>
       )}
     </div>
@@ -1255,19 +1530,25 @@ function PoliciesSection({
   form,
   setForm,
   availableProperties,
-  groupWithPropertyId,
-  setGroupWithPropertyId,
+  selectedGroupPropertyIds,
+  setSelectedGroupPropertyIds,
   wholePropertyChoice,
   setWholePropertyChoice,
 }: {
   form: typeof EMPTY_FORM
   setForm: (f: typeof EMPTY_FORM) => void
   availableProperties: Property[]
-  groupWithPropertyId: string
-  setGroupWithPropertyId: (id: string) => void
-  wholePropertyChoice: WholePropertyChoice
-  setWholePropertyChoice: (value: WholePropertyChoice) => void
+  selectedGroupPropertyIds: string[]
+  setSelectedGroupPropertyIds: React.Dispatch<React.SetStateAction<string[]>>
+  wholePropertyChoice: string
+  setWholePropertyChoice: (value: string) => void
 }) {
+  const togglePropertyInGroup = (id: string) => {
+    setSelectedGroupPropertyIds(prev =>
+      prev.includes(id) ? prev.filter(p => p !== id) : [...prev, id]
+    )
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div>
@@ -1291,25 +1572,39 @@ function PoliciesSection({
       </div>
 
       <div>
-        <FieldLabel>Group With Existing Property (optional)</FieldLabel>
+        <FieldLabel>Group With Existing Properties (Multi-Property Shared Availability)</FieldLabel>
+        <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '12px' }}>
+          Select multiple properties / units that share availability (e.g. 2-3 individual rooms plus a whole villa).
+        </p>
         {availableProperties.length > 0 ? (
-          <>
-            <select
-              style={selectStyle}
-              value={groupWithPropertyId}
-              onChange={e => setGroupWithPropertyId(e.target.value)}
-            >
-              <option value="">No grouping</option>
-              {availableProperties.map(item => (
-                <option key={item.id} value={item.id}>
-                  {item.name} · {item.city}, {item.state}
-                </option>
-              ))}
-            </select>
-            <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '8px' }}>
-              Choose an existing property to link as a shared group for availability.
-            </p>
-          </>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '220px', overflowY: 'auto', border: '1px solid var(--color-border)', borderRadius: '10px', padding: '12px', backgroundColor: 'var(--color-bg-card)' }}>
+            {availableProperties.map(item => {
+              const isChecked = selectedGroupPropertyIds.includes(item.id)
+              return (
+                <label
+                  key={item.id}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px',
+                    borderRadius: '8px', cursor: 'pointer',
+                    backgroundColor: isChecked ? 'rgba(201,168,76,0.12)' : '#ffffff',
+                    border: `1px solid ${isChecked ? 'var(--color-gold)' : 'var(--color-border)'}`,
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => togglePropertyInGroup(item.id)}
+                    style={{ accentColor: 'var(--color-gold)', width: '18px', height: '18px', cursor: 'pointer' }}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '13px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{item.name}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--color-text-muted)' }}>{item.city}, {item.state} · ₹{item.price_per_night.toLocaleString('en-IN')}/night</div>
+                  </div>
+                </label>
+              )
+            })}
+          </div>
         ) : (
           <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
             No other properties available for grouping.
@@ -1317,19 +1612,22 @@ function PoliciesSection({
         )}
       </div>
 
-      {groupWithPropertyId && (
+      {selectedGroupPropertyIds.length > 0 && (
         <div>
-          <FieldLabel>Whole Property Listing</FieldLabel>
+          <FieldLabel>Whole Property Listing (Optional)</FieldLabel>
           <select
             style={selectStyle}
             value={wholePropertyChoice}
-            onChange={e => setWholePropertyChoice(e.target.value as WholePropertyChoice)}
+            onChange={e => setWholePropertyChoice(e.target.value)}
           >
-            <option value="existing">Selected property</option>
-            <option value="new">This listing</option>
+            <option value="none">None (All listings are separate individual units)</option>
+            <option value="new">This listing is the whole-property parent listing</option>
+            {availableProperties.filter(p => selectedGroupPropertyIds.includes(p.id)).map(p => (
+              <option key={p.id} value={p.id}>{p.name} (Whole Property)</option>
+            ))}
           </select>
           <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '8px' }}>
-            Only one listing in a group can be the whole-property listing.
+            When the whole-property listing is booked, all individual units in this group are automatically blocked.
           </p>
         </div>
       )}
@@ -1514,8 +1812,8 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [form, setForm] = useState<typeof EMPTY_FORM>(() => createFormFromProperty(property))
   const [availableProperties, setAvailableProperties] = useState<Property[]>([])
-  const [groupWithPropertyId, setGroupWithPropertyId] = useState('')
-  const [wholePropertyChoice, setWholePropertyChoice] = useState<WholePropertyChoice>('existing')
+  const [selectedGroupPropertyIds, setSelectedGroupPropertyIds] = useState<string[]>([])
+  const [wholePropertyChoice, setWholePropertyChoice] = useState<string>('none')
   const [imageUploadProgress, setImageUploadProgress] = useState<UploadProgressMap>({})
   const [imageUploadErrors, setImageUploadErrors] = useState<UploadErrorMap>({})
   const [imageUploadNotice, setImageUploadNotice] = useState('')
@@ -1539,14 +1837,14 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
         const properties = await listAdminProperties(fetchWithAuth)
         if (isMounted) {
           setAvailableProperties(properties.filter(item => item.id !== property?.id))
-          setGroupWithPropertyId('')
-          setWholePropertyChoice('existing')
+          setSelectedGroupPropertyIds([])
+          setWholePropertyChoice('none')
         }
       } catch {
         if (isMounted) {
           setAvailableProperties([])
-          setGroupWithPropertyId('')
-          setWholePropertyChoice('existing')
+          setSelectedGroupPropertyIds([])
+          setWholePropertyChoice('none')
         }
       }
     }
@@ -1590,6 +1888,7 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
         image_url: img.image_url,
         is_primary: index === 0,
         display_order: index + 1,
+        album_name: img.album_name || 'General',
       }
     })
 
@@ -1601,6 +1900,7 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
           image_url: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800',
           is_primary: true,
           display_order: 1,
+          album_name: 'General',
         }]
 
     return {
@@ -1644,15 +1944,17 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
   }
 
   const applyGrouping = async (saved: Property) => {
-    if (!groupWithPropertyId) {
+    if (selectedGroupPropertyIds.length === 0) {
       return
     }
     const groups = await listPropertyGroups(fetchWithAuth)
-    const selectedProperty = availableProperties.find(item => item.id === groupWithPropertyId)
-    let group = groups.find(g => g.members.some(member => member.property_id === groupWithPropertyId))
+    let group = groups.find(g =>
+      g.members.some(member => selectedGroupPropertyIds.includes(member.property_id))
+    )
 
     if (!group) {
-      const groupName = selectedProperty ? `${selectedProperty.name} Group` : `${saved.name} Group`
+      const firstProp = availableProperties.find(p => selectedGroupPropertyIds.includes(p.id))
+      const groupName = firstProp ? `${firstProp.name} Group` : `${saved.name} Group`
       group = await createPropertyGroup(groupName, fetchWithAuth)
     }
 
@@ -1660,25 +1962,22 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
       return
     }
 
-    const refreshHasWhole = (current: { members: { is_whole_property: boolean }[] }) =>
-      current.members.some(member => member.is_whole_property)
-
-    let hasWhole = refreshHasWhole(group)
-    const selectedMember = group.members.find(member => member.property_id === groupWithPropertyId)
-
-    if (!selectedMember) {
-      const selectedIsWhole = !hasWhole && wholePropertyChoice === 'existing'
-      group = await addPropertyGroupMember(group.id, groupWithPropertyId, selectedIsWhole, fetchWithAuth)
-      hasWhole = refreshHasWhole(group)
-    } else if (!hasWhole && wholePropertyChoice === 'existing' && !selectedMember.is_whole_property) {
-      group = await updatePropertyGroupMember(group.id, selectedMember.id, true, fetchWithAuth)
-      hasWhole = refreshHasWhole(group)
+    for (const propId of selectedGroupPropertyIds) {
+      const existingMember = group.members.find(m => m.property_id === propId)
+      const isWhole = wholePropertyChoice === propId
+      if (!existingMember) {
+        group = await addPropertyGroupMember(group.id, propId, isWhole, fetchWithAuth)
+      } else if (existingMember.is_whole_property !== isWhole) {
+        group = await updatePropertyGroupMember(group.id, existingMember.id, isWhole, fetchWithAuth)
+      }
     }
 
-    const newMember = group.members.find(member => member.property_id === saved.id)
-    if (!newMember) {
-      const newIsWhole = !hasWhole && wholePropertyChoice === 'new'
-      await addPropertyGroupMember(group.id, saved.id, newIsWhole, fetchWithAuth)
+    const savedMember = group.members.find(m => m.property_id === saved.id)
+    const savedIsWhole = wholePropertyChoice === 'new'
+    if (!savedMember) {
+      await addPropertyGroupMember(group.id, saved.id, savedIsWhole, fetchWithAuth)
+    } else if (savedMember.is_whole_property !== savedIsWhole) {
+      await updatePropertyGroupMember(group.id, savedMember.id, savedIsWhole, fetchWithAuth)
     }
   }
 
@@ -1951,8 +2250,8 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
                   form={form}
                   setForm={setForm}
                   availableProperties={availableProperties}
-                  groupWithPropertyId={groupWithPropertyId}
-                  setGroupWithPropertyId={setGroupWithPropertyId}
+                  selectedGroupPropertyIds={selectedGroupPropertyIds}
+                  setSelectedGroupPropertyIds={setSelectedGroupPropertyIds}
                   wholePropertyChoice={wholePropertyChoice}
                   setWholePropertyChoice={setWholePropertyChoice}
                 />

@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
 import { DayPicker } from 'react-day-picker'
@@ -8,7 +8,7 @@ import { buildApiUrl, fetchPropertyReviews } from '@/lib/api'
 import type { Property, Review } from '@/lib/types'
 import type { DateRange } from 'react-day-picker'
 import { useAuth } from '@/lib/auth/AuthContext'
-import { Star, MapPin, Users, User, Bed, Bath, Calendar, Moon, Dog, Check, Phone, Mail, Clock, ShieldAlert, Sparkles, ChevronLeft, ChevronRight, Armchair, Sofa, Utensils, UtensilsCrossed, DoorOpen, LayoutDashboard, TreePalm } from 'lucide-react'
+import { Star, MapPin, Users, User, Bed, Bath, Calendar, Moon, Dog, Check, Phone, Mail, Clock, ShieldAlert, Sparkles, ChevronLeft, ChevronRight, Armchair, Sofa, Utensils, UtensilsCrossed, DoorOpen, LayoutDashboard, TreePalm, Camera, X } from 'lucide-react'
 
 const bathroomLabel: Record<string, string> = {
   ensuite: 'Private Ensuite',
@@ -49,6 +49,11 @@ export default function PropertyDetailPage() {
   const [activeTab, setActiveTab] = useState('overview')
   const [hoveredTags, setHoveredTags] = useState<Record<string, boolean>>({})
   const [bookingError, setBookingError] = useState<string | null>(null)
+
+  // ── Photo Tour State ──────────────────────────────────────────────────────
+  const [tourModalOpen, setTourModalOpen] = useState(false)
+  const [tourActiveAlbum, setTourActiveAlbum] = useState<string>('All')
+  const [tourActiveIndex, setTourActiveIndex] = useState(0)
 
   // ── Reviews State ────────────────────────────────────────────────────────
   const [reviews, setReviews] = useState<Review[]>([])
@@ -270,13 +275,57 @@ export default function PropertyDetailPage() {
     router.push(`/booking/${property.id}?checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}&pets=${pets}&nights=${nights}&total=${totalPrice}`)
   }
 
+  // Group images into albums for the Airbnb Photo Tour
+  const albums = useMemo(() => {
+    if (!property?.images?.length) return []
+    const map = new Map<string, typeof property.images>()
+    for (const img of property.images) {
+      const alb = img.album_name || 'General'
+      if (!map.has(alb)) {
+        map.set(alb, [])
+      }
+      map.get(alb)!.push(img)
+    }
+    return Array.from(map.entries()).map(([name, imgs]) => ({
+      name,
+      images: imgs,
+      cover: imgs[0]?.image_url || 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800',
+      count: imgs.length,
+    }))
+  }, [property?.images])
+
+  const currentTourImages = useMemo(() => {
+    if (!property?.images?.length) return []
+    if (tourActiveAlbum === 'All') return property.images
+    return property.images.filter(img => (img.album_name || 'General') === tourActiveAlbum)
+  }, [property?.images, tourActiveAlbum])
+
+  // Keyboard navigation in Photo Tour Lightbox
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (!tourModalOpen) return
+    if (e.key === 'Escape') setTourModalOpen(false)
+    if (e.key === 'ArrowLeft') setTourActiveIndex(i => Math.max(0, i - 1))
+    if (e.key === 'ArrowRight') setTourActiveIndex(i => Math.min(currentTourImages.length - 1, i + 1))
+  }, [tourModalOpen, currentTourImages.length])
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handleKeyDown])
+
+  const openTourForAlbum = (albumName: string) => {
+    setTourActiveAlbum(albumName)
+    setTourActiveIndex(0)
+    setTourModalOpen(true)
+  }
+
   // Star distribution from real reviews
   const starCounts = [5, 4, 3, 2, 1].map(star => ({
     star,
     count: reviews.filter(r => r.rating === star).length,
   }))
 
-  const tabs = ['overview', 'amenities', 'house rules', 'location', 'reviews']
+  const tabs = ['overview', 'photo tour', 'amenities', 'house rules', 'location', 'reviews']
 
   const cardStyle = {
     backgroundColor: '#ffffff',
@@ -548,6 +597,77 @@ export default function PropertyDetailPage() {
                 {property.description}
               </p>
 
+              {/* Photo Tour Preview in Overview */}
+              {albums.length > 0 && (
+                <div style={{ marginBottom: '36px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <div>
+                      <h3 style={{ fontSize: '20px', fontWeight: '800', color: 'var(--color-text-primary)', margin: 0 }}>Photo Tour</h3>
+                      <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', margin: '4px 0 0 0' }}>Explore photos categorized by room and space</p>
+                    </div>
+                    <button
+                      onClick={() => openTourForAlbum('All')}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px',
+                        border: '1.5px solid var(--color-text-primary)', borderRadius: '8px',
+                        backgroundColor: '#ffffff', color: 'var(--color-text-primary)',
+                        fontSize: '13px', fontWeight: '700', cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--color-bg-soft)' }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#ffffff' }}
+                    >
+                      <Camera size={15} /> View all {property.images.length} photos
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: '14px' }}>
+                    {albums.map(album => (
+                      <div
+                        key={album.name}
+                        onClick={() => openTourForAlbum(album.name)}
+                        style={{
+                          borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--color-border)',
+                          cursor: 'pointer', transition: 'all 0.2s ease', backgroundColor: '#ffffff',
+                        }}
+                        onMouseEnter={e => {
+                          (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-3px)'
+                          ;(e.currentTarget as HTMLDivElement).style.boxShadow = '0 8px 24px rgba(0,0,0,0.08)'
+                          ;(e.currentTarget as HTMLDivElement).style.borderColor = 'var(--color-gold)'
+                        }}
+                        onMouseLeave={e => {
+                          (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)'
+                          ;(e.currentTarget as HTMLDivElement).style.boxShadow = 'none'
+                          ;(e.currentTarget as HTMLDivElement).style.borderColor = 'var(--color-border)'
+                        }}
+                      >
+                        <div style={{ position: 'relative', width: '100%', aspectRatio: '16/11' }}>
+                          <Image
+                            src={album.cover}
+                            alt={album.name}
+                            fill
+                            unoptimized
+                            sizes="260px"
+                            style={{ objectFit: 'cover' }}
+                          />
+                          <div style={{ position: 'absolute', bottom: '8px', right: '8px', backgroundColor: 'rgba(0,0,0,0.65)', color: '#ffffff', fontSize: '11px', fontWeight: '700', padding: '3px 8px', borderRadius: '4px', backdropFilter: 'blur(4px)' }}>
+                            {album.count} {album.count === 1 ? 'photo' : 'photos'}
+                          </div>
+                        </div>
+                        <div style={{ padding: '12px 14px' }}>
+                          <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)', margin: 0 }}>
+                            {album.name}
+                          </p>
+                          <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: '2px 0 0 0' }}>
+                            {album.count} {album.count === 1 ? 'photo' : 'photos'}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div style={cardStyle}>
                 <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '16px' }}>Property Contact</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -596,6 +716,69 @@ export default function PropertyDetailPage() {
                     <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>All bookings are non-refundable. Once payment is confirmed, cancellations will not be eligible for a refund. Please review your dates carefully before booking.</p>
                   </div>
                 </div>
+            </div>
+          )}
+
+          {/* Photo Tour Tab */}
+          {activeTab === 'photo tour' && (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <div>
+                  <h3 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--color-text-primary)', margin: 0 }}>Photo Tour</h3>
+                  <p style={{ fontSize: '14px', color: 'var(--color-text-muted)', margin: '4px 0 0 0' }}>All photos organized by room and space</p>
+                </div>
+                <button
+                  onClick={() => openTourForAlbum('All')}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 18px',
+                    backgroundColor: 'var(--color-text-primary)', color: '#ffffff',
+                    borderRadius: '8px', border: 'none', fontSize: '13px', fontWeight: '700', cursor: 'pointer',
+                  }}
+                >
+                  <Camera size={16} /> Open Gallery View
+                </button>
+              </div>
+
+              {albums.map(album => (
+                <div key={album.name} style={{ marginBottom: '32px', backgroundColor: 'var(--color-bg-soft)', borderRadius: '12px', padding: '20px', border: '1px solid var(--color-border)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '18px' }}>📁</span>
+                      <h4 style={{ fontSize: '16px', fontWeight: '800', color: 'var(--color-text-primary)', margin: 0 }}>{album.name}</h4>
+                      <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', backgroundColor: '#ffffff', padding: '2px 8px', borderRadius: '10px', fontWeight: '600', border: '1px solid var(--color-border)' }}>
+                        {album.count} {album.count === 1 ? 'photo' : 'photos'}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => openTourForAlbum(album.name)}
+                      style={{ fontSize: '12px', color: 'var(--color-gold)', fontWeight: '700', backgroundColor: 'transparent', border: 'none', cursor: 'pointer' }}
+                    >
+                      View Space →
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '10px' }}>
+                    {album.images.map((img, idx) => (
+                      <div
+                        key={img.id || idx}
+                        onClick={() => { setTourActiveAlbum(album.name); setTourActiveIndex(idx); setTourModalOpen(true) }}
+                        style={{ position: 'relative', aspectRatio: '4/3', borderRadius: '8px', overflow: 'hidden', cursor: 'pointer' }}
+                      >
+                        <Image
+                          src={img.image_url}
+                          alt=""
+                          fill
+                          unoptimized
+                          sizes="180px"
+                          style={{ objectFit: 'cover', transition: 'transform 0.2s ease' }}
+                          onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.05)')}
+                          onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 
@@ -1001,6 +1184,160 @@ export default function PropertyDetailPage() {
         </div>
       </div>
       </div>
+
+      {/* ── Photo Tour Lightbox Modal ── */}
+      {tourModalOpen && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            backgroundColor: 'rgba(10, 10, 10, 0.96)',
+            display: 'flex', flexDirection: 'column',
+            animation: 'fadeIn 0.2s ease',
+          }}
+        >
+          {/* Top Bar */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+            {/* Space Navigation Pills */}
+            <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', scrollbarWidth: 'none', alignItems: 'center', maxWidth: '80vw' }}>
+              <button
+                type="button"
+                onClick={() => { setTourActiveAlbum('All'); setTourActiveIndex(0) }}
+                style={{
+                  padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: '700',
+                  border: tourActiveAlbum === 'All' ? '1.5px solid var(--color-gold)' : '1px solid rgba(255,255,255,0.2)',
+                  backgroundColor: tourActiveAlbum === 'All' ? 'var(--color-gold)' : 'transparent',
+                  color: tourActiveAlbum === 'All' ? 'var(--color-text-primary)' : '#ffffff',
+                  cursor: 'pointer', whiteSpace: 'nowrap',
+                }}
+              >
+                All Photos ({property.images.length})
+              </button>
+
+              {albums.map(album => (
+                <button
+                  key={album.name}
+                  type="button"
+                  onClick={() => { setTourActiveAlbum(album.name); setTourActiveIndex(0) }}
+                  style={{
+                    padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: '700',
+                    border: tourActiveAlbum === album.name ? '1.5px solid var(--color-gold)' : '1px solid rgba(255,255,255,0.2)',
+                    backgroundColor: tourActiveAlbum === album.name ? 'var(--color-gold)' : 'transparent',
+                    color: tourActiveAlbum === album.name ? 'var(--color-text-primary)' : '#ffffff',
+                    cursor: 'pointer', whiteSpace: 'nowrap',
+                  }}
+                >
+                  📁 {album.name} ({album.count})
+                </button>
+              ))}
+            </div>
+
+            {/* Counter & Close */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <span style={{ color: '#ffffff', fontSize: '13px', fontWeight: '600', letterSpacing: '0.5px' }}>
+                {tourActiveIndex + 1} / {currentTourImages.length}
+              </span>
+              <button
+                type="button"
+                onClick={() => setTourModalOpen(false)}
+                style={{
+                  width: '36px', height: '36px', borderRadius: '50%',
+                  border: '1px solid rgba(255,255,255,0.3)',
+                  backgroundColor: 'rgba(255,255,255,0.1)',
+                  color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(255,255,255,0.25)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(255,255,255,0.1)' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+          </div>
+
+          {/* Main Photo Viewing Area */}
+          <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px 40px' }}>
+            {currentTourImages[tourActiveIndex] && (
+              <div style={{ position: 'relative', width: '100%', height: '100%', maxWidth: '1100px', maxHeight: '72vh' }}>
+                <Image
+                  src={currentTourImages[tourActiveIndex].image_url}
+                  alt={property.name}
+                  fill
+                  unoptimized
+                  sizes="90vw"
+                  style={{ objectFit: 'contain' }}
+                  priority
+                />
+              </div>
+            )}
+
+            {/* Prev / Next Buttons */}
+            {currentTourImages.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setTourActiveIndex(i => Math.max(0, i - 1))}
+                  disabled={tourActiveIndex === 0}
+                  style={{
+                    position: 'absolute', left: '24px', top: '50%', transform: 'translateY(-50%)',
+                    width: '48px', height: '48px', borderRadius: '50%',
+                    backgroundColor: 'rgba(255,255,255,0.15)', color: '#ffffff',
+                    border: '1px solid rgba(255,255,255,0.3)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: tourActiveIndex === 0 ? 'not-allowed' : 'pointer',
+                    opacity: tourActiveIndex === 0 ? 0.3 : 1,
+                    backdropFilter: 'blur(6px)', transition: 'all 0.15s ease',
+                  }}
+                >
+                  <ChevronLeft size={24} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTourActiveIndex(i => Math.min(currentTourImages.length - 1, i + 1))}
+                  disabled={tourActiveIndex === currentTourImages.length - 1}
+                  style={{
+                    position: 'absolute', right: '24px', top: '50%', transform: 'translateY(-50%)',
+                    width: '48px', height: '48px', borderRadius: '50%',
+                    backgroundColor: 'rgba(255,255,255,0.15)', color: '#ffffff',
+                    border: '1px solid rgba(255,255,255,0.3)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: tourActiveIndex === currentTourImages.length - 1 ? 'not-allowed' : 'pointer',
+                    opacity: tourActiveIndex === currentTourImages.length - 1 ? 0.3 : 1,
+                    backdropFilter: 'blur(6px)', transition: 'all 0.15s ease',
+                  }}
+                >
+                  <ChevronRight size={24} />
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Bottom Thumbnails Filmstrip */}
+          <div style={{ padding: '12px 24px 20px', borderTop: '1px solid rgba(255,255,255,0.1)', display: 'flex', gap: '8px', overflowX: 'auto', scrollbarWidth: 'none', justifyContent: 'center' }}>
+            {currentTourImages.map((img, i) => (
+              <div
+                key={img.id || i}
+                onClick={() => setTourActiveIndex(i)}
+                style={{
+                  position: 'relative', width: '70px', height: '48px', flexShrink: 0,
+                  borderRadius: '6px', overflow: 'hidden', cursor: 'pointer',
+                  border: tourActiveIndex === i ? '2px solid var(--color-gold)' : '2px solid transparent',
+                  opacity: tourActiveIndex === i ? 1 : 0.5, transition: 'all 0.15s ease',
+                  transform: tourActiveIndex === i ? 'scale(1.08)' : 'scale(1)',
+                }}
+              >
+                <Image
+                  src={img.image_url}
+                  alt=""
+                  fill
+                  unoptimized
+                  sizes="80px"
+                  style={{ objectFit: 'cover' }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

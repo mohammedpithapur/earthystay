@@ -40,6 +40,7 @@ export type PropertyGroup = {
 export type PropertyImageUpdatePayload = {
   is_primary?: boolean
   display_order?: number
+  album_name?: string
 }
 
 export type CreateReviewPayload = {

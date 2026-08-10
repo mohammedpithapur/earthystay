@@ -12,6 +12,7 @@ class PropertyImageOut(BaseModel):
     image_url: str = ""
     is_primary: bool = False
     display_order: int = 0
+    album_name: str = "General"
 
     @field_validator("id", mode="before")
     @classmethod
@@ -25,11 +26,13 @@ class PropertyImageCreate(BaseModel):
     image_url: str
     is_primary: bool = False
     display_order: int = 0
+    album_name: str = "General"
 
 
 class PropertyImageUpdate(BaseModel):
     is_primary: bool | None = None
     display_order: int | None = None
+    album_name: str | None = None
 
 
 # ── Property ──
