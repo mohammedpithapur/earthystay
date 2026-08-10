@@ -981,30 +981,16 @@ function PhotosSection({
           setUploadProgress(prev => { const n = { ...prev }; delete n[tempId]; return n })
           delete uploadFilesRef.current[tempId]
         } catch (error) {
-          try {
-            const dataUrl = await new Promise<string>((resolve, reject) => {
-              const reader = new FileReader()
-              reader.onload = () => resolve(reader.result as string)
-              reader.onerror = reject
-              reader.readAsDataURL(file)
-            })
-            try { URL.revokeObjectURL(localPreviewUrl) } catch {}
-            const realId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : tempId
-            setForm(prev => ({
-              ...prev,
-              images: prev.images.map(img =>
-                img.id === tempId
-                  ? { ...img, id: realId, image_url: dataUrl }
-                  : img
-              ),
-            }))
-            setUploadProgress(prev => { const n = { ...prev }; delete n[tempId]; return n })
-            delete uploadFilesRef.current[tempId]
-          } catch {
-            const message = error instanceof Error ? error.message : 'Image upload failed'
-            setUploadErrors(prev => ({ ...prev, [tempId]: message }))
-            setUploadNotice('Image upload failed. Please try again or use a smaller file.')
-          }
+          try { URL.revokeObjectURL(localPreviewUrl) } catch {}
+          const message = error instanceof Error ? error.message : 'Image upload failed'
+          setForm(prev => ({
+            ...prev,
+            images: prev.images.filter(img => img.id !== tempId),
+          }))
+          setUploadErrors(prev => ({ ...prev, [tempId]: message }))
+          setUploadNotice(message || 'Image upload failed. Please try again or use a smaller file under 10MB.')
+          setUploadProgress(prev => { const n = { ...prev }; delete n[tempId]; return n })
+          delete uploadFilesRef.current[tempId]
         } finally {
           activeUploadCountRef.current = Math.max(0, activeUploadCountRef.current - 1)
           if (activeUploadCountRef.current === 0) {

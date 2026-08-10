@@ -21,6 +21,64 @@ function parseUploadError(responseText: string, status: number): string {
   return `Failed to upload image (${status})`
 }
 
+export async function compressImageFile(file: File, maxDimension = 1920, quality = 0.82): Promise<File> {
+  if (typeof window === 'undefined' || !file.type.startsWith('image/')) {
+    return file
+  }
+
+  return new Promise(resolve => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+
+      let { width, height } = img
+      if (width > maxDimension || height > maxDimension) {
+        if (width > height) {
+          height = Math.round((height * maxDimension) / width)
+          width = maxDimension
+        } else {
+          width = Math.round((width * maxDimension) / height)
+          height = maxDimension
+        }
+      }
+
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        return resolve(file)
+      }
+
+      ctx.drawImage(img, 0, 0, width, height)
+
+      const mimeType = 'image/webp'
+      canvas.toBlob(
+        blob => {
+          if (!blob) {
+            return resolve(file)
+          }
+          const compressedName = file.name.replace(/\.[^/.]+$/, '') + '.webp'
+          const compressedFile = new File([blob], compressedName, {
+            type: mimeType,
+            lastModified: Date.now(),
+          })
+          resolve(compressedFile)
+        },
+        mimeType,
+        quality
+      )
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      resolve(file)
+    }
+    img.src = url
+  })
+}
+
 export function validateImageFile(file: File): void {
   if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
     throw new Error('Unsupported image type. Please upload JPG, PNG, or WEBP files.')
@@ -36,7 +94,8 @@ export async function uploadPropertyImage(
   onProgress?: (percent: number) => void,
   fetcher?: ApiFetcher,
 ): Promise<string> {
-  validateImageFile(file)
+  const fileToUpload = await compressImageFile(file)
+  validateImageFile(fileToUpload)
 
   if (fetcher) {
     onProgress?.(0)
@@ -45,7 +104,7 @@ export async function uploadPropertyImage(
         method: 'POST',
         body: (() => {
           const formData = new FormData()
-          formData.append('file', file, file.name)
+          formData.append('file', fileToUpload, fileToUpload.name)
           return formData
         })(),
       })
