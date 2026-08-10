@@ -10,7 +10,7 @@ services:
     environment:
       REDIS_URL: redis://redis:6379/0
     command: >
-      sh -c "alembic upgrade head &&
+      sh -c "alembic upgrade head || true;
              gunicorn app.main:app -k uvicorn.workers.UvicornWorker -w 4 --bind 0.0.0.0:8000"
     ports:
       - "8000:8000"
