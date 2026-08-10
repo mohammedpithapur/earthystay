@@ -81,20 +81,26 @@ async def request_logging(request: Request, call_next):
     return response
 
 
-cors_origins = set(settings.CORS_ORIGINS)
-cors_origins.add("https://earthystay.vercel.app")
-cors_origins.add("https://earthystay-delta.vercel.app")
-cors_origins.add("https://earthystays.com")
-cors_origins.add("https://www.earthystays.com")
-cors_origins.add("http://localhost:3000")
-cors_origins.add("http://127.0.0.1:3000")
+# Exact, explicit whitelist of allowed origins (no wildcard regex)
+ALLOWED_ORIGINS = [
+    "https://earthystay-delta.vercel.app",
+    "https://earthystay.vercel.app",
+    "https://earthystays.com",
+    "https://www.earthystays.com",
+    "https://earthystays.com",
+    "https://www.earthystays.com",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+for origin in settings.CORS_ORIGINS:
+    if origin not in ALLOWED_ORIGINS:
+        ALLOWED_ORIGINS.append(origin)
 
 cors_kwargs = {
-    "allow_origins": list(cors_origins),
-    "allow_origin_regex": r"^https?://.*",
+    "allow_origins": ALLOWED_ORIGINS,
     "allow_credentials": True,
-    "allow_methods": ["*"],
-    "allow_headers": ["*"],
+    "allow_methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    "allow_headers": ["Content-Type", "Authorization", "X-Requested-With", "Accept", "Origin"],
 }
 
 app.add_middleware(CORSMiddleware, **cors_kwargs)
