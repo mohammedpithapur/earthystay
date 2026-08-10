@@ -365,9 +365,9 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
                   const shadowEvs = dayEvents.filter(e => e.type === 'shadow_block')
 
                   const tips: string[] = []
-                  guestEvs.forEach(e => tips.push(`👤 ${e.guest_name} | ${e.booking_ref} | ₹${(e.total ?? 0).toLocaleString('en-IN')}`))
-                  adminEvs.forEach(e => tips.push(`🔒 Admin Block${e.note ? ': ' + e.note : ''}`))
-                  shadowEvs.forEach(e => tips.push(`⬜ Group block${e.parent_booking_ref ? ': ' + e.parent_booking_ref : ''}`))
+                  guestEvs.forEach(e => tips.push(`Guest: ${e.guest_name} | ${e.booking_ref} | ₹${(e.total ?? 0).toLocaleString('en-IN')}`))
+                  adminEvs.forEach(e => tips.push(`Admin Block${e.note ? ': ' + e.note : ''}`))
+                  shadowEvs.forEach(e => tips.push(`Group Block${e.parent_booking_ref ? ': ' + e.parent_booking_ref : ''}`))
                   const tipText = tips.join('\n')
 
                   const isGuest = guestEvs.length > 0
@@ -389,7 +389,7 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
                       <span>{day}</span>
                       {dayEvents.length > 0 && (
                         <span style={{ fontSize: '0.55rem', marginTop: 2 }}>
-                          {guestEvs.length > 0 ? '●' : adminEvs.length > 0 ? '🔒' : '◌'}
+                          {guestEvs.length > 0 ? '•' : adminEvs.length > 0 ? '■' : '◦'}
                         </span>
                       )}
                     </div>
@@ -482,7 +482,7 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
                   transition: 'all 0.2s', marginTop: 2,
                 }}
               >
-                {blocking ? 'Blocking…' : '🔒 Block Dates'}
+                {blocking ? 'Blocking…' : 'Block Dates'}
               </button>
 
               <p style={{ fontSize: '0.68rem', color: '#5a5040', marginTop: 8, lineHeight: 1.5 }}>

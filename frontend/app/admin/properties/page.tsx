@@ -9,6 +9,7 @@ import { useRequireAuth } from '@/lib/auth/useRequireAuth'
 import { uploadPropertyImage } from '@/lib/supabase/storage'
 // NOTE: admin UI now loads properties from the API via `listAdminProperties`
 import { Property, type PropertyImage, type BathroomDetail, type SpaceDetail } from '@/lib/types'
+import { Folder, Pencil, Trash2, Camera, MapPin, AlertTriangle, Plus, X, Check, Calendar as CalendarIcon, Info } from 'lucide-react'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -44,13 +45,13 @@ const SECTIONS: Section[] = [
 ]
 
 const AMENITY_GROUPS: Record<string, string[]> = {
-  '✨ Essentials': ['WiFi', 'Air Conditioning', 'Heating', 'Washer', 'Dryer', 'Iron', 'Workspace'],
-  '🍳 Kitchen': ['Kitchen', 'Refrigerator', 'Microwave', 'Coffee Maker', 'Dishwasher', 'BBQ Grill'],
-  '🛏 Bedroom & Living': ['TV', 'Fireplace', 'Balcony', 'Terrace', 'Library', 'Extra Pillows & Blankets'],
-  '🏊 Outdoor & Recreation': ['Pool', 'Hot Tub', 'Garden', 'Parking', 'Beach Access', 'Hiking Trails', 'Gym', 'Bonfire'],
-  '🌿 Views & Nature': ['Mountain View', 'Lake View', 'River View', 'Star Gazing'],
-  '🎒 Experiences': ['Desert Safari', 'Camel Ride', 'Adventure Activities', 'Yoga Deck', 'Spa', 'Restaurant'],
-  '🐾 Guest Policies': ['Pet Friendly', 'Long-term Stays Allowed', 'Self Check-in', 'Luggage Dropoff'],
+  'Essentials': ['WiFi', 'Air Conditioning', 'Heating', 'Washer', 'Dryer', 'Iron', 'Workspace'],
+  'Kitchen': ['Kitchen', 'Refrigerator', 'Microwave', 'Coffee Maker', 'Dishwasher', 'BBQ Grill'],
+  'Bedroom & Living': ['TV', 'Fireplace', 'Balcony', 'Terrace', 'Library', 'Extra Pillows & Blankets'],
+  'Outdoor & Recreation': ['Pool', 'Hot Tub', 'Garden', 'Parking', 'Beach Access', 'Hiking Trails', 'Gym', 'Bonfire'],
+  'Views & Nature': ['Mountain View', 'Lake View', 'River View', 'Star Gazing'],
+  'Experiences': ['Desert Safari', 'Camel Ride', 'Adventure Activities', 'Yoga Deck', 'Spa', 'Restaurant'],
+  'Guest Policies': ['Pet Friendly', 'Long-term Stays Allowed', 'Self Check-in', 'Luggage Dropoff'],
 }
 const AMENITY_OPTIONS = Object.values(AMENITY_GROUPS).flat()
 
@@ -708,10 +709,10 @@ function VisualWysiwygEditor({ value, onChange }: { value: string; onChange: (ht
     <div style={{ border: '1px solid var(--color-border)', borderRadius: '10px', overflow: 'hidden', backgroundColor: '#ffffff' }}>
       {/* Toolbar */}
       <div style={{ display: 'flex', gap: '6px', padding: '8px 12px', backgroundColor: 'var(--color-bg-soft)', borderBottom: '1px solid var(--color-border)', flexWrap: 'wrap', alignItems: 'center' }}>
-        {toolbarBtn(<><b>B</b> Bold</>, 'Bold', () => execFormat('bold'))}
-        {toolbarBtn(<><i>I</i> Italic</>, 'Italic', () => execFormat('italic'), { fontStyle: 'italic' })}
+        {toolbarBtn(<b>B</b>, 'Bold', () => execFormat('bold'))}
+        {toolbarBtn(<i>I</i>, 'Italic', () => execFormat('italic'), { fontStyle: 'italic' })}
 
-        {toolbarBtn('🔗 Insert Link', 'Insert Link', () => {
+        {toolbarBtn('Insert Link', 'Insert Link', () => {
           const url = prompt('Enter URL (e.g. https://maps.google.com):')
           if (!url) return
           ensureFocused()
@@ -720,7 +721,7 @@ function VisualWysiwygEditor({ value, onChange }: { value: string; onChange: (ht
           const label = selectedText || url
           insertAtCursor(`<a href="${url}" target="_blank" style="color:#9a7a2f;text-decoration:underline;font-weight:600">${label}</a>&nbsp;`)
         }, { fontWeight: '600' })}
-        {toolbarBtn('🧹 Clear', 'Clear Formatting', () => {
+        {toolbarBtn('Clear', 'Clear Formatting', () => {
           ensureFocused()
           document.execCommand('removeFormat', false)
           syncContent()
@@ -796,7 +797,6 @@ function LocationSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: 
 
       {/* Map preview hint */}
       <div style={{ backgroundColor: 'var(--color-bg-soft)', borderRadius: '12px', padding: '20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-        <div style={{ fontSize: '24px' }}>📍</div>
         <div>
           <p style={{ fontSize: '14px', fontWeight: '600', color: 'var(--color-text-primary)', marginBottom: '4px' }}>
             {form.city && form.state ? `${form.city}, ${form.state}` : 'Enter city & state above'}
@@ -1053,9 +1053,9 @@ function PhotosSection({
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
           <div>
-            <FieldLabel>Photo Folders &amp; Albums</FieldLabel>
+            <FieldLabel>Photo Folders & Albums</FieldLabel>
             <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', margin: '2px 0 0 0' }}>
-              Create room/space folders (e.g. &quot;Living room&quot;, &quot;Master bedroom&quot;, &quot;Balcony&quot;) for the Airbnb-style Photo Tour.
+              Create room/space folders for the Photo Tour.
             </p>
           </div>
           {!isCreatingFolder && (
@@ -1076,7 +1076,6 @@ function PhotosSection({
         {/* Inline Add Folder Input */}
         {isCreatingFolder && (
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center', padding: '12px 16px', backgroundColor: 'var(--color-bg-soft)', borderRadius: '10px', marginBottom: '12px', border: '1px solid var(--color-border)' }}>
-            <span style={{ fontSize: '16px' }}>📁</span>
             <input
               style={{ ...inputStyle, flex: 1, padding: '8px 12px', fontSize: '13px' }}
               value={newFolderName}
@@ -1138,7 +1137,7 @@ function PhotosSection({
                       autoFocus
                     />
                     <button type="button" onClick={() => handleRenameFolder(folder)} style={{ padding: '4px 8px', fontSize: '11px', fontWeight: '700', borderRadius: '4px', border: 'none', backgroundColor: 'var(--color-text-primary)', color: '#fff', cursor: 'pointer' }}>Save</button>
-                    <button type="button" onClick={() => setRenamingFolder(null)} style={{ padding: '4px 6px', fontSize: '11px', borderRadius: '4px', border: '1px solid var(--color-border)', backgroundColor: '#fff', cursor: 'pointer' }}>✕</button>
+                    <button type="button" onClick={() => setRenamingFolder(null)} style={{ padding: '4px 6px', fontSize: '11px', borderRadius: '4px', border: '1px solid var(--color-border)', backgroundColor: '#fff', cursor: 'pointer' }}>x</button>
                   </div>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
@@ -1154,7 +1153,7 @@ function PhotosSection({
                         display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.15s ease',
                       }}
                     >
-                      <span>📁 {folder}</span>
+                      <span>{folder}</span>
                       <span style={{ fontSize: '11px', opacity: 0.8, backgroundColor: isActive ? 'rgba(255,255,255,0.25)' : 'var(--color-bg-soft)', padding: '1px 6px', borderRadius: '10px' }}>
                         {count}
                       </span>
@@ -1167,13 +1166,13 @@ function PhotosSection({
                           title="Rename Folder"
                           onClick={() => { setRenamingFolder(folder); setRenameInput(folder) }}
                           style={{ border: 'none', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '11px', opacity: 0.6, padding: '2px 4px' }}
-                        >✏️</button>
+                        >Edit</button>
                         <button
                           type="button"
                           title="Delete Folder"
                           onClick={() => handleDeleteFolder(folder)}
                           style={{ border: 'none', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '11px', opacity: 0.6, padding: '2px 4px' }}
-                        >🗑️</button>
+                        >Delete</button>
                       </div>
                     )}
                   </div>
@@ -1198,11 +1197,10 @@ function PhotosSection({
         onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--color-gold)' }}
         onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--color-border)' }}
       >
-        <div style={{ fontSize: '28px', marginBottom: '8px' }}>📸</div>
         <p style={{ fontSize: '15px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '4px' }}>
           {activeFolder === 'All' ? 'Upload photos to General folder' : `Upload photos to "${activeFolder}"`}
         </p>
-        <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '14px' }}>Drag &amp; drop or click to choose. JPG, PNG, WEBP (max 10MB each).</p>
+        <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginBottom: '14px' }}>Drag & drop or click to choose. JPG, PNG, WEBP (max 10MB each).</p>
         <div style={{
           display: 'inline-block', backgroundColor: 'var(--color-text-primary)', color: '#ffffff',
           padding: '8px 20px', borderRadius: '8px', fontSize: '12px', fontWeight: '700',
@@ -1214,7 +1212,7 @@ function PhotosSection({
       </div>
 
       {isUploading && (
-        <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>⏳ Uploading {activeUploadCountRef.current} photo{activeUploadCountRef.current !== 1 ? 's' : ''}... please wait.</p>
+        <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>Uploading {activeUploadCountRef.current} photo{activeUploadCountRef.current !== 1 ? 's' : ''}... please wait.</p>
       )}
 
       {uploadNotice && (
@@ -1268,7 +1266,6 @@ function PhotosSection({
 
                     {uploading && (
                       <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.65)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '6px', zIndex: 5 }}>
-                        <div style={{ width: '22px', height: '22px', border: '2.5px solid var(--color-gold)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
                         <span style={{ color: '#ffffff', fontSize: '10px', fontWeight: '700' }}>Uploading...</span>
                       </div>
                     )}
@@ -1284,12 +1281,12 @@ function PhotosSection({
                       disabled={uploading}
                       onClick={e => { e.stopPropagation(); e.preventDefault(); removeImage(img.id) }}
                       style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 6, width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.65)', border: 'none', color: '#fff', fontSize: '14px', cursor: uploading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: uploading ? 0.4 : 1 }}
-                    >×</button>
+                    >x</button>
                   </div>
 
                   {/* Folder Selector Footer */}
                   <div style={{ padding: '8px 10px', backgroundColor: '#ffffff', borderTop: '1px solid var(--color-border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
-                    <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', fontWeight: '600' }}>📁 Folder:</span>
+                    <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', fontWeight: '600' }}>Folder:</span>
                     <select
                       value={img.album_name || 'General'}
                       onChange={e => changeImageFolder(img.id, e.target.value)}
@@ -1574,7 +1571,7 @@ function PoliciesSection({
       <div>
         <FieldLabel>Group With Existing Properties (Multi-Property Shared Availability)</FieldLabel>
         <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '12px' }}>
-          Select multiple properties / units that share availability (e.g. 2-3 individual rooms plus a whole villa).
+          Select multiple properties / units that share availability.
         </p>
         {availableProperties.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '220px', overflowY: 'auto', border: '1px solid var(--color-border)', borderRadius: '10px', padding: '12px', backgroundColor: 'var(--color-bg-card)' }}>
@@ -1615,17 +1612,19 @@ function PoliciesSection({
       {selectedGroupPropertyIds.length > 0 && (
         <div>
           <FieldLabel>Whole Property Listing (Optional)</FieldLabel>
-          <select
-            style={selectStyle}
-            value={wholePropertyChoice}
-            onChange={e => setWholePropertyChoice(e.target.value)}
-          >
-            <option value="none">None (All listings are separate individual units)</option>
-            <option value="new">This listing is the whole-property parent listing</option>
-            {availableProperties.filter(p => selectedGroupPropertyIds.includes(p.id)).map(p => (
-              <option key={p.id} value={p.id}>{p.name} (Whole Property)</option>
-            ))}
-          </select>
+          <div style={{ backgroundColor: '#fff8e1', border: '1px solid #ffe082', borderRadius: '8px', padding: '14px 18px', display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <select
+              style={selectStyle}
+              value={wholePropertyChoice}
+              onChange={e => setWholePropertyChoice(e.target.value)}
+            >
+              <option value="none">None (All listings are separate individual units)</option>
+              <option value="new">This listing is the whole-property parent listing</option>
+              {availableProperties.filter(p => selectedGroupPropertyIds.includes(p.id)).map(p => (
+                <option key={p.id} value={p.id}>{p.name} (Whole Property)</option>
+              ))}
+            </select>
+          </div>
           <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '8px' }}>
             When the whole-property listing is booked, all individual units in this group are automatically blocked.
           </p>
@@ -1635,7 +1634,6 @@ function PoliciesSection({
       {/* Cancellation notice */}
       <div style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-gold)', borderRadius: '12px', padding: '20px 24px' }}>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-          <span style={{ fontSize: '18px', flexShrink: 0 }}>⚠</span>
           <div>
             <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '6px' }}>Non-Refundable Policy</p>
             <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>
@@ -1739,7 +1737,6 @@ function HouseRulesSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm
             {form.house_rules.map((rule, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: '8px', gap: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
-                  <span style={{ color: 'var(--color-gold)', fontSize: '14px', flexShrink: 0 }}>○</span>
                   <span style={{ fontSize: '14px', color: 'var(--color-text-primary)' }}>{rule}</span>
                   {isCustom(rule) && (
                     <span style={{ fontSize: '10px', backgroundColor: 'var(--color-bg-soft)', color: 'var(--color-text-muted)', padding: '2px 6px', borderRadius: '4px', fontWeight: '600', flexShrink: 0 }}>CUSTOM</span>
@@ -1748,7 +1745,7 @@ function HouseRulesSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm
                 <button
                   onClick={() => removeRule(rule)}
                   style={{ background: 'none', border: 'none', color: '#ccc', cursor: 'pointer', fontSize: '18px', flexShrink: 0, padding: '0 4px' }}
-                >×</button>
+                >x</button>
               </div>
             ))}
           </div>
@@ -1862,16 +1859,6 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
 
   const closeEditor = () => {
     onClose?.()
-  }
-
-  const getNextPropertyId = () => {
-    const combined = [...availableProperties]
-    if (property) combined.push(property)
-    const maxId = combined.reduce((max, item) => {
-      const parsed = Number.parseInt(item.id, 10)
-      return Number.isNaN(parsed) ? max : Math.max(max, parsed)
-    }, 0)
-    return String(maxId + 1)
   }
 
   const buildPropertyPayload = (): Property => {
@@ -1991,7 +1978,7 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
     )
 
     if (hasActiveUploads) {
-      setImageUploadNotice('Photos are currently uploading (see spinning wheel). Please wait a moment for uploads to complete before saving.')
+      setImageUploadNotice('Photos are currently uploading. Please wait a moment for uploads to complete before saving.')
       changeSection('photos')
       setSaveStatus('idle')
       return false
@@ -2037,7 +2024,6 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
       const payload = buildPropertyPayload()
       const saved = await saveProperty(payload, { isEdit }, fetchWithAuth)
       await applyGrouping(saved)
-      // update local available properties state (do not mutate demo data)
       setAvailableProperties(prev => {
         const idx = prev.findIndex(p => p.id === saved.id)
         if (idx >= 0) {
@@ -2134,7 +2120,7 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
               <span style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>Saving...</span>
             )}
             {saveStatus === 'saved' && (
-              <span style={{ fontSize: '13px', color: '#2E7D32', fontWeight: '600' }}>✓ Saved</span>
+              <span style={{ fontSize: '13px', color: '#2E7D32', fontWeight: '600' }}>Saved</span>
             )}
             <button
               onClick={() => void handleSave()}
@@ -2178,7 +2164,7 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ fontSize: '14px', color: isActive ? 'var(--color-text-primary)' : 'var(--color-gold)' }}>{section.icon}</span>
                       <span style={{ fontSize: '14px', fontWeight: isActive ? '700' : '500', color: isActive ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}>
                         {section.label}

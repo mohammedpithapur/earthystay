@@ -8,7 +8,7 @@ import { buildApiUrl, fetchPropertyReviews } from '@/lib/api'
 import type { Property, Review } from '@/lib/types'
 import type { DateRange } from 'react-day-picker'
 import { useAuth } from '@/lib/auth/AuthContext'
-import { Star, MapPin, Users, User, Bed, Bath, Calendar, Moon, Dog, Check, Phone, Mail, Clock, ShieldAlert, Sparkles, ChevronLeft, ChevronRight, Armchair, Sofa, Utensils, UtensilsCrossed, DoorOpen, LayoutDashboard, TreePalm, Camera, X } from 'lucide-react'
+import { Star, MapPin, Users, User, Bed, Bath, Calendar, Moon, Dog, Check, Phone, Mail, Clock, ShieldAlert, Sparkles, ChevronLeft, ChevronRight, Armchair, Sofa, Utensils, UtensilsCrossed, DoorOpen, LayoutDashboard, TreePalm, Camera, X, Folder } from 'lucide-react'
 
 const bathroomLabel: Record<string, string> = {
   ensuite: 'Private Ensuite',
@@ -743,7 +743,7 @@ export default function PropertyDetailPage() {
                 <div key={album.name} style={{ marginBottom: '32px', backgroundColor: 'var(--color-bg-soft)', borderRadius: '12px', padding: '20px', border: '1px solid var(--color-border)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '18px' }}>📁</span>
+                      <Folder size={18} style={{ color: 'var(--color-gold)' }} />
                       <h4 style={{ fontSize: '16px', fontWeight: '800', color: 'var(--color-text-primary)', margin: 0 }}>{album.name}</h4>
                       <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', backgroundColor: '#ffffff', padding: '2px 8px', borderRadius: '10px', fontWeight: '600', border: '1px solid var(--color-border)' }}>
                         {album.count} {album.count === 1 ? 'photo' : 'photos'}
@@ -1226,7 +1226,7 @@ export default function PropertyDetailPage() {
                     cursor: 'pointer', whiteSpace: 'nowrap',
                   }}
                 >
-                  📁 {album.name} ({album.count})
+                  <Folder size={12} style={{ display: 'inline-block', marginRight: '4px', verticalAlign: 'middle' }} /> {album.name} ({album.count})
                 </button>
               ))}
             </div>

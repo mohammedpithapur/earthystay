@@ -1,5 +1,6 @@
 'use client'
 import Link from 'next/link'
+import { AlertTriangle } from 'lucide-react'
 
 const faqs = [
   {
@@ -74,7 +75,7 @@ export default function CancellationPage() {
       {/* Main Policy Banner */}
       <div style={{ backgroundColor: 'var(--color-text-primary)', padding: '48px 24px' }}>
         <div className="content-shell" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '40px', marginBottom: '16px' }}>⚠</div>
+          <AlertTriangle size={40} style={{ color: 'var(--color-gold)', margin: '0 auto 16px' }} />
           <h2 style={{ color: 'var(--color-gold)', fontSize: 'clamp(24px, 3vw, 36px)', fontWeight: '800', marginBottom: '16px', letterSpacing: '1px' }}>
             100% Non-Refundable
           </h2>

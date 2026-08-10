@@ -103,7 +103,7 @@ export default function ConfirmationPage() {
           gap: '12px',
           alignItems: 'flex-start',
         }}>
-          <span style={{ fontSize: '18px', flexShrink: 0 }}>ℹ️</span>
+          <Info size={18} style={{ color: 'var(--color-gold)', flexShrink: 0, marginTop: '2px' }} />
           <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.6', margin: 0 }}>
             <strong>Reminder:</strong> This booking is <strong>non-refundable</strong>. Please save your booking reference number <strong>{ref}</strong> for your records.
           </p>
