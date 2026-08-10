@@ -182,6 +182,44 @@ export default function PropertyDetailPage() {
     setBookingError(null)
   }
 
+  // ── Hooks must run unconditionally at top level (React Rule of Hooks) ────
+  const albums = useMemo(() => {
+    if (!property?.images?.length) return []
+    const map = new Map<string, typeof property.images>()
+    for (const img of property.images) {
+      const alb = img.album_name || 'General'
+      if (!map.has(alb)) {
+        map.set(alb, [])
+      }
+      map.get(alb)!.push(img)
+    }
+    return Array.from(map.entries()).map(([name, imgs]) => ({
+      name,
+      images: imgs,
+      cover: imgs[0]?.image_url || 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800',
+      count: imgs.length,
+    }))
+  }, [property?.images])
+
+  const currentTourImages = useMemo(() => {
+    if (!property?.images?.length) return []
+    if (tourActiveAlbum === 'All') return property.images
+    return property.images.filter(img => (img.album_name || 'General') === tourActiveAlbum)
+  }, [property?.images, tourActiveAlbum])
+
+  // Keyboard navigation in Photo Tour Lightbox
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (!tourModalOpen) return
+    if (e.key === 'Escape') setTourModalOpen(false)
+    if (e.key === 'ArrowLeft') setTourActiveIndex(i => Math.max(0, i - 1))
+    if (e.key === 'ArrowRight') setTourActiveIndex(i => Math.min(currentTourImages.length - 1, i + 1))
+  }, [tourModalOpen, currentTourImages.length])
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handleKeyDown])
+
   if (loading) {
     return (
       <div className="page-shell" style={{ backgroundColor: '#ffffff' }}>
@@ -274,44 +312,6 @@ export default function PropertyDetailPage() {
     if (isRangeBlocked(checkIn, checkOut)) { alert('Selected dates are not available'); return }
     router.push(`/booking/${property.id}?checkIn=${checkIn}&checkOut=${checkOut}&guests=${guests}&pets=${pets}&nights=${nights}&total=${totalPrice}`)
   }
-
-  // Group images into albums for the Airbnb Photo Tour
-  const albums = useMemo(() => {
-    if (!property?.images?.length) return []
-    const map = new Map<string, typeof property.images>()
-    for (const img of property.images) {
-      const alb = img.album_name || 'General'
-      if (!map.has(alb)) {
-        map.set(alb, [])
-      }
-      map.get(alb)!.push(img)
-    }
-    return Array.from(map.entries()).map(([name, imgs]) => ({
-      name,
-      images: imgs,
-      cover: imgs[0]?.image_url || 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800',
-      count: imgs.length,
-    }))
-  }, [property?.images])
-
-  const currentTourImages = useMemo(() => {
-    if (!property?.images?.length) return []
-    if (tourActiveAlbum === 'All') return property.images
-    return property.images.filter(img => (img.album_name || 'General') === tourActiveAlbum)
-  }, [property?.images, tourActiveAlbum])
-
-  // Keyboard navigation in Photo Tour Lightbox
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    if (!tourModalOpen) return
-    if (e.key === 'Escape') setTourModalOpen(false)
-    if (e.key === 'ArrowLeft') setTourActiveIndex(i => Math.max(0, i - 1))
-    if (e.key === 'ArrowRight') setTourActiveIndex(i => Math.min(currentTourImages.length - 1, i + 1))
-  }, [tourModalOpen, currentTourImages.length])
-
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleKeyDown])
 
   const openTourForAlbum = (albumName: string) => {
     setTourActiveAlbum(albumName)
