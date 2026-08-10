@@ -4,6 +4,9 @@ services:
       context: ./backend
     env_file:
       - ./backend/.env
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     environment:
       REDIS_URL: redis://redis:6379/0
     command: >
