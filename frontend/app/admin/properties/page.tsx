@@ -574,7 +574,7 @@ function BasicInfoSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm:
         </div>
         <div>
           <FieldLabel>Contact Email</FieldLabel>
-          <input style={inputStyle} value={form.contact_email} placeholder="staysearthy@gmail.com" onChange={e => setForm({ ...form, contact_email: e.target.value })} />
+          <input style={inputStyle} value={form.contact_email ?? ''} placeholder="staysearthy@gmail.com" onChange={e => setForm({ ...form, contact_email: e.target.value })} />
         </div>
         <div>
           <FieldLabel>Contact WhatsApp</FieldLabel>
@@ -605,8 +605,17 @@ function BasicInfoSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm:
 function VisualWysiwygEditor({ value, onChange }: { value: string; onChange: (html: string) => void }) {
   const editorRef = useRef<HTMLDivElement>(null)
 
-  // Only sync from outside when value changes externally (not from user typing)
+  // Set initial content on first mount
   const lastHtml = useRef<string>(value || '')
+  useEffect(() => {
+    if (editorRef.current) {
+      editorRef.current.innerHTML = value || ''
+      lastHtml.current = value || ''
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Sync from outside when value changes externally (e.g. form reset when switching property)
   useEffect(() => {
     if (editorRef.current && value !== lastHtml.current) {
       editorRef.current.innerHTML = value || ''
