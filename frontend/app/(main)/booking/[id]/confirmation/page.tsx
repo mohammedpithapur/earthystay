@@ -2,6 +2,7 @@
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { Info } from 'lucide-react'
 
 export default function ConfirmationPage() {
   const searchParams = useSearchParams()
