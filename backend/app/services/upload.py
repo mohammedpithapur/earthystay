@@ -85,9 +85,9 @@ def upload_property_image_from_bytes(image_bytes: bytes, mime_type: str, folder:
     upload_url = f"{base_url}/storage/v1/object/{bucket}/{object_path}"
     headers = {
         "Authorization": f"Bearer {settings.SUPABASE_SERVICE_KEY}",
-        "apiKey": settings.SUPABASE_SERVICE_KEY,
+        "apikey": settings.SUPABASE_SERVICE_KEY,
         "Content-Type": mime_type,
-        "x-upsert": "false",
+        "x-upsert": "true",
     }
 
     try:
@@ -119,7 +119,7 @@ def delete_property_image_from_url(image_url: str) -> None:
     delete_url = f"{base_url}/storage/v1/object/{bucket}"
     headers = {
         "Authorization": f"Bearer {settings.SUPABASE_SERVICE_KEY}",
-        "apiKey": settings.SUPABASE_SERVICE_KEY,
+        "apikey": settings.SUPABASE_SERVICE_KEY,
         "Content-Type": "application/json",
     }
 
