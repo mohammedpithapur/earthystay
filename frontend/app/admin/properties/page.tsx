@@ -730,10 +730,12 @@ function VisualWysiwygEditor({ value, onChange }: { value: string; onChange: (ht
           const label = selectedText || url
           insertAtCursor(`<a href="${url}" target="_blank" style="color:#9a7a2f;text-decoration:underline;font-weight:600">${label}</a>&nbsp;`)
         }, { fontWeight: '600' })}
-        {toolbarBtn('Clear', 'Clear Formatting', () => {
-          ensureFocused()
-          document.execCommand('removeFormat', false)
-          syncContent()
+        {toolbarBtn('Clear', 'Clear All Content', () => {
+          if (editorRef.current) {
+            editorRef.current.innerHTML = ''
+            lastHtml.current = ''
+            onChange('')
+          }
         }, { color: '#888', marginLeft: 'auto' })}
       </div>
 
