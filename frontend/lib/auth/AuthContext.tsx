@@ -135,6 +135,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Proactively check session when returning to the tab/window
+  useEffect(() => {
+    if (E2E_SKIP_AUTH) return
+
+    const handleFocus = () => {
+      if (document.visibilityState === 'visible') {
+        void silentRefreshRef.current?.()
+      }
+    }
+
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleFocus)
+
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleFocus)
+    }
+  }, [])
+
   // ── Auth actions ─────────────────────────────────────────────────────────────
 
   const login = useCallback(async (email: string, password: string) => {

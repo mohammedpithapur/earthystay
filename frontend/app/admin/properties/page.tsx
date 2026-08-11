@@ -1831,16 +1831,39 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
   const [imageUploadNotice, setImageUploadNotice] = useState('')
   const [isUploadingImages, setIsUploadingImages] = useState(false)
 
-  const propId = property?.id
+  const propId = property?.id || 'new'
+
   useEffect(() => {
-    setForm(createFormFromProperty(property))
+    const draftKey = `earthystay_draft_${propId}`
+    let restoredForm = createFormFromProperty(property)
+    try {
+      const savedDraft = localStorage.getItem(draftKey)
+      if (savedDraft) {
+        const parsed = JSON.parse(savedDraft)
+        if (parsed && typeof parsed === 'object' && parsed.name) {
+          restoredForm = { ...restoredForm, ...parsed }
+          setImageUploadNotice('Restored unsaved draft')
+        }
+      }
+    } catch {}
+
+    setForm(restoredForm)
     setSaveStatus('idle')
     setImageUploadProgress({})
     setImageUploadErrors({})
-    setImageUploadNotice('')
     setIsUploadingImages(false)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propId])
+
+  // Auto-save form draft to localStorage
+  useEffect(() => {
+    const draftKey = `earthystay_draft_${propId}`
+    try {
+      if (form.name || form.description || form.address || form.images.length > 0) {
+        localStorage.setItem(draftKey, JSON.stringify(form))
+      }
+    } catch {}
+  }, [form, propId])
 
   useEffect(() => {
     let isMounted = true
@@ -2049,6 +2072,7 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
         return [saved, ...prev]
       })
 
+      try { localStorage.removeItem(`earthystay_draft_${propId}`) } catch {}
       onSave?.(saved)
       setSaveStatus('saved')
       setTimeout(() => setSaveStatus('idle'), 2000)

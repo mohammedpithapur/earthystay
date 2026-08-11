@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     # Access token - short-lived, sent in Authorization header
     JWT_SECRET: str
     JWT_ALGORITHM: str = "HS256"
-    JWT_EXPIRE_MINUTES: int = 20
+    JWT_EXPIRE_MINUTES: int = 720
 
     # Refresh token - long-lived, stored in httpOnly cookie
     JWT_REFRESH_SECRET: str | None = None
