@@ -20,7 +20,8 @@ export default function LoginClient() {
 
   useEffect(() => {
     if (!loading && user) {
-      router.replace(next)
+      const target = (user.role === 'admin' && (next === '/dashboard' || !next)) ? '/admin/properties' : next
+      router.replace(target)
     }
   }, [user, loading, router, next])
 
@@ -39,7 +40,6 @@ export default function LoginClient() {
     setSubmitting(true)
     try {
       await login(form.email, form.password)
-      router.replace(next)
     } catch (err) {
       setApiError(err instanceof Error ? err.message : 'Login failed')
     } finally {

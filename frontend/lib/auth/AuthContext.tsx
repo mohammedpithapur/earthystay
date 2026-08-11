@@ -132,7 +132,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       isMounted = false
     }
-  }, [silentRefresh])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // ── Auth actions ─────────────────────────────────────────────────────────────
 
