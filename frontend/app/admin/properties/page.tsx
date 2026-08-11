@@ -329,13 +329,18 @@ function BasicInfoSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm:
                 style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-border)', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '16px' }}
               >−</button>
               <input
-                type="number"
-                min={1}
-                max={50}
-                value={form.bedrooms}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={form.bedrooms === 0 ? '' : form.bedrooms}
+                placeholder="1"
                 onChange={e => {
-                  const v = parseInt(e.target.value, 10) || 1
-                  setForm(f => ({ ...f, bedrooms: Math.max(1, v) }))
+                  const raw = e.target.value.replace(/[^0-9]/g, '')
+                  const v = raw === '' ? 0 : parseInt(raw, 10)
+                  setForm(f => ({ ...f, bedrooms: v }))
+                }}
+                onBlur={() => {
+                  setForm(f => ({ ...f, bedrooms: Math.max(1, f.bedrooms) }))
                 }}
                 style={{ width: '60px', textAlign: 'center', fontWeight: '700', padding: '6px', border: '1px solid var(--color-border)', borderRadius: '8px' }}
               />
@@ -364,13 +369,21 @@ function BasicInfoSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm:
                 style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-border)', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '16px' }}
               >−</button>
               <input
-                type="number"
-                min={1}
-                max={100}
-                value={form.base_guests}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={form.base_guests === 0 ? '' : form.base_guests}
+                placeholder="2"
                 onChange={e => {
-                  const v = parseInt(e.target.value, 10) || 1
+                  const raw = e.target.value.replace(/[^0-9]/g, '')
+                  const v = raw === '' ? 0 : parseInt(raw, 10)
                   setForm(f => ({ ...f, base_guests: v, max_guests: Math.max(f.max_guests, v) }))
+                }}
+                onBlur={() => {
+                  setForm(f => {
+                    const b = Math.max(1, f.base_guests)
+                    return { ...f, base_guests: b, max_guests: Math.max(f.max_guests, b) }
+                  })
                 }}
                 style={{ width: '60px', textAlign: 'center', fontWeight: '700', padding: '6px', border: '1px solid var(--color-border)', borderRadius: '8px' }}
               />
@@ -395,17 +408,22 @@ function BasicInfoSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm:
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <button
                 type="button"
-                onClick={() => setForm(f => ({ ...f, max_guests: Math.max(f.base_guests, f.max_guests - 1) }))}
+                onClick={() => setForm(f => ({ ...f, max_guests: Math.max(f.base_guests || 1, f.max_guests - 1) }))}
                 style={{ width: '32px', height: '32px', borderRadius: '50%', border: '1px solid var(--color-border)', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '16px' }}
               >−</button>
               <input
-                type="number"
-                min={form.base_guests}
-                max={100}
-                value={form.max_guests}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                value={form.max_guests === 0 ? '' : form.max_guests}
+                placeholder={String(form.base_guests || 2)}
                 onChange={e => {
-                  const v = parseInt(e.target.value, 10) || form.base_guests
-                  setForm(f => ({ ...f, max_guests: Math.max(f.base_guests, v) }))
+                  const raw = e.target.value.replace(/[^0-9]/g, '')
+                  const v = raw === '' ? 0 : parseInt(raw, 10)
+                  setForm(f => ({ ...f, max_guests: v }))
+                }}
+                onBlur={() => {
+                  setForm(f => ({ ...f, max_guests: Math.max(f.base_guests || 1, f.max_guests) }))
                 }}
                 style={{ width: '60px', textAlign: 'center', fontWeight: '700', padding: '6px', border: '1px solid var(--color-border)', borderRadius: '8px' }}
               />

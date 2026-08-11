@@ -25,6 +25,7 @@ export interface AuthContextType {
   loading: boolean
   login: (email: string, password: string) => Promise<void>
   register: (email: string, password: string, fullName: string, phone?: string) => Promise<void>
+  googleLoginCallback: (code: string) => Promise<User>
   logout: () => Promise<void>
   /** Use instead of raw fetch() for any protected API call.
    *  Automatically injects the Authorization header and retries once on 401. */
@@ -121,15 +122,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return
     }
 
-    const timer = setTimeout(() => {
-      silentRefresh().finally(() => setLoading(false))
-    }, 0)
+    let isMounted = true
+    silentRefresh().finally(() => {
+      if (isMounted) {
+        setLoading(false)
+      }
+    })
+
     return () => {
-      clearTimeout(timer)
-      clearRefreshTimer()
+      isMounted = false
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [silentRefresh])
 
   // ── Auth actions ─────────────────────────────────────────────────────────────
 
@@ -170,6 +173,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAccessToken(data.access_token)
     setUser(data.user)
     scheduleRefresh(data.access_token)
+  }, [scheduleRefresh])
+
+  const googleLoginCallback = useCallback(async (code: string): Promise<User> => {
+    const res = await fetch(`${API_BASE}/auth/google/callback?code=${encodeURIComponent(code)}`, {
+      method: 'POST',
+      credentials: 'include',
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.detail || 'Google authentication failed')
+    }
+    const data = await res.json()
+    setAccessToken(data.access_token)
+    setUser(data.user)
+    scheduleRefresh(data.access_token)
+    return data.user
   }, [scheduleRefresh])
 
   const logout = useCallback(async () => {
@@ -241,7 +260,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [accessToken, silentRefresh])
 
   return (
-    <AuthContext.Provider value={{ user, accessToken, loading, login, register, logout, fetchWithAuth }}>
+    <AuthContext.Provider value={{ user, accessToken, loading, login, register, googleLoginCallback, logout, fetchWithAuth }}>
       {children}
     </AuthContext.Provider>
   )

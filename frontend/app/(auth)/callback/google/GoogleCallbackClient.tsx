@@ -1,8 +1,7 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { API_BASE } from '@/lib/auth/AuthContext'
-
+import { useAuth } from '@/lib/auth/AuthContext'
 import { AlertTriangle } from 'lucide-react'
 
 /**
@@ -13,8 +12,10 @@ import { AlertTriangle } from 'lucide-react'
 export default function GoogleCallbackClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { googleLoginCallback } = useAuth()
 
   const [error, setError] = useState('')
+  const hasAttemptedRef = useRef(false)
 
   useEffect(() => {
     const code = searchParams.get('code')
@@ -31,22 +32,18 @@ export default function GoogleCallbackClient() {
       return
     }
 
-    fetch(`${API_BASE}/auth/google/callback?code=${encodeURIComponent(code)}`, {
-      method: 'POST',
-      credentials: 'include',
-    })
-      .then(async res => {
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}))
-          throw new Error(err.detail || 'Google authentication failed')
-        }
+    if (hasAttemptedRef.current) return
+    hasAttemptedRef.current = true
 
-        router.replace(next)
+    googleLoginCallback(code)
+      .then(user => {
+        const target = (user.role === 'admin' && next === '/dashboard') ? '/admin/properties' : next
+        router.replace(target)
       })
       .catch(err => {
         setError(err.message || 'Authentication failed. Please try again.')
       })
-  }, [searchParams, router])
+  }, [searchParams, router, googleLoginCallback])
 
   if (error) {
     return (
