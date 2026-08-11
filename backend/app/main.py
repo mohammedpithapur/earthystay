@@ -85,8 +85,9 @@ async def request_logging(request: Request, call_next):
 ALLOWED_ORIGINS = [
     "https://earthystay-delta.vercel.app",
     "https://earthystay.vercel.app",
-    "https://earthystays.com",
-    "https://www.earthystays.com",
+    "https://earthystays.in",
+    "https://www.earthystays.in",
+    "https://api.earthystays.in",
     "https://earthystays.com",
     "https://www.earthystays.com",
     "http://localhost:3000",
