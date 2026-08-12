@@ -26,7 +26,10 @@ export default function RegisterClient() {
   const [resendTimer, setResendTimer] = useState(0)
 
   useEffect(() => {
-    if (!loading && user) router.replace(next)
+    if (!loading && user) {
+      const target = (user.role === 'admin' && (next === '/dashboard' || !next)) ? '/admin/properties' : next
+      router.replace(target)
+    }
   }, [user, loading, router, next])
 
   useEffect(() => {
