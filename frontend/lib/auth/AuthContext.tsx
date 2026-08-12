@@ -52,18 +52,65 @@ function parseJwtExp(token: string): number | null {
   }
 }
 
+const TOKEN_KEY = 'earthystay_token'
+const USER_KEY = 'earthystay_user'
+
+function getStoredToken(): string | null {
+  if (typeof window === 'undefined') return null
+  try { return localStorage.getItem(TOKEN_KEY) } catch { return null }
+}
+
+function getStoredUser(): User | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem(USER_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch { return null }
+}
+
+function setStoredSession(token: string | null, u: User | null) {
+  if (typeof window === 'undefined') return
+  try {
+    if (token && u) {
+      localStorage.setItem(TOKEN_KEY, token)
+      localStorage.setItem(USER_KEY, JSON.stringify(u))
+    } else {
+      localStorage.removeItem(TOKEN_KEY)
+      localStorage.removeItem(USER_KEY)
+    }
+  } catch {}
+}
+
 const REFRESH_MARGIN_MS = 2 * 60 * 1000 // start refresh 2 min before expiry
 
 // ── Provider ──────────────────────────────────────────────────────────────────
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(E2E_SKIP_AUTH ? E2E_ADMIN_USER : null)
-  const [accessToken, setAccessToken] = useState<string | null>(E2E_SKIP_AUTH ? 'e2e-admin-token' : null)
+  const [user, setUser] = useState<User | null>(() => {
+    if (E2E_SKIP_AUTH) return E2E_ADMIN_USER
+    const u = getStoredUser()
+    const t = getStoredToken()
+    if (u && t) {
+      const exp = parseJwtExp(t)
+      if (exp && exp > Date.now()) return u
+    }
+    return null
+  })
+
+  const [accessToken, setAccessToken] = useState<string | null>(() => {
+    if (E2E_SKIP_AUTH) return 'e2e-admin-token'
+    const t = getStoredToken()
+    if (t) {
+      const exp = parseJwtExp(t)
+      if (exp && exp > Date.now()) return t
+    }
+    return null
+  })
+
   const [loading, setLoading] = useState(!E2E_SKIP_AUTH)
 
   // Ref so scheduleRefresh can call silentRefresh without a circular dep
   const silentRefreshRef = useRef<(() => Promise<string | null>) | undefined>(undefined)
-
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const clearRefreshTimer = () => {
@@ -72,6 +119,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       refreshTimerRef.current = null
     }
   }
+
+  const saveSession = useCallback((token: string | null, u: User | null) => {
+    setAccessToken(token)
+    setUser(u)
+    setStoredSession(token, u)
+  }, [])
 
   /** Schedule an automatic silent refresh before the access token expires. */
   const scheduleRefresh = useCallback((token: string) => {
@@ -93,22 +146,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         credentials: 'include', // sends the httpOnly cookie
       })
       if (!res.ok) {
-        setUser(null)
-        setAccessToken(null)
+        const storedToken = getStoredToken()
+        const exp = storedToken ? parseJwtExp(storedToken) : null
+        if (exp && exp > Date.now()) {
+          return storedToken
+        }
+        saveSession(null, null)
         clearRefreshTimer()
         return null
       }
       const data = await res.json()
-      setAccessToken(data.access_token)
-      setUser(data.user)
+      saveSession(data.access_token, data.user)
       scheduleRefresh(data.access_token)
       return data.access_token
     } catch {
-      setUser(null)
-      setAccessToken(null)
+      const storedToken = getStoredToken()
+      const exp = storedToken ? parseJwtExp(storedToken) : null
+      if (exp && exp > Date.now()) {
+        return storedToken
+      }
       return null
     }
-  }, [scheduleRefresh])
+  }, [saveSession, scheduleRefresh])
 
   // Keep the ref in sync so scheduleRefresh always calls the latest version
   useEffect(() => {
@@ -135,25 +194,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Proactively check session when returning to the tab/window
-  useEffect(() => {
-    if (E2E_SKIP_AUTH) return
-
-    const handleFocus = () => {
-      if (document.visibilityState === 'visible') {
-        void silentRefreshRef.current?.()
-      }
-    }
-
-    window.addEventListener('focus', handleFocus)
-    document.addEventListener('visibilitychange', handleFocus)
-
-    return () => {
-      window.removeEventListener('focus', handleFocus)
-      document.removeEventListener('visibilitychange', handleFocus)
-    }
-  }, [])
-
   // ── Auth actions ─────────────────────────────────────────────────────────────
 
   const login = useCallback(async (email: string, password: string) => {
@@ -168,10 +208,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error(err.detail || 'Login failed')
     }
     const data = await res.json()
-    setAccessToken(data.access_token)
-    setUser(data.user)
+    saveSession(data.access_token, data.user)
     scheduleRefresh(data.access_token)
-  }, [scheduleRefresh])
+  }, [saveSession, scheduleRefresh])
 
   const register = useCallback(async (
     email: string,
@@ -190,10 +229,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error(err.detail || 'Registration failed')
     }
     const data = await res.json()
-    setAccessToken(data.access_token)
-    setUser(data.user)
+    saveSession(data.access_token, data.user)
     scheduleRefresh(data.access_token)
-  }, [scheduleRefresh])
+  }, [saveSession, scheduleRefresh])
 
   const googleLoginCallback = useCallback(async (code: string): Promise<User> => {
     const res = await fetch(`${API_BASE}/auth/google/callback?code=${encodeURIComponent(code)}`, {
@@ -205,16 +243,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       throw new Error(err.detail || 'Google authentication failed')
     }
     const data = await res.json()
-    setAccessToken(data.access_token)
-    setUser(data.user)
+    saveSession(data.access_token, data.user)
     scheduleRefresh(data.access_token)
     return data.user
-  }, [scheduleRefresh])
+  }, [saveSession, scheduleRefresh])
 
   const logout = useCallback(async () => {
     if (E2E_SKIP_AUTH) {
-      setUser(null)
-      setAccessToken(null)
+      saveSession(null, null)
       return
     }
 
@@ -223,9 +259,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       method: 'POST',
       credentials: 'include',
     }).catch(() => {})
-    setUser(null)
-    setAccessToken(null)
-  }, [])
+    saveSession(null, null)
+  }, [saveSession])
 
   // ── fetchWithAuth ─────────────────────────────────────────────────────────────
 
@@ -239,7 +274,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     url: string,
     options: RequestInit = {},
   ): Promise<Response> => {
-    let token = accessToken
+    let token = accessToken || getStoredToken()
 
     const makeRequest = (t: string | null) =>
       (() => {
@@ -271,13 +306,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         res = await makeRequest(token)
       } else {
         // Refresh failed — session is dead
-        setUser(null)
-        setAccessToken(null)
+        saveSession(null, null)
       }
     }
 
     return res
-  }, [accessToken, silentRefresh])
+  }, [accessToken, silentRefresh, saveSession])
 
   return (
     <AuthContext.Provider value={{ user, accessToken, loading, login, register, googleLoginCallback, logout, fetchWithAuth }}>
