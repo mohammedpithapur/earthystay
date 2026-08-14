@@ -138,7 +138,7 @@ export default function PropertyCard({ property }: Props) {
             // 3. Baths (with type label)
             const hasSharedBath = (property.bathrooms_detail ?? []).some(b => b.type === 'shared')
             const isBathShared = (property.bathrooms_detail ?? []).length > 0 ? hasSharedBath : false
-            const bathSharingText = (property.bathrooms_detail ?? []).length > 0 ? (isBathShared ? 'Shared' : 'Not Shared') : null
+            const bathSharingText = (property.bathrooms_detail ?? []).length > 0 ? (isBathShared ? 'Shared' : 'Private') : null
             slots.push({
               icon: <Bath style={{ width: '14px', height: '14px', strokeWidth: 1.8 }} />,
               text: `${property.bathrooms ?? 0} Baths${bathSharingText ? ` (${bathSharingText})` : ''}`
@@ -181,7 +181,7 @@ export default function PropertyCard({ property }: Props) {
                 const isShared = sp.sharing === 'shared'
                 slots.push({
                   icon: cfg.icon,
-                  text: `${sp.count} ${cfg.label} (${isShared ? 'Shared' : 'Not Shared'})`
+                  text: `${sp.count} ${cfg.label} (${isShared ? 'Shared' : 'Private'})`
                 })
               }
             }
