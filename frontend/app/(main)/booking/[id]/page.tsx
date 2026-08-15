@@ -1,6 +1,6 @@
 'use client'
 export const dynamic = 'force-dynamic'
-import { useEffect, useState, useRef, Suspense } from 'react'
+import React, { useEffect, useState, useRef, Suspense, Component } from 'react'
 import Image from 'next/image'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { buildApiUrl, createBooking, createPaymentOrder, verifyPayment } from '@/lib/api'
@@ -550,14 +550,43 @@ function BookingPageContent() {
   )
 }
 
+class BookingPageErrorBoundary extends Component<{ children: React.ReactNode }, { hasError: boolean; error: string }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props)
+    this.state = { hasError: false, error: '' }
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error: error?.message || 'An error occurred' }
+  }
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('BookingPage ErrorBoundary caught:', error, errorInfo)
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ textAlign: 'center', padding: '120px 24px' }}>
+          <h2 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '16px' }}>Something went wrong loading booking details</h2>
+          <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', marginBottom: '24px' }}>{this.state.error}</p>
+          <a href="/properties" style={{ backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', padding: '14px 32px', fontSize: '13px', letterSpacing: '1.5px', textTransform: 'uppercase', fontWeight: '700', borderRadius: '8px', textDecoration: 'none', display: 'inline-block' }}>
+            Back to Properties
+          </a>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
 export default function BookingPage() {
   return (
-    <Suspense fallback={
-      <div style={{ textAlign: 'center', padding: '120px 24px' }}>
-        <h2 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '16px' }}>Loading booking details…</h2>
-      </div>
-    }>
-      <BookingPageContent />
-    </Suspense>
+    <BookingPageErrorBoundary>
+      <Suspense fallback={
+        <div style={{ textAlign: 'center', padding: '120px 24px' }}>
+          <h2 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '16px' }}>Loading booking details…</h2>
+        </div>
+      }>
+        <BookingPageContent />
+      </Suspense>
+    </BookingPageErrorBoundary>
   )
 }
