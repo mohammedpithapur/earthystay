@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, Suspense } from 'react'
 import Image from 'next/image'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { buildApiUrl, createBooking, createPaymentOrder, verifyPayment } from '@/lib/api'
@@ -69,7 +69,7 @@ function loadRazorpayScript(): Promise<void> {
   })
 }
 
-export default function BookingPage() {
+function BookingPageContent() {
   const { id } = useParams()
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -545,5 +545,17 @@ export default function BookingPage() {
         }
       `}</style>
     </div>
+  )
+}
+
+export default function BookingPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ textAlign: 'center', padding: '120px 24px' }}>
+        <h2 style={{ fontSize: '28px', fontWeight: '700', marginBottom: '16px' }}>Loading booking details…</h2>
+      </div>
+    }>
+      <BookingPageContent />
+    </Suspense>
   )
 }
