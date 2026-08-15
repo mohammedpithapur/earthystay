@@ -1,4 +1,5 @@
 'use client'
+export const dynamic = 'force-dynamic'
 import { useEffect, useState, useRef, Suspense } from 'react'
 import Image from 'next/image'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
@@ -80,12 +81,12 @@ function BookingPageContent() {
   const [pageLoading, setPageLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
 
-  const checkIn = searchParams.get('checkIn') || ''
-  const checkOut = searchParams.get('checkOut') || ''
-  const guests = Number(searchParams.get('guests')) || 1
-  const pets = Number(searchParams.get('pets')) || 0
-  const nights = Number(searchParams.get('nights')) || 0
-  const total = Number(searchParams.get('total')) || 0
+  const checkIn = searchParams?.get('checkIn') || ''
+  const checkOut = searchParams?.get('checkOut') || ''
+  const guests = Number(searchParams?.get('guests')) || 1
+  const pets = Number(searchParams?.get('pets')) || 0
+  const nights = Number(searchParams?.get('nights')) || 0
+  const total = Number(searchParams?.get('total')) || 0
 
   const [form, setForm] = useState({
     full_name: '',
@@ -102,7 +103,8 @@ function BookingPageContent() {
   useEffect(() => {
     if (authLoading) return
     if (!user) {
-      const currentUrl = `/booking/${propertyId}?${searchParams.toString()}`
+      const q = searchParams ? searchParams.toString() : ''
+      const currentUrl = `/booking/${propertyId || ''}${q ? `?${q}` : ''}`
       router.replace(`/login?next=${encodeURIComponent(currentUrl)}`)
     } else if (!form.full_name) {
       setForm(f => ({
