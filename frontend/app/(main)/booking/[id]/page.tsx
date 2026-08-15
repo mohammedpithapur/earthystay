@@ -116,6 +116,10 @@ function BookingPageContent() {
   const [paymentError, setPaymentError] = useState<string | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
+  // Refs — must be declared here before any early returns (Rules of Hooks)
+  const policyRef = useRef<HTMLDivElement>(null)
+  const guestDetailsRef = useRef<HTMLDivElement>(null)
+
   // Auth guard
   useEffect(() => {
     if (authLoading) return
@@ -187,9 +191,6 @@ function BookingPageContent() {
 
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })
-
-  const policyRef = useRef<HTMLDivElement>(null)
-  const guestDetailsRef = useRef<HTMLDivElement>(null)
 
   const validate = () => {
     const newErrors: Record<string, string> = {}
