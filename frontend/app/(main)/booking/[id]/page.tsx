@@ -2,7 +2,7 @@
 export const dynamic = 'force-dynamic'
 import React, { useEffect, useState, useRef, Suspense, Component } from 'react'
 import Image from 'next/image'
-import { useParams, useSearchParams, useRouter } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { buildApiUrl, createBooking, createPaymentOrder, verifyPayment } from '@/lib/api'
 import { useAuth } from '@/lib/auth/AuthContext'
 import type { Property } from '@/lib/types'
@@ -72,21 +72,38 @@ function loadRazorpayScript(): Promise<void> {
 
 function BookingPageContent() {
   const { id } = useParams()
-  const searchParams = useSearchParams()
   const router = useRouter()
   const { user, fetchWithAuth, loading: authLoading } = useAuth()
   const propertyId = Array.isArray(id) ? id[0] : id
 
+  // Read URL query params directly from window to avoid useSearchParams/Suspense issues
+  const [urlParams, setUrlParams] = useState({
+    checkIn: '',
+    checkOut: '',
+    guests: 1,
+    pets: 0,
+    nights: 0,
+    total: 0,
+  })
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const p = new URLSearchParams(window.location.search)
+    setUrlParams({
+      checkIn: p.get('checkIn') || '',
+      checkOut: p.get('checkOut') || '',
+      guests: Number(p.get('guests')) || 1,
+      pets: Number(p.get('pets')) || 0,
+      nights: Number(p.get('nights')) || 0,
+      total: Number(p.get('total')) || 0,
+    })
+  }, [])
+
+  const { checkIn, checkOut, guests, pets, nights, total } = urlParams
+
   const [property, setProperty] = useState<Property | null>(null)
   const [pageLoading, setPageLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
-
-  const checkIn = searchParams?.get('checkIn') || ''
-  const checkOut = searchParams?.get('checkOut') || ''
-  const guests = Number(searchParams?.get('guests')) || 1
-  const pets = Number(searchParams?.get('pets')) || 0
-  const nights = Number(searchParams?.get('nights')) || 0
-  const total = Number(searchParams?.get('total')) || 0
 
   const [form, setForm] = useState({
     full_name: '',
@@ -103,8 +120,7 @@ function BookingPageContent() {
   useEffect(() => {
     if (authLoading) return
     if (!user) {
-      const q = searchParams ? searchParams.toString() : ''
-      const currentUrl = `/booking/${propertyId || ''}${q ? `?${q}` : ''}`
+      const currentUrl = `/booking/${propertyId || ''}${typeof window !== 'undefined' ? window.location.search : ''}`
       router.replace(`/login?next=${encodeURIComponent(currentUrl)}`)
     } else if (!form.full_name) {
       setForm(f => ({
