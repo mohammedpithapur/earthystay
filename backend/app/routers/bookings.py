@@ -51,13 +51,42 @@ async def create_booking(
             .with_for_update()
         )
 
-    # Check availability — overlapping confirmed/pending bookings
+    # 1. Check if the CURRENT GUEST already has a pending booking for these exact dates & property
+    existing_pending = await db.scalar(
+        select(Booking).where(
+            Booking.property_id == data.property_id,
+            Booking.guest_id == user.id,
+            Booking.status == BookingStatus.pending,
+            Booking.check_in == data.check_in,
+            Booking.check_out == data.check_out,
+        )
+    )
+
+    if existing_pending:
+        # Reuse the existing pending booking for this guest, update pricing/info if needed
+        pricing = calculate_pricing(property, data.check_in, data.check_out, data.pets, data.guests)
+        existing_pending.guests = data.guests
+        existing_pending.pets = data.pets
+        existing_pending.nights = pricing["nights"]
+        existing_pending.base_price = pricing["base_price"]
+        existing_pending.cleaning_fee = pricing["cleaning_fee"]
+        existing_pending.pet_charge = pricing["pet_charge"]
+        existing_pending.total = pricing["total"]
+        existing_pending.guest_name = user.full_name
+        existing_pending.guest_email = user.email
+        existing_pending.guest_phone = user.phone
+        await db.commit()
+        await db.refresh(existing_pending)
+        return existing_pending
+
+    # 2. Check availability — overlapping confirmed/pending bookings from OTHER users
     overlapping = await db.execute(
         select(Booking).where(
             Booking.property_id == data.property_id,
             Booking.status.in_([BookingStatus.confirmed, BookingStatus.pending]),
             Booking.check_in < data.check_out,
             Booking.check_out > data.check_in,
+            Booking.guest_id != user.id,
         )
     )
     if overlapping.scalar_one_or_none():

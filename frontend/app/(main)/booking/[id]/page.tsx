@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import Image from 'next/image'
 import { useParams, useSearchParams, useRouter } from 'next/navigation'
 import { buildApiUrl, createBooking, createPaymentOrder, verifyPayment } from '@/lib/api'
@@ -170,6 +170,9 @@ export default function BookingPage() {
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })
 
+  const policyRef = useRef<HTMLDivElement>(null)
+  const guestDetailsRef = useRef<HTMLDivElement>(null)
+
   const validate = () => {
     const newErrors: Record<string, string> = {}
     if (!form.full_name.trim()) newErrors.full_name = 'Full name is required'
@@ -183,7 +186,15 @@ export default function BookingPage() {
   }
 
   const handleSubmit = async () => {
-    if (!validate()) return
+    const isValid = validate()
+    if (!isValid) {
+      if (!agreed) {
+        policyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      } else {
+        guestDetailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+      return
+    }
     setPaymentError(null)
 
     try {
@@ -331,7 +342,7 @@ export default function BookingPage() {
           )}
 
           {/* Guest Info */}
-          <div style={cardStyle}>
+          <div ref={guestDetailsRef} style={cardStyle}>
             <h2 style={{ fontSize: '22px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '8px' }}>
               1. Guest Information
             </h2>
@@ -402,7 +413,7 @@ export default function BookingPage() {
           </div>
 
           {/* Cancellation Policy */}
-          <div style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-gold)', borderRadius: '12px', padding: '32px', marginBottom: '24px' }}>
+          <div ref={policyRef} id="cancellation-policy" style={{ backgroundColor: 'var(--color-bg-card)', border: `2px solid ${errors.agreed ? '#E53E3E' : 'var(--color-gold)'}`, borderRadius: '12px', padding: '32px', marginBottom: '24px', transition: 'border-color 0.3s ease' }}>
             <h2 style={{ fontSize: '22px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '8px' }}>
               3. Cancellation Policy
             </h2>
