@@ -40,9 +40,10 @@ export async function subscribeToPush(token: string): Promise<boolean> {
     await navigator.serviceWorker.ready;
 
     // 3. Subscribe
+    const applicationServerKey = urlBase64ToUint8Array(public_key) as unknown as BufferSource;
     const subscription = await reg.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(public_key),
+      applicationServerKey,
     });
 
     const json = subscription.toJSON();
