@@ -120,7 +120,7 @@ async def sync_single_ical_link(
     }
 
     try:
-        async with httpx.AsyncClient(timeout=20, follow_redirects=True) as client:
+        async with httpx.AsyncClient(timeout=20, follow_redirects=True, verify=False) as client:
             res = await client.get(url, headers=headers)
             if not res.is_success:
                 logger.error("Failed to fetch iCal URL %s: HTTP %s", url, res.status_code)
