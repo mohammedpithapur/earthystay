@@ -38,12 +38,12 @@ export default function GoogleCallbackClient() {
     googleLoginCallback(code)
       .then(user => {
         const target = (user.role === 'admin' && next === '/dashboard') ? '/admin/properties' : next
-        router.replace(target)
+        window.location.href = target
       })
       .catch(err => {
         setError(err.message || 'Authentication failed. Please try again.')
       })
-  }, [searchParams, router, googleLoginCallback])
+  }, [searchParams, googleLoginCallback])
 
   if (error) {
     return (
