@@ -623,6 +623,14 @@ export async function deleteICalLink(linkId: string, fetcher: ApiFetcher): Promi
   if (!response.ok) throw new Error(`Failed to delete iCal link (${response.status})`)
 }
 
+export async function syncPropertyICal(propertyId: string, fetcher: ApiFetcher): Promise<{ message: string; synced: Record<string, number> }> {
+  const response = await fetcher(buildApiUrl(`/ical/properties/${propertyId}/sync`), {
+    method: "POST",
+  })
+  if (!response.ok) throw new Error(`Failed to sync iCal calendars (${response.status})`)
+  return response.json()
+}
+
 // ─── User Dashboard ───────────────────────────────────────────────────────────
 
 export async function getUserDashboard(fetcher: ApiFetcher): Promise<UserDashboard> {

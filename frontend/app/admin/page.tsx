@@ -12,7 +12,7 @@ import {
   listAdminProperties, deleteAdminProperty, duplicateAdminProperty, buildApiUrl,
   getAdminDashboard, listAdminBookings, updateAdminBookingStatus, updateAdminBookingWithRefund,
   createAdminReview, deleteAdminReview, fetchPropertyReviews,
-  listICalLinks, createICalLink, deleteICalLink, getICalExportUrl,
+  listICalLinks, createICalLink, deleteICalLink, syncPropertyICal, getICalExportUrl,
   listAdminEvents, updateAdminEventStatus, getAdminAnalytics,
   getAdminPayments, getAdminSettlements, getPaymentSummary,
   type PropertyGroup, type CreateReviewPayload, type AdminBooking, type AdminDashboard, type ICalLink,
@@ -369,6 +369,16 @@ export default function AdminPage() {
         direction: 'import',
       }, fetchWithAuth)
       setIcalInputs(prev => ({ ...prev, [propertyId]: { name: '', url: '' } }))
+      await loadIcalLinks(propertyId)
+    } catch { /* noop */ } finally {
+      setIcalSaving(prev => ({ ...prev, [propertyId]: false }))
+    }
+  }
+
+  const handleManualSync = async (propertyId: string) => {
+    setIcalSaving(prev => ({ ...prev, [propertyId]: true }))
+    try {
+      await syncPropertyICal(propertyId, fetchWithAuth)
       await loadIcalLinks(propertyId)
     } catch { /* noop */ } finally {
       setIcalSaving(prev => ({ ...prev, [propertyId]: false }))
@@ -2063,7 +2073,19 @@ export default function AdminPage() {
 
                   {/* Connected Calendars */}
                   <div style={{ marginTop: '16px', padding: '16px', backgroundColor: '#f9f8f5', border: '1px solid var(--color-border)', borderRadius: '12px' }}>
-                    <p style={{ fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '12px', fontWeight: '700' }}>Connected Calendars</p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                      <p style={{ fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700', margin: 0 }}>Connected Calendars</p>
+                      {propLinks.some(l => l.direction === 'import') && (
+                        <button
+                          disabled={icalSaving[property.id]}
+                          onClick={() => handleManualSync(property.id)}
+                          style={{ padding: '4px 10px', backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '11px', fontWeight: '700', cursor: 'pointer', color: '#1565C0', display: 'flex', alignItems: 'center', gap: '4px' }}
+                        >
+                          <RefreshCw size={11} className={icalSaving[property.id] ? 'animate-spin' : ''} />
+                          {icalSaving[property.id] ? 'Syncing…' : 'Sync All'}
+                        </button>
+                      )}
+                    </div>
                     {propLinks.length === 0 ? (
                       <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>No calendars connected yet. Paste an import link above to get started.</p>
                     ) : (
