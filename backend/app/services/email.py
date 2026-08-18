@@ -129,21 +129,26 @@ async def send_booking_confirmation_email(
         logger.error("RESEND_API_KEY is not configured")
         return False
 
-    async with httpx.AsyncClient(timeout=10) as client:
-        response = await client.post(
-            "https://api.resend.com/emails",
-            headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}"},
-            json={
-                "from": settings.RESEND_FROM_EMAIL,
-                "to": [to_email],
-                "subject": subject,
-                "html": html,
-            },
-        )
-    if response.is_success:
-        return True
-    logger.error("Resend confirmation email failed: %s %s", response.status_code, response.text)
-    return False
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            response = await client.post(
+                "https://api.resend.com/emails",
+                headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}"},
+                json={
+                    "from": settings.RESEND_FROM_EMAIL,
+                    "to": [to_email],
+                    "subject": subject,
+                    "html": html,
+                },
+            )
+        if response.is_success:
+            logger.info("Successfully sent booking confirmation email to %s (booking_ref: %s)", to_email, booking_ref)
+            return True
+        logger.error("Resend confirmation email failed for %s: %s %s", to_email, response.status_code, response.text)
+        return False
+    except Exception as exc:
+        logger.exception("Error sending confirmation email to %s via Resend: %s", to_email, exc)
+        return False
 
 
 async def send_booking_cancellation_email(
@@ -177,21 +182,26 @@ async def send_booking_cancellation_email(
         logger.error("RESEND_API_KEY is not configured")
         return False
 
-    async with httpx.AsyncClient(timeout=10) as client:
-        response = await client.post(
-            "https://api.resend.com/emails",
-            headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}"},
-            json={
-                "from": settings.RESEND_FROM_EMAIL,
-                "to": [to_email],
-                "subject": subject,
-                "html": html,
-            },
-        )
-    if response.is_success:
-        return True
-    logger.error("Resend cancellation email failed: %s %s", response.status_code, response.text)
-    return False
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            response = await client.post(
+                "https://api.resend.com/emails",
+                headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}"},
+                json={
+                    "from": settings.RESEND_FROM_EMAIL,
+                    "to": [to_email],
+                    "subject": subject,
+                    "html": html,
+                },
+            )
+        if response.is_success:
+            logger.info("Successfully sent cancellation email to %s (booking_ref: %s)", to_email, booking_ref)
+            return True
+        logger.error("Resend cancellation email failed for %s: %s %s", to_email, response.status_code, response.text)
+        return False
+    except Exception as exc:
+        logger.exception("Error sending cancellation email to %s via Resend: %s", to_email, exc)
+        return False
 
 
 async def send_admin_new_booking_email(

@@ -73,7 +73,7 @@ async def create_booking(
         existing_pending.pet_charge = pricing["pet_charge"]
         existing_pending.total = pricing["total"]
         existing_pending.guest_name = data.guest_name or user.full_name
-        existing_pending.guest_email = user.email
+        existing_pending.guest_email = data.guest_email or user.email
         existing_pending.guest_phone = data.guest_phone or user.phone
         if data.note is not None:
             existing_pending.note = data.note
@@ -116,7 +116,7 @@ async def create_booking(
         total=pricing["total"],
         status=BookingStatus.pending,
         guest_name=data.guest_name or user.full_name,
-        guest_email=user.email,
+        guest_email=data.guest_email or user.email,
         guest_phone=data.guest_phone or user.phone,
         note=data.note,
     )

@@ -227,6 +227,7 @@ function BookingPageContent() {
           guests,
           pets,
           guest_name: form.full_name.trim() || undefined,
+          guest_email: form.email.trim() || undefined,
           guest_phone: form.phone.trim() || undefined,
           note: form.special_requests.trim() || undefined,
         },

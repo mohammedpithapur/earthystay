@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     SENTRY_DSN: str | None = None
     REDIS_URL: str | None = None
     RESEND_API_KEY: str | None = None
-    RESEND_FROM_EMAIL: str = "EarthyStay <noreply@yourdomain.com>"
+    RESEND_FROM_EMAIL: str = "EarthyStay <noreply@earthystays.in>"
     FAST2SMS_API_KEY: str | None = None
 
     RAZORPAY_KEY_ID: str = ""

@@ -295,6 +295,7 @@ export type BookingCreate = {
   guests: number
   pets: number
   guest_name?: string
+  guest_email?: string
   guest_phone?: string
   note?: string
 }

@@ -11,6 +11,7 @@ class BookingCreate(BaseModel):
     guests: int
     pets: int = 0
     guest_name: str | None = None
+    guest_email: str | None = None
     guest_phone: str | None = None
     note: str | None = None
 
