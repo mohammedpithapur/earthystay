@@ -120,6 +120,11 @@ async def create_payment_order(
             detail="Payment gateway not configured. Please add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to .env",
         )
 
+    # Fetch property for notes
+    prop_for_notes = await db.get(Property, booking.property_id)
+    prop_name_for_notes = prop_for_notes.name if prop_for_notes else ""
+    prop_city_for_notes = prop_for_notes.city if prop_for_notes else ""
+
     client = _get_razorpay_client()
     rz_order = client.order.create(
         {
@@ -127,6 +132,19 @@ async def create_payment_order(
             "currency": "INR",
             "receipt": booking.booking_ref,
             "payment_capture": 1,  # auto-capture
+            # Notes appear in Razorpay dashboard under each payment
+            "notes": {
+                "booking_ref": booking.booking_ref,
+                "property": prop_name_for_notes,
+                "location": prop_city_for_notes,
+                "check_in": str(booking.check_in),
+                "check_out": str(booking.check_out),
+                "nights": str(booking.nights),
+                "guests": str(booking.guests),
+                "guest_name": booking.guest_name,
+                "guest_email": booking.guest_email,
+                "guest_phone": booking.guest_phone or "",
+            },
         }
     )
 
@@ -210,6 +228,11 @@ async def verify_payment(
     # Trigger notifications in the background
     property_obj = await db.get(Property, booking.property_id)
     property_name = property_obj.name if property_obj else "EarthyStay Property"
+    property_city = property_obj.city if property_obj else ""
+    property_state = property_obj.state if property_obj else ""
+    property_address = property_obj.address if property_obj else ""
+    checkin_time = property_obj.check_in_time if property_obj else "2:00 PM"
+    checkout_time = property_obj.check_out_time if property_obj else "11:00 AM"
     email_instructions = getattr(property_obj, 'booking_email_instructions', '') if property_obj else ""
     c_phone = property_obj.contact_phone if property_obj else ""
     c_email = property_obj.contact_email if property_obj else ""
@@ -223,6 +246,11 @@ async def verify_payment(
         guest_name=booking.guest_name,
         booking_ref=booking.booking_ref,
         property_name=property_name,
+        property_city=property_city,
+        property_state=property_state,
+        property_address=property_address,
+        checkin_time=checkin_time,
+        checkout_time=checkout_time,
         check_in=str(booking.check_in),
         check_out=str(booking.check_out),
         guests=str(booking.guests),
@@ -245,11 +273,15 @@ async def verify_payment(
         guest_phone=booking.guest_phone or "",
         booking_ref=booking.booking_ref,
         property_name=property_name,
+        property_city=property_city,
+        property_state=property_state,
         check_in=str(booking.check_in),
         check_out=str(booking.check_out),
         guests=str(booking.guests),
         nights=str(booking.nights),
         total=str(booking.total),
+        special_requests=booking.note or "",
+        razorpay_payment_id=data.razorpay_payment_id,
     )
 
     return booking
@@ -317,6 +349,11 @@ async def razorpay_webhook(
                     # Trigger notifications
                     property_obj = await db.get(Property, booking.property_id)
                     property_name = property_obj.name if property_obj else "EarthyStay Property"
+                    property_city = property_obj.city if property_obj else ""
+                    property_state = property_obj.state if property_obj else ""
+                    property_address = property_obj.address if property_obj else ""
+                    checkin_time = property_obj.check_in_time if property_obj else "2:00 PM"
+                    checkout_time = property_obj.check_out_time if property_obj else "11:00 AM"
                     email_instructions = getattr(property_obj, 'booking_email_instructions', '') if property_obj else ""
                     c_phone = property_obj.contact_phone if property_obj else ""
                     c_email = property_obj.contact_email if property_obj else ""
@@ -330,6 +367,11 @@ async def razorpay_webhook(
                         guest_name=booking.guest_name,
                         booking_ref=booking.booking_ref,
                         property_name=property_name,
+                        property_city=property_city,
+                        property_state=property_state,
+                        property_address=property_address,
+                        checkin_time=checkin_time,
+                        checkout_time=checkout_time,
                         check_in=str(booking.check_in),
                         check_out=str(booking.check_out),
                         guests=str(booking.guests),
@@ -352,11 +394,15 @@ async def razorpay_webhook(
                         guest_phone=booking.guest_phone or "",
                         booking_ref=booking.booking_ref,
                         property_name=property_name,
+                        property_city=property_city,
+                        property_state=property_state,
                         check_in=str(booking.check_in),
                         check_out=str(booking.check_out),
                         guests=str(booking.guests),
                         nights=str(booking.nights),
                         total=str(booking.total),
+                        special_requests="",
+                        razorpay_payment_id=payment_id,
                     )
                 else:
                     await db.commit()
