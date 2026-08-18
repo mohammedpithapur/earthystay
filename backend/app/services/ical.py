@@ -19,17 +19,20 @@ logger = logging.getLogger("earthystay.ical")
 
 
 def _parse_ics_date(val: str) -> date | None:
-    """Parse various iCal date formats: 20260818, 20260818T140000Z, 2026-08-18, etc."""
-    val = val.strip().split(";")[0].split(":")[-1]  # strip parameters like VALUE=DATE:
-    # Match YYYYMMDD
-    m = re.match(r"^(\d{4})(\d{2})(\d{2})", val)
+    """Parse various iCal date formats: DTSTART;VALUE=DATE:20260818, 20260818T140000Z, 2026-08-18, etc."""
+    if not val:
+        return None
+    # The actual date/time string is always after the last colon in an iCal line
+    raw_val = val.strip().split(":")[-1].strip()
+    # Match YYYYMMDD or YYYYMMDDTHHMMSSZ
+    m = re.match(r"^(\d{4})(\d{2})(\d{2})", raw_val)
     if m:
         try:
             return date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
         except ValueError:
             return None
     # Match YYYY-MM-DD
-    m = re.match(r"^(\d{4})-(\d{2})-(\d{2})", val)
+    m = re.match(r"^(\d{4})-(\d{2})-(\d{2})", raw_val)
     if m:
         try:
             return date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
