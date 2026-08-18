@@ -46,7 +46,8 @@ from app.models.user import User
 from app.models.property import Property
 from app.schemas.booking import BookingOut
 from app.schemas.payment import PaymentOrderCreate, PaymentOrderOut, PaymentOut, PaymentVerifyIn
-from app.services.email import send_booking_confirmation_email, send_admin_new_booking_email
+from app.services.email import send_booking_confirmation_email
+from app.services.push import send_push_to_all
 from app.services.booking import remove_shadow_blocks
 
 
@@ -240,9 +241,8 @@ async def verify_payment(
     c_spare = getattr(property_obj, 'contact_spare_phone', '') if property_obj else ""
     h_rules = property_obj.house_rules if (property_obj and property_obj.house_rules) else []
 
-    background_tasks.add_task(
-        send_booking_confirmation_email,
-        to_email=booking.guest_email,
+    # Shared email kwargs to avoid repetition
+    _email_kwargs = dict(
         guest_name=booking.guest_name,
         booking_ref=booking.booking_ref,
         property_name=property_name,
@@ -264,24 +264,21 @@ async def verify_payment(
         house_rules=h_rules,
     )
 
-    admin_email = property_obj.contact_email if (property_obj and property_obj.contact_email) else "admin@earthystay.com"
+    # Send to guest
+    background_tasks.add_task(send_booking_confirmation_email, to_email=booking.guest_email, **_email_kwargs)
+
+    # Send same email to admin (staysearthy@gmail.com and property contact if different)
+    admin_emails = {email for email in [c_email, "staysearthy@gmail.com"] if email and email != booking.guest_email}
+    for recipient in admin_emails:
+        background_tasks.add_task(send_booking_confirmation_email, to_email=recipient, **_email_kwargs)
+
+    # Push notification to all subscribed devices
     background_tasks.add_task(
-        send_admin_new_booking_email,
-        admin_email=admin_email,
-        guest_name=booking.guest_name,
-        guest_email=booking.guest_email,
-        guest_phone=booking.guest_phone or "",
-        booking_ref=booking.booking_ref,
-        property_name=property_name,
-        property_city=property_city,
-        property_state=property_state,
-        check_in=str(booking.check_in),
-        check_out=str(booking.check_out),
-        guests=str(booking.guests),
-        nights=str(booking.nights),
-        total=str(booking.total),
-        special_requests=booking.note or "",
-        razorpay_payment_id=data.razorpay_payment_id,
+        send_push_to_all,
+        db=db,
+        title=f"New Booking — {property_name}",
+        body=f"{booking.guest_name} · {booking.check_in} → {booking.check_out} · ₹{booking.total:,}",
+        url="/admin",
     )
 
     return booking
@@ -361,9 +358,8 @@ async def razorpay_webhook(
                     c_spare = getattr(property_obj, 'contact_spare_phone', '') if property_obj else ""
                     h_rules = property_obj.house_rules if (property_obj and property_obj.house_rules) else []
 
-                    background_tasks.add_task(
-                        send_booking_confirmation_email,
-                        to_email=booking.guest_email,
+                    # Shared email kwargs
+                    _email_kwargs = dict(
                         guest_name=booking.guest_name,
                         booking_ref=booking.booking_ref,
                         property_name=property_name,
@@ -385,25 +381,14 @@ async def razorpay_webhook(
                         house_rules=h_rules,
                     )
 
-                    admin_email = property_obj.contact_email if (property_obj and property_obj.contact_email) else "admin@earthystay.com"
-                    background_tasks.add_task(
-                        send_admin_new_booking_email,
-                        admin_email=admin_email,
-                        guest_name=booking.guest_name,
-                        guest_email=booking.guest_email,
-                        guest_phone=booking.guest_phone or "",
-                        booking_ref=booking.booking_ref,
-                        property_name=property_name,
-                        property_city=property_city,
-                        property_state=property_state,
-                        check_in=str(booking.check_in),
-                        check_out=str(booking.check_out),
-                        guests=str(booking.guests),
-                        nights=str(booking.nights),
-                        total=str(booking.total),
-                        special_requests="",
-                        razorpay_payment_id=payment_id,
-                    )
+                    # Send to guest
+                    background_tasks.add_task(send_booking_confirmation_email, to_email=booking.guest_email, **_email_kwargs)
+
+                    # Send same email to admin (staysearthy@gmail.com and property contact if different)
+                    admin_emails = {email for email in [c_email, "staysearthy@gmail.com"] if email and email != booking.guest_email}
+                    for recipient in admin_emails:
+                        background_tasks.add_task(send_booking_confirmation_email, to_email=recipient, **_email_kwargs)
+
                 else:
                     await db.commit()
 

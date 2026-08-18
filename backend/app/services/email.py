@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 
 import httpx
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from app.config import settings
 
@@ -9,12 +10,15 @@ from app.config import settings
 logger = logging.getLogger("earthystay.email")
 TEMPLATE_DIR = Path(__file__).resolve().parents[1] / "templates"
 
+_jinja_env = Environment(
+    loader=FileSystemLoader(str(TEMPLATE_DIR)),
+    autoescape=select_autoescape(["html"]),
+)
 
-def _render_template(name: str, **context: str) -> str:
-    template = (TEMPLATE_DIR / name).read_text(encoding="utf-8")
-    for key, value in context.items():
-        template = template.replace("{{ " + key + " }}", value)
-    return template
+
+def _render_template(name: str, **context) -> str:
+    template = _jinja_env.get_template(name)
+    return template.render(**context)
 
 
 async def send_password_reset_email(to_email: str, reset_url: str) -> bool:

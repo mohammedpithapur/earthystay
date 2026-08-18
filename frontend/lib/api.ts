@@ -294,6 +294,9 @@ export type BookingCreate = {
   check_out: string  // "YYYY-MM-DD"
   guests: number
   pets: number
+  guest_name?: string
+  guest_phone?: string
+  note?: string
 }
 
 export type PaymentOrderOut = {

@@ -72,9 +72,11 @@ async def create_booking(
         existing_pending.cleaning_fee = pricing["cleaning_fee"]
         existing_pending.pet_charge = pricing["pet_charge"]
         existing_pending.total = pricing["total"]
-        existing_pending.guest_name = user.full_name
+        existing_pending.guest_name = data.guest_name or user.full_name
         existing_pending.guest_email = user.email
-        existing_pending.guest_phone = user.phone
+        existing_pending.guest_phone = data.guest_phone or user.phone
+        if data.note is not None:
+            existing_pending.note = data.note
         await db.commit()
         await db.refresh(existing_pending)
         return existing_pending
@@ -113,9 +115,10 @@ async def create_booking(
         pet_charge=pricing["pet_charge"],
         total=pricing["total"],
         status=BookingStatus.pending,
-        guest_name=user.full_name,
+        guest_name=data.guest_name or user.full_name,
         guest_email=user.email,
-        guest_phone=user.phone,
+        guest_phone=data.guest_phone or user.phone,
+        note=data.note,
     )
     db.add(booking)
     await db.flush()  # Populates booking.id and database-side defaults without committing transaction

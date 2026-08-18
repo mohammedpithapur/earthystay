@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth/AuthContext'
 import { useRequireAuth } from '@/lib/auth/useRequireAuth'
+import PushSubscribeButton from '@/components/shared/PushSubscribeButton'
 import {
   listPropertyGroups, createPropertyGroup, updatePropertyGroup, deletePropertyGroup,
   addPropertyGroupMember, removePropertyGroupMember, updatePropertyGroupMember,
@@ -68,7 +69,7 @@ const statusColors: Record<string, { bg: string, color: string }> = {
 export default function AdminPage() {
   const router = useRouter()
   const { user, loading } = useRequireAuth({ requireAdmin: true })
-  const { fetchWithAuth } = useAuth()
+  const { fetchWithAuth, accessToken } = useAuth()
   const [activeTab, setActiveTab] = useState('overview')
 
   // ── Dashboard stats ───────────────────────────────────────────────────────
@@ -737,7 +738,8 @@ export default function AdminPage() {
               Earthy Stays Dashboard
             </h1>
           </div>
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+            <PushSubscribeButton token={accessToken} />
             <button onClick={() => router.push('/')} style={buttonStyle} onMouseEnter={e => { const target = e.currentTarget as HTMLButtonElement; target.style.borderColor = 'var(--color-gold)'; target.style.color = 'var(--color-gold)' }} onMouseLeave={e => { const target = e.currentTarget as HTMLButtonElement; target.style.borderColor = 'var(--color-gold)'; target.style.color = 'var(--color-text-primary)' }}>
               View Site
             </button>

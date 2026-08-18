@@ -43,6 +43,11 @@ class Settings(BaseSettings):
     RAZORPAY_KEY_ID: str = ""
     RAZORPAY_KEY_SECRET: str = ""
 
+    # Web Push (VAPID) — generate keys with: python backend/generate_vapid.py
+    VAPID_PUBLIC_KEY: str = ""
+    VAPID_PRIVATE_KEY: str = ""
+    VAPID_CONTACT_EMAIL: str = "noreply@earthystays.in"
+
     model_config = {"env_file": ".env"}
 
     @field_validator("CORS_ORIGINS", mode="before")

@@ -1,0 +1,116 @@
+/**
+ * Browser Web Push utilities.
+ * Used by the PushSubscribeButton component.
+ */
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.earthystays.in';
+
+/** Converts a base64url string to Uint8Array (required for applicationServerKey). */
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+}
+
+/** Register the service worker (idempotent — safe to call multiple times). */
+export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
+  if (!('serviceWorker' in navigator)) return null;
+  try {
+    return await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+  } catch (err) {
+    console.error('[Push] SW registration failed:', err);
+    return null;
+  }
+}
+
+/** Subscribe to push and POST the subscription to the backend. */
+export async function subscribeToPush(token: string): Promise<boolean> {
+  try {
+    // 1. Fetch VAPID public key from backend
+    const keyRes = await fetch(`${API_BASE}/push/vapid-public-key`);
+    if (!keyRes.ok) throw new Error('Failed to fetch VAPID public key');
+    const { public_key } = await keyRes.json();
+
+    // 2. Register service worker
+    const reg = await registerServiceWorker();
+    if (!reg) throw new Error('Service worker not supported');
+
+    // Wait for SW to be ready
+    await navigator.serviceWorker.ready;
+
+    // 3. Subscribe
+    const subscription = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(public_key),
+    });
+
+    const json = subscription.toJSON();
+    const p256dh = json.keys?.p256dh;
+    const auth = json.keys?.auth;
+    if (!p256dh || !auth) throw new Error('Missing subscription keys');
+
+    // 4. Send to backend
+    const res = await fetch(`${API_BASE}/push/subscribe`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ endpoint: subscription.endpoint, p256dh, auth }),
+    });
+
+    return res.ok;
+  } catch (err) {
+    console.error('[Push] Subscribe error:', err);
+    return false;
+  }
+}
+
+/** Unsubscribe from push and notify the backend. */
+export async function unsubscribeFromPush(token: string): Promise<boolean> {
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const subscription = await reg.pushManager.getSubscription();
+    if (!subscription) return true;
+
+    const json = subscription.toJSON();
+    const p256dh = json.keys?.p256dh ?? '';
+    const auth = json.keys?.auth ?? '';
+
+    await fetch(`${API_BASE}/push/unsubscribe`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ endpoint: subscription.endpoint, p256dh, auth }),
+    });
+
+    await subscription.unsubscribe();
+    return true;
+  } catch (err) {
+    console.error('[Push] Unsubscribe error:', err);
+    return false;
+  }
+}
+
+/** Check if the browser is currently subscribed. */
+export async function isSubscribed(): Promise<boolean> {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    return sub !== null;
+  } catch {
+    return false;
+  }
+}
+
+/** Check if push is supported in this browser. */
+export function isPushSupported(): boolean {
+  return typeof window !== 'undefined' &&
+    'serviceWorker' in navigator &&
+    'PushManager' in window &&
+    'Notification' in window;
+}

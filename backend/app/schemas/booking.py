@@ -10,6 +10,9 @@ class BookingCreate(BaseModel):
     check_out: date
     guests: int
     pets: int = 0
+    guest_name: str | None = None
+    guest_phone: str | None = None
+    note: str | None = None
 
     @model_validator(mode="after")
     def validate_booking(self):
