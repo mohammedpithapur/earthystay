@@ -174,7 +174,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     silentRefreshRef.current = silentRefresh
   }, [silentRefresh])
 
-  // On first mount: restore session from the refresh cookie (if any)
+  // On first mount: restore session.
+  // If localStorage already has a valid non-expired token, use it directly
+  // without hitting the network (avoids double-login after Google OAuth).
+  // Only call silentRefresh when there is no usable local token.
   useEffect(() => {
     if (E2E_SKIP_AUTH) {
       setLoading(false)
@@ -182,11 +185,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     let isMounted = true
-    silentRefresh().finally(() => {
-      if (isMounted) {
-        setLoading(false)
-      }
-    })
+
+    const storedToken = getStoredToken()
+    const storedUser = getStoredUser()
+    const exp = storedToken ? parseJwtExp(storedToken) : null
+
+    if (storedToken && storedUser && exp && exp > Date.now()) {
+      // Valid token already in localStorage — no need to call /auth/refresh
+      setLoading(false)
+      scheduleRefresh(storedToken)
+    } else {
+      // No valid local token — try to get a new one from the refresh cookie
+      silentRefresh().finally(() => {
+        if (isMounted) setLoading(false)
+      })
+    }
 
     return () => {
       isMounted = false
