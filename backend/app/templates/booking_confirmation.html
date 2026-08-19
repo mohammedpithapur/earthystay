@@ -1,45 +1,45 @@
 <!doctype html>
 <html lang="en">
   <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-  <body style="margin:0;padding:0;background:#f5f0e8;font-family:'Helvetica Neue',Arial,sans-serif;color:#2f2a23;">
+  <body style="margin:0;padding:0;background:#f7efe6;font-family:'Helvetica Neue',Arial,sans-serif;color:#000000;">
     <div style="max-width:600px;margin:0 auto;padding:32px 16px;">
 
       <!-- Header -->
-      <div style="background:#2f2a23;border-radius:10px 10px 0 0;padding:28px 32px;text-align:center;">
-        <p style="margin:0 0 4px;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#c9a84a;font-weight:700;">EarthyStay</p>
+      <div style="background:#2b2017;border-radius:10px 10px 0 0;padding:28px 32px;text-align:center;">
+        <p style="margin:0 0 4px;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#ead0af;font-weight:700;">EarthyStay</p>
         <h1 style="margin:0;font-size:26px;color:#ffffff;font-weight:700;letter-spacing:-0.5px;">Booking Confirmed</h1>
-        <p style="margin:8px 0 0;font-size:13px;color:#c9a84a;letter-spacing:1px;">{{ booking_ref }}</p>
+        <p style="margin:8px 0 0;font-size:13px;color:#ead0af;letter-spacing:1px;">{{ booking_ref }}</p>
       </div>
 
       <!-- Body -->
       <div style="background:#ffffff;padding:36px 32px;">
 
-        <p style="margin:0 0 24px;font-size:15px;line-height:1.7;color:#4a4540;">
+        <p style="margin:0 0 24px;font-size:15px;line-height:1.7;color:#000000;">
           Hi <strong>{{ guest_name }}</strong>, your stay at <strong>{{ property_name }}</strong> is officially confirmed. We look forward to welcoming you!
         </p>
 
         <!-- Property + Dates Banner -->
-        <div style="background:#f9f6f0;border:1px solid #ede8de;border-radius:8px;padding:24px;margin-bottom:24px;">
-          <p style="margin:0 0 4px;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#9a7a2f;font-weight:700;">Your Stay</p>
-          <h2 style="margin:0 0 4px;font-size:20px;color:#2f2a23;font-weight:700;">{{ property_name }}</h2>
+        <div style="background:#fffaf4;border:1px solid #d9c2a8;border-radius:8px;padding:24px;margin-bottom:24px;">
+          <p style="margin:0 0 4px;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#b7895f;font-weight:700;">Your Stay</p>
+          <h2 style="margin:0 0 4px;font-size:20px;color:#2b2017;font-weight:700;">{{ property_name }}</h2>
           {% if property_city or property_state %}
-          <p style="margin:0 0 20px;font-size:13px;color:#7a7167;">{{ property_city }}{% if property_city and property_state %}, {% endif %}{{ property_state }}</p>
+          <p style="margin:0 0 20px;font-size:13px;color:#000000;">{{ property_city }}{% if property_city and property_state %}, {% endif %}{{ property_state }}</p>
           {% endif %}
 
           <table style="width:100%;border-collapse:collapse;">
             <tr>
               <td style="width:50%;padding:0 8px 0 0;vertical-align:top;">
-                <div style="background:#ffffff;border:1px solid #ede8de;border-radius:6px;padding:14px 16px;">
-                  <p style="margin:0 0 2px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#9a7a2f;font-weight:700;">Check-in</p>
-                  <p style="margin:0;font-size:15px;font-weight:700;color:#2f2a23;">{{ check_in }}</p>
-                  <p style="margin:2px 0 0;font-size:12px;color:#7a7167;">From {{ checkin_time }}</p>
+                <div style="background:#ffffff;border:1px solid #d9c2a8;border-radius:6px;padding:14px 16px;">
+                  <p style="margin:0 0 2px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#b7895f;font-weight:700;">Check-in</p>
+                  <p style="margin:0;font-size:15px;font-weight:700;color:#2b2017;">{{ check_in }}</p>
+                  <p style="margin:2px 0 0;font-size:12px;color:#000000;">From {{ checkin_time }}</p>
                 </div>
               </td>
               <td style="width:50%;padding:0 0 0 8px;vertical-align:top;">
-                <div style="background:#ffffff;border:1px solid #ede8de;border-radius:6px;padding:14px 16px;">
-                  <p style="margin:0 0 2px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#9a7a2f;font-weight:700;">Check-out</p>
-                  <p style="margin:0;font-size:15px;font-weight:700;color:#2f2a23;">{{ check_out }}</p>
-                  <p style="margin:2px 0 0;font-size:12px;color:#7a7167;">By {{ checkout_time }}</p>
+                <div style="background:#ffffff;border:1px solid #d9c2a8;border-radius:6px;padding:14px 16px;">
+                  <p style="margin:0 0 2px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#b7895f;font-weight:700;">Check-out</p>
+                  <p style="margin:0;font-size:15px;font-weight:700;color:#2b2017;">{{ check_out }}</p>
+                  <p style="margin:2px 0 0;font-size:12px;color:#000000;">By {{ checkout_time }}</p>
                 </div>
               </td>
             </tr>
@@ -47,63 +47,63 @@
         </div>
 
         <!-- Booking Details -->
-        <div style="background:#f9f6f0;border:1px solid #ede8de;border-radius:8px;padding:20px;margin-bottom:24px;">
-          <p style="margin:0 0 12px;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#9a7a2f;font-weight:700;">Booking Details</p>
+        <div style="background:#fffaf4;border:1px solid #d9c2a8;border-radius:8px;padding:20px;margin-bottom:24px;">
+          <p style="margin:0 0 12px;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#b7895f;font-weight:700;">Booking Details</p>
           <table style="width:100%;border-collapse:collapse;font-size:14px;">
             <tr>
-              <td style="padding:5px 0;color:#7a7167;width:45%;">Reference</td>
-              <td style="padding:5px 0;font-weight:700;color:#2f2a23;">{{ booking_ref }}</td>
+              <td style="padding:5px 0;color:#000000;width:45%;">Reference</td>
+              <td style="padding:5px 0;font-weight:700;color:#2b2017;">{{ booking_ref }}</td>
             </tr>
             <tr>
-              <td style="padding:5px 0;color:#7a7167;">Guests</td>
-              <td style="padding:5px 0;color:#2f2a23;">{{ guests }} guest(s)</td>
+              <td style="padding:5px 0;color:#000000;">Guests</td>
+              <td style="padding:5px 0;color:#2b2017;">{{ guests }} guest(s)</td>
             </tr>
             <tr>
-              <td style="padding:5px 0;color:#7a7167;">Duration</td>
-              <td style="padding:5px 0;color:#2f2a23;">{{ nights }} night(s)</td>
+              <td style="padding:5px 0;color:#000000;">Duration</td>
+              <td style="padding:5px 0;color:#2b2017;">{{ nights }} night(s)</td>
             </tr>
-            <tr style="border-top:1px solid #ede8de;">
-              <td style="padding:12px 0 5px;color:#7a7167;font-weight:700;">Total Paid</td>
-              <td style="padding:12px 0 5px;font-size:18px;font-weight:800;color:#9a7a2f;">&#8377;{{ total }}</td>
+            <tr style="border-top:1px solid #d9c2a8;">
+              <td style="padding:12px 0 5px;color:#000000;font-weight:700;">Total Paid</td>
+              <td style="padding:12px 0 5px;font-size:18px;font-weight:800;color:#b7895f;">&#8377;{{ total }}</td>
             </tr>
           </table>
         </div>
 
         {% if booking_email_instructions %}
         <!-- Host Instructions -->
-        <div style="background:#fffdf5;border-left:3px solid #c9a84a;border-radius:0 8px 8px 0;padding:18px 20px;margin-bottom:24px;">
-          <p style="margin:0 0 8px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#9a7a2f;font-weight:700;">Host Instructions</p>
-          <div style="font-size:14px;line-height:1.7;color:#2f2a23;">{{ booking_email_instructions }}</div>
+        <div style="background:#fffaf4;border-left:3px solid #ead0af;border-radius:0 8px 8px 0;padding:18px 20px;margin-bottom:24px;">
+          <p style="margin:0 0 8px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#b7895f;font-weight:700;">Host Instructions</p>
+          <div style="font-size:14px;line-height:1.7;color:#000000;">{{ booking_email_instructions }}</div>
         </div>
         {% endif %}
 
         {% if contact_phone or contact_email or contact_whatsapp or contact_spare_phone %}
         <!-- Contacts -->
-        <div style="background:#f9f6f0;border:1px solid #ede8de;border-radius:8px;padding:20px;margin-bottom:24px;">
-          <p style="margin:0 0 12px;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#9a7a2f;font-weight:700;">Property Contact</p>
+        <div style="background:#fffaf4;border:1px solid #d9c2a8;border-radius:8px;padding:20px;margin-bottom:24px;">
+          <p style="margin:0 0 12px;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#b7895f;font-weight:700;">Property Contact</p>
           <table style="width:100%;border-collapse:collapse;font-size:14px;">
             {% if contact_phone %}
             <tr>
-              <td style="padding:4px 0;color:#7a7167;width:35%;">Phone</td>
-              <td style="padding:4px 0;color:#2f2a23;font-weight:600;">{{ contact_phone }}</td>
+              <td style="padding:4px 0;color:#000000;width:35%;">Phone</td>
+              <td style="padding:4px 0;color:#2b2017;font-weight:600;">{{ contact_phone }}</td>
             </tr>
             {% endif %}
             {% if contact_whatsapp %}
             <tr>
-              <td style="padding:4px 0;color:#7a7167;">WhatsApp</td>
-              <td style="padding:4px 0;color:#2f2a23;font-weight:600;">{{ contact_whatsapp }}</td>
+              <td style="padding:4px 0;color:#000000;">WhatsApp</td>
+              <td style="padding:4px 0;color:#2b2017;font-weight:600;">{{ contact_whatsapp }}</td>
             </tr>
             {% endif %}
             {% if contact_spare_phone %}
             <tr>
-              <td style="padding:4px 0;color:#7a7167;">Alternate</td>
-              <td style="padding:4px 0;color:#2f2a23;font-weight:600;">{{ contact_spare_phone }}</td>
+              <td style="padding:4px 0;color:#000000;">Alternate</td>
+              <td style="padding:4px 0;color:#2b2017;font-weight:600;">{{ contact_spare_phone }}</td>
             </tr>
             {% endif %}
             {% if contact_email %}
             <tr>
-              <td style="padding:4px 0;color:#7a7167;">Email</td>
-              <td style="padding:4px 0;color:#2f2a23;font-weight:600;">{{ contact_email }}</td>
+              <td style="padding:4px 0;color:#000000;">Email</td>
+              <td style="padding:4px 0;color:#2b2017;font-weight:600;">{{ contact_email }}</td>
             </tr>
             {% endif %}
           </table>
@@ -112,9 +112,9 @@
 
         {% if house_rules and house_rules|length > 0 %}
         <!-- House Rules -->
-        <div style="background:#f9f6f0;border:1px solid #ede8de;border-radius:8px;padding:20px;margin-bottom:24px;">
-          <p style="margin:0 0 12px;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#9a7a2f;font-weight:700;">House Rules</p>
-          <ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.8;color:#4a4540;">
+        <div style="background:#fffaf4;border:1px solid #d9c2a8;border-radius:8px;padding:20px;margin-bottom:24px;">
+          <p style="margin:0 0 12px;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:#b7895f;font-weight:700;">House Rules</p>
+          <ul style="margin:0;padding-left:18px;font-size:13px;line-height:1.8;color:#000000;">
             {% for rule in house_rules %}
             <li>{{ rule }}</li>
             {% endfor %}
@@ -124,7 +124,7 @@
 
         <!-- CTA -->
         <div style="text-align:center;margin:28px 0 4px;">
-          <a href="{{ dashboard_url }}" style="display:inline-block;background:#c9a84a;color:#2f2a23;text-decoration:none;border-radius:6px;padding:14px 28px;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">
+          <a href="{{ dashboard_url }}" style="display:inline-block;background:#b7895f;color:#ffffff;text-decoration:none;border-radius:6px;padding:14px 28px;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">
             View Booking Dashboard
           </a>
         </div>
@@ -132,10 +132,10 @@
       </div>
 
       <!-- Footer -->
-      <div style="background:#f5f0e8;border-radius:0 0 10px 10px;padding:20px 32px;text-align:center;border-top:1px solid #ede8de;">
-        <p style="margin:0;font-size:12px;color:#9a8f82;line-height:1.7;">
+      <div style="background:#ead1b3;border-radius:0 0 10px 10px;padding:20px 32px;text-align:center;border-top:1px solid #d9c2a8;">
+        <p style="margin:0;font-size:12px;color:#2b2017;line-height:1.7;">
           All bookings on EarthyStay are strictly non-refundable.<br>
-          For support, reply to this email or contact us at <a href="mailto:support@earthystays.in" style="color:#9a7a2f;text-decoration:none;">support@earthystays.in</a>
+          For support, reply to this email or contact us at <a href="mailto:support@earthystays.in" style="color:#b7895f;text-decoration:none;">support@earthystays.in</a>
         </p>
       </div>
 
