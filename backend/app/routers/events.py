@@ -2,12 +2,15 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, or_
+import asyncio
 
 from app.database import get_db
 from app.dependencies import get_admin
 from app.models.user import User
 from app.models.event import EventRequest, EventStatus
 from app.schemas.event import EventRequestCreate, EventRequestUpdate, EventRequestOut
+from app.services.email import send_event_enquiry_confirmation_email, send_admin_event_enquiry_email
+from app.config import settings
 
 
 router = APIRouter(prefix="/events", tags=["events"])
@@ -39,6 +42,43 @@ async def create_event_request(
     db.add(event_req)
     await db.commit()
     await db.refresh(event_req)
+
+    # Generate a short reference from the UUID
+    event_ref = f"EV-{str(event_req.id).upper()[:8]}"
+    start_str = str(data.event_start_date)
+    end_str = str(data.event_end_date) if data.event_end_date else start_str
+
+    # Send emails in the background (non-blocking)
+    asyncio.create_task(send_event_enquiry_confirmation_email(
+        to_email=str(data.email),
+        name=data.name,
+        event_ref=event_ref,
+        nature_of_event=data.nature_of_event,
+        destination=data.destination,
+        hotel=data.hotel or "",
+        event_start_date=start_str,
+        event_end_date=end_str,
+        no_of_guests=str(data.no_of_guests),
+        requires_rooms=data.requires_rooms,
+        no_of_rooms=data.no_of_rooms or 0,
+        additional_details=data.additional_details or "",
+        phone=data.phone,
+    ))
+    asyncio.create_task(send_admin_event_enquiry_email(
+        admin_email=settings.ADMIN_EMAIL,
+        name=data.name,
+        event_ref=event_ref,
+        nature_of_event=data.nature_of_event,
+        destination=data.destination,
+        hotel=data.hotel or "",
+        event_start_date=start_str,
+        event_end_date=end_str,
+        no_of_guests=str(data.no_of_guests),
+        phone=data.phone,
+        guest_email=str(data.email),
+        additional_details=data.additional_details or "",
+    ))
+
     return event_req
 
 

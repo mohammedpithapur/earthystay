@@ -6,9 +6,9 @@
 
       <!-- Header -->
       <div style="background:#2b2017;border-radius:10px 10px 0 0;padding:28px 32px;text-align:center;">
-        <p style="margin:0 0 4px;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#ead0af;font-weight:700;">EarthyStay</p>
-        <h1 style="margin:0;font-size:26px;color:#ffffff;font-weight:700;letter-spacing:-0.5px;">Booking Confirmed</h1>
-        <p style="margin:8px 0 0;font-size:13px;color:#ead0af;letter-spacing:1px;">{{ booking_ref }}</p>
+        <p style="margin:0 0 6px;font-size:12px;letter-spacing:4px;text-transform:uppercase;color:#ffffff;font-weight:700;">EarthyStay</p>
+        <h1 style="margin:0;font-size:28px;color:#ead0af;font-weight:700;letter-spacing:-0.5px;">Booking Confirmed</h1>
+        <p style="margin:10px 0 0;font-size:13px;color:#b7895f;letter-spacing:1.5px;font-weight:600;">{{ booking_ref }}</p>
       </div>
 
       <!-- Body -->
@@ -84,26 +84,26 @@
           <table style="width:100%;border-collapse:collapse;font-size:14px;">
             {% if contact_phone %}
             <tr>
-              <td style="padding:4px 0;color:#000000;width:35%;">Phone</td>
-              <td style="padding:4px 0;color:#2b2017;font-weight:600;">{{ contact_phone }}</td>
+              <td style="padding:6px 16px 6px 0;color:#000000;white-space:nowrap;min-width:90px;">Phone</td>
+              <td style="padding:6px 0;color:#2b2017;font-weight:600;word-break:break-all;">{{ contact_phone }}</td>
             </tr>
             {% endif %}
             {% if contact_whatsapp %}
             <tr>
-              <td style="padding:4px 0;color:#000000;">WhatsApp</td>
-              <td style="padding:4px 0;color:#2b2017;font-weight:600;">{{ contact_whatsapp }}</td>
+              <td style="padding:6px 16px 6px 0;color:#000000;white-space:nowrap;min-width:90px;">WhatsApp</td>
+              <td style="padding:6px 0;color:#2b2017;font-weight:600;word-break:break-all;">{{ contact_whatsapp }}</td>
             </tr>
             {% endif %}
             {% if contact_spare_phone %}
             <tr>
-              <td style="padding:4px 0;color:#000000;">Alternate</td>
-              <td style="padding:4px 0;color:#2b2017;font-weight:600;">{{ contact_spare_phone }}</td>
+              <td style="padding:6px 16px 6px 0;color:#000000;white-space:nowrap;min-width:90px;">Alternate</td>
+              <td style="padding:6px 0;color:#2b2017;font-weight:600;word-break:break-all;">{{ contact_spare_phone }}</td>
             </tr>
             {% endif %}
             {% if contact_email %}
             <tr>
-              <td style="padding:4px 0;color:#000000;">Email</td>
-              <td style="padding:4px 0;color:#2b2017;font-weight:600;">{{ contact_email }}</td>
+              <td style="padding:6px 16px 6px 0;color:#000000;white-space:nowrap;min-width:90px;">Email</td>
+              <td style="padding:6px 0;color:#2b2017;font-weight:600;word-break:break-all;">{{ contact_email }}</td>
             </tr>
             {% endif %}
           </table>

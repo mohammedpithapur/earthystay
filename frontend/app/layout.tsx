@@ -5,8 +5,21 @@ import Providers from './providers'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Earthy Stays | Earthy Property Stays',
-  description: 'Discover and book unique earthy properties across India',
+  title: 'EarthyStay | Unique Earthy Properties Across India',
+  description: 'Discover and book one-of-a-kind earthy villas, cottages, and estates across India. Perfect for stays, weddings, and corporate retreats.',
+  metadataBase: new URL('https://earthystays.in'),
+  openGraph: {
+    type: 'website',
+    url: 'https://earthystays.in',
+    siteName: 'EarthyStay',
+    title: 'EarthyStay | Unique Earthy Properties Across India',
+    description: 'Discover and book one-of-a-kind earthy villas, cottages, and estates across India. Perfect for stays, weddings, and corporate retreats.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'EarthyStay | Unique Earthy Properties Across India',
+    description: 'Discover and book one-of-a-kind earthy villas, cottages, and estates across India. Perfect for stays, weddings, and corporate retreats.',
+  },
   icons: {
     icon: '/Untitled_design-removebg-preview.png?v=2',
     shortcut: '/Untitled_design-removebg-preview.png?v=2',

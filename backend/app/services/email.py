@@ -265,3 +265,151 @@ async def send_admin_new_booking_email(
     logger.error("Resend admin email failed: %s %s", response.status_code, response.text)
     return False
 
+
+async def send_event_enquiry_confirmation_email(
+    to_email: str,
+    name: str,
+    event_ref: str,
+    nature_of_event: str,
+    destination: str,
+    hotel: str,
+    event_start_date: str,
+    event_end_date: str,
+    no_of_guests: str,
+    requires_rooms: bool,
+    no_of_rooms: int,
+    additional_details: str,
+    phone: str,
+) -> bool:
+    """Send branded enquiry confirmation to the guest."""
+    html = _render_template(
+        "event_enquiry_confirmation.html",
+        name=name,
+        event_ref=event_ref,
+        nature_of_event=nature_of_event,
+        destination=destination,
+        hotel=hotel or "",
+        event_start_date=event_start_date,
+        event_end_date=event_end_date,
+        no_of_guests=no_of_guests,
+        requires_rooms=requires_rooms,
+        no_of_rooms=no_of_rooms,
+        additional_details=additional_details or "",
+        phone=phone,
+        email=to_email,
+    )
+    subject = f"Enquiry Received: {nature_of_event} at {destination} — EarthyStay"
+
+    if not settings.RESEND_API_KEY:
+        if settings.ENVIRONMENT == "development":
+            logger.info("[DEV EMAIL] Event enquiry confirmation to %s", to_email)
+            return True
+        logger.error("RESEND_API_KEY is not configured")
+        return False
+
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            response = await client.post(
+                "https://api.resend.com/emails",
+                headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}"},
+                json={
+                    "from": settings.RESEND_FROM_EMAIL,
+                    "to": [to_email],
+                    "subject": subject,
+                    "html": html,
+                },
+            )
+        if response.is_success:
+            logger.info("Sent event enquiry confirmation to %s", to_email)
+            return True
+        logger.error("Resend event email failed: %s %s", response.status_code, response.text)
+        return False
+    except Exception as exc:
+        logger.exception("Error sending event enquiry email to %s: %s", to_email, exc)
+        return False
+
+
+async def send_admin_event_enquiry_email(
+    admin_email: str,
+    name: str,
+    event_ref: str,
+    nature_of_event: str,
+    destination: str,
+    hotel: str,
+    event_start_date: str,
+    event_end_date: str,
+    no_of_guests: str,
+    phone: str,
+    guest_email: str,
+    additional_details: str,
+) -> bool:
+    """Send new event enquiry alert to admin."""
+    admin_url = f"{settings.FRONTEND_BASE_URL}/admin"
+    rows = [
+        ("Ref", event_ref),
+        ("Event Type", nature_of_event),
+        ("Destination", destination),
+        ("Venue", hotel or "—"),
+        ("Date", f"{event_start_date} – {event_end_date}" if event_end_date != event_start_date else event_start_date),
+        ("Guests", no_of_guests),
+        ("Name", name),
+        ("Phone", phone),
+        ("Email", guest_email),
+    ]
+    rows_html = "".join(
+        f"<tr><td style='padding:5px 16px 5px 0;color:#7a7167;white-space:nowrap;'>{label}</td>"
+        f"<td style='padding:5px 0;color:#2b2017;font-weight:600;word-break:break-all;'>{value}</td></tr>"
+        for label, value in rows
+    )
+    note_block = (
+        f"<div style='background:#fffaf4;border-left:3px solid #ead0af;border-radius:0 8px 8px 0;"
+        f"padding:16px 20px;margin-bottom:24px;'>"
+        f"<p style='margin:0 0 6px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#b7895f;font-weight:700;'>Message</p>"
+        f"<p style='margin:0;font-size:14px;color:#000;line-height:1.7;'>{additional_details}</p></div>"
+        if additional_details else ""
+    )
+    html = (
+        f"<!doctype html><html><body style='margin:0;padding:0;background:#f7efe6;font-family:Arial,sans-serif;'>"
+        f"<div style='max-width:600px;margin:0 auto;padding:32px 16px;'>"
+        f"<div style='background:#2b2017;border-radius:10px 10px 0 0;padding:24px 32px;text-align:center;'>"
+        f"<p style='margin:0 0 4px;font-size:12px;letter-spacing:4px;text-transform:uppercase;color:#ffffff;font-weight:700;'>EarthyStay Admin</p>"
+        f"<h1 style='margin:0;font-size:22px;color:#ead0af;font-weight:700;'>New Event Enquiry</h1></div>"
+        f"<div style='background:#ffffff;padding:32px;'>"
+        f"<p style='margin:0 0 20px;font-size:15px;color:#000000;'>A new <strong>{nature_of_event}</strong> enquiry has been submitted.</p>"
+        f"<div style='background:#fffaf4;border:1px solid #d9c2a8;border-radius:8px;padding:20px;margin-bottom:24px;'>"
+        f"<table style='width:100%;border-collapse:collapse;font-size:14px;'>{rows_html}</table></div>"
+        f"{note_block}"
+        f"<div style='text-align:center;'>"
+        f"<a href='{admin_url}' style='display:inline-block;background:#b7895f;color:#ffffff;text-decoration:none;"
+        f"border-radius:6px;padding:12px 28px;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;'>"
+        f"Open Admin Panel</a></div></div>"
+        f"<div style='background:#ead1b3;border-radius:0 0 10px 10px;padding:16px 32px;text-align:center;border-top:1px solid #d9c2a8;'>"
+        f"<p style='margin:0;font-size:12px;color:#2b2017;'>EarthyStay Admin Notification</p></div>"
+        f"</div></body></html>"
+    )
+
+    subject = f"[Admin] New {nature_of_event} Enquiry — {name} ({destination})"
+
+    if not settings.RESEND_API_KEY:
+        logger.info("[DEV EMAIL] Admin event alert to %s", admin_email)
+        return True
+
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.post(
+                "https://api.resend.com/emails",
+                headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}"},
+                json={
+                    "from": settings.RESEND_FROM_EMAIL,
+                    "to": [admin_email],
+                    "subject": subject,
+                    "html": html,
+                },
+            )
+        if response.is_success:
+            return True
+        logger.error("Admin event email failed: %s %s", response.status_code, response.text)
+        return False
+    except Exception as exc:
+        logger.exception("Error sending admin event email: %s", exc)
+        return False

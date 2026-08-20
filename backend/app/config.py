@@ -38,6 +38,7 @@ class Settings(BaseSettings):
     REDIS_URL: str | None = None
     RESEND_API_KEY: str | None = None
     RESEND_FROM_EMAIL: str = "EarthyStay <noreply@earthystays.in>"
+    ADMIN_EMAIL: str = "staysearthy@gmail.com"
     FAST2SMS_API_KEY: str | None = None
 
     RAZORPAY_KEY_ID: str = ""
