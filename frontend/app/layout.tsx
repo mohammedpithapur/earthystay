@@ -14,11 +14,22 @@ export const metadata: Metadata = {
     siteName: 'EarthyStay',
     title: 'EarthyStay | Unique Earthy Properties Across India',
     description: 'Discover and book one-of-a-kind earthy villas, cottages, and estates across India. Perfect for stays, weddings, and corporate retreats.',
+    images: [
+      {
+        url: 'https://earthystays.in/og-image.jpg',
+        secureUrl: 'https://earthystays.in/og-image.jpg',
+        width: 1200,
+        height: 630,
+        type: 'image/jpeg',
+        alt: 'EarthyStay — Unique Earthy Properties Across India',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'EarthyStay | Unique Earthy Properties Across India',
     description: 'Discover and book one-of-a-kind earthy villas, cottages, and estates across India. Perfect for stays, weddings, and corporate retreats.',
+    images: ['https://earthystays.in/og-image.jpg'],
   },
   icons: {
     icon: '/Untitled_design-removebg-preview.png?v=2',
