@@ -204,7 +204,6 @@ export default function Navbar() {
             { label: 'Our Hotels', href: '/properties' },
             { label: 'Corporate', href: '/corporate' },
             { label: 'Wedding', href: '/wedding' },
-            { label: 'Offers', href: '/offers' },
             { label: 'Contact Us', href: '/contact' },
           ].map(link => (
             <Link key={link.href} href={link.href}
