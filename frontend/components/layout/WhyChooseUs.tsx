@@ -10,38 +10,38 @@ export default function WhyChooseUs() {
 
   const reasons = [
     {
-      image: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=1200&q=80&auto=format&fit=crop',
-      alt: 'Earthy bedroom interior',
+      image: '/prop-bedroom-blockprint.jpg',
+      alt: 'Earthy bedroom with block-print textiles',
       title: 'Handpicked Properties',
       description: Copy.whyDescription
     },
     {
-      image: 'https://images.unsplash.com/photo-1551632436-cbf8dd35adfa?w=1200&q=80&auto=format&fit=crop',
-      alt: 'Modern booking workspace',
+      image: '/prop-staircase-gallery.jpg',
+      alt: 'Staircase with gallery wall and plants',
       title: 'Instant Booking',
       description: "Book your stay in minutes with our seamless booking system. Real-time availability so you always know what's free."
     },
     {
-      image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&q=80&auto=format&fit=crop',
-      alt: 'Premium villa exterior',
+      image: '/prop-heritage-corridor.jpg',
+      alt: 'Heritage corridor with ornate metal railing',
       title: 'Best Price Guarantee',
       description: 'Book directly with us and get the best possible rate. No hidden fees — what you see is exactly what you pay.'
     },
     {
-      image: 'https://images.unsplash.com/photo-1556740738-b6a63e27c4df?w=1200&q=80&auto=format&fit=crop',
-      alt: 'Secure digital payment experience',
+      image: '/prop-carved-door.jpg',
+      alt: 'Ornate carved wooden door with artwork',
       title: 'Secure Payments',
       description: 'All payments are processed securely through Razorpay. Your financial information is always protected.'
     },
     {
-      image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=1200&q=80&auto=format&fit=crop',
-      alt: 'Pet friendly stay with dog',
+      image: '/prop-swing-nook.jpg',
+      alt: 'Cosy hanging swing chair in arched nook',
       title: 'Pet Friendly Options',
       description: 'Travelling with your furry friends? We have a curated selection of pet-friendly properties just for you.'
     },
     {
-      image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=1200&q=80&auto=format&fit=crop',
-      alt: 'Support team assisting guests',
+      image: '/prop-entrance-sign.jpg',
+      alt: 'EarthyStays entrance door with wooden sign',
       title: '24/7 Support',
       description: "Our team is always available to assist you before, during, and after your stay. We've got you covered."
     },

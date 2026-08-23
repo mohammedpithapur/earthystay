@@ -156,7 +156,7 @@ export default function Hero() {
       {/* Background Image */}
       <div style={{
         position: 'absolute', inset: 0,
-        backgroundImage: 'url(https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1600)',
+        backgroundImage: 'url(/prop-heritage-bedroom.jpg)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
       }} />
