@@ -28,8 +28,8 @@ export default function WhyChooseUs() {
       description: 'Book directly with us and get the best possible rate. No hidden fees — what you see is exactly what you pay.'
     },
     {
-      image: '/prop-carved-door.jpg',
-      alt: 'Ornate carved wooden door with artwork',
+      image: '/prop-room-bedroom.jpg',
+      alt: 'Spacious heritage bedroom with wooden ceiling fan',
       title: 'Secure Payments',
       description: 'All payments are processed securely through Razorpay. Your financial information is always protected.'
     },
