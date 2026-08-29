@@ -68,6 +68,11 @@ export default function PropertiesClient() {
   const [sortBy, setSortBy] = useState('rating')
   const [filtersOpen, setFiltersOpen] = useState(false)
 
+  // ── Read hero search params (checkIn, checkOut, guests) ─────────────────
+  const urlCheckIn  = searchParams.get('checkIn')  || searchParams.get('check_in')  || ''
+  const urlCheckOut = searchParams.get('checkOut') || searchParams.get('check_out') || ''
+  const urlGuests   = searchParams.get('guests')   || ''
+
   useEffect(() => {
     let isMounted = true
 
@@ -75,7 +80,14 @@ export default function PropertiesClient() {
       try {
         setLoading(true)
         setLoadError(null)
-        const response = await fetch(buildApiUrl('/properties?limit=200'), { cache: 'no-store' })
+
+        // Pass dates + guests to backend for availability filtering
+        const apiParams = new URLSearchParams({ limit: '200' })
+        if (urlCheckIn)  apiParams.set('check_in',  urlCheckIn)
+        if (urlCheckOut) apiParams.set('check_out', urlCheckOut)
+        if (urlGuests)   apiParams.set('guests',    urlGuests)
+
+        const response = await fetch(buildApiUrl(`/properties?${apiParams.toString()}`), { cache: 'no-store' })
         if (!response.ok) {
           throw new Error(`Failed to load properties (${response.status})`)
         }
@@ -98,14 +110,17 @@ export default function PropertiesClient() {
     return () => {
       isMounted = false
     }
-  }, [])
+  }, [urlCheckIn, urlCheckOut, urlGuests])
 
   const filtered = useMemo(() => {
     let result = [...properties]
     if (location) {
+      const q = location.toLowerCase()
+      // Search by city, state, OR property name
       result = result.filter(p =>
-        p.city.toLowerCase().includes(location.toLowerCase()) ||
-        p.state.toLowerCase().includes(location.toLowerCase())
+        p.city?.toLowerCase().includes(q) ||
+        p.state?.toLowerCase().includes(q) ||
+        p.name?.toLowerCase().includes(q)
       )
     }
     result = result.filter(p => p.price_per_night >= minPrice && p.price_per_night <= maxPrice)
@@ -186,6 +201,27 @@ export default function PropertiesClient() {
       </div>
 
       <div className="content-shell-lg" style={{ padding: '48px 24px 72px' }}>
+        {/* Active search chips from hero */}
+        {(urlCheckIn || urlCheckOut || urlGuests) && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '20px' }}>
+            {urlCheckIn && (
+              <span style={{ padding: '6px 14px', borderRadius: '999px', backgroundColor: 'var(--color-bg-soft)', border: '1px solid var(--color-border)', fontSize: '13px', color: 'var(--color-text-primary)', fontWeight: '500' }}>
+                📅 Check-in: {new Date(urlCheckIn).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+              </span>
+            )}
+            {urlCheckOut && (
+              <span style={{ padding: '6px 14px', borderRadius: '999px', backgroundColor: 'var(--color-bg-soft)', border: '1px solid var(--color-border)', fontSize: '13px', color: 'var(--color-text-primary)', fontWeight: '500' }}>
+                📅 Check-out: {new Date(urlCheckOut).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+              </span>
+            )}
+            {urlGuests && (
+              <span style={{ padding: '6px 14px', borderRadius: '999px', backgroundColor: 'var(--color-bg-soft)', border: '1px solid var(--color-border)', fontSize: '13px', color: 'var(--color-text-primary)', fontWeight: '500' }}>
+                👥 {urlGuests} Guest{Number(urlGuests) !== 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+        )}
+
         <div style={{ marginBottom: '28px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           <button
             onClick={() => setFiltersOpen(true)}
