@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import uuid
 from datetime import date, timedelta
 
@@ -31,6 +32,7 @@ from app.services.upload import (
 from app.services.cache import cache_get_json, cache_set_json, invalidate_properties_cache
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+logger = logging.getLogger(__name__)
 
 
 async def fetch_group(db: AsyncSession, group_id: str) -> PropertyGroup | None:
@@ -387,6 +389,7 @@ async def update_property(
         raise
     except Exception as exc:
         await db.rollback()
+        logger.error(f"Failed to update property {property_id}: {exc}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to update property: {exc}") from exc
 
     result = await db.execute(
