@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation'
 import PropertyCard from '@/components/property/PropertyCard'
 import { buildApiUrl } from '@/lib/api'
 import type { Property } from '@/lib/types'
-import { Building2, SlidersHorizontal, Search, RotateCcw, PawPrint } from 'lucide-react'
+import { Building2, SlidersHorizontal, Search, RotateCcw, PawPrint, Calendar, Users } from 'lucide-react'
 
 const roomTypeOptions = [
   { value: 'all', label: 'Any Room Type' },
@@ -210,18 +210,21 @@ export default function PropertiesClient() {
         {(urlCheckIn || urlCheckOut || urlGuests) && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '20px' }}>
             {urlCheckIn && (
-              <span style={{ padding: '6px 14px', borderRadius: '999px', backgroundColor: 'var(--color-bg-soft)', border: '1px solid var(--color-border)', fontSize: '13px', color: 'var(--color-text-primary)', fontWeight: '500' }}>
-                📅 Check-in: {new Date(urlCheckIn).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 14px', borderRadius: '999px', backgroundColor: 'var(--color-bg-soft)', border: '1px solid var(--color-border)', fontSize: '13px', color: 'var(--color-text-primary)', fontWeight: '500' }}>
+                <Calendar size={13} style={{ color: 'var(--color-gold)' }} />
+                Check-in: {new Date(urlCheckIn).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
               </span>
             )}
             {urlCheckOut && (
-              <span style={{ padding: '6px 14px', borderRadius: '999px', backgroundColor: 'var(--color-bg-soft)', border: '1px solid var(--color-border)', fontSize: '13px', color: 'var(--color-text-primary)', fontWeight: '500' }}>
-                📅 Check-out: {new Date(urlCheckOut).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 14px', borderRadius: '999px', backgroundColor: 'var(--color-bg-soft)', border: '1px solid var(--color-border)', fontSize: '13px', color: 'var(--color-text-primary)', fontWeight: '500' }}>
+                <Calendar size={13} style={{ color: 'var(--color-gold)' }} />
+                Check-out: {new Date(urlCheckOut).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
               </span>
             )}
             {urlGuests && (
-              <span style={{ padding: '6px 14px', borderRadius: '999px', backgroundColor: 'var(--color-bg-soft)', border: '1px solid var(--color-border)', fontSize: '13px', color: 'var(--color-text-primary)', fontWeight: '500' }}>
-                👥 {urlGuests} Guest{Number(urlGuests) !== 1 ? 's' : ''}
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 14px', borderRadius: '999px', backgroundColor: 'var(--color-bg-soft)', border: '1px solid var(--color-border)', fontSize: '13px', color: 'var(--color-text-primary)', fontWeight: '500' }}>
+                <Users size={13} style={{ color: 'var(--color-gold)' }} />
+                {urlGuests} Guest{Number(urlGuests) !== 1 ? 's' : ''}
               </span>
             )}
           </div>

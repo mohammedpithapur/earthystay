@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { ApiFetcher, CalendarEvent, PriceOverride } from '@/lib/api'
 import { getPropertyCalendarFull, createAdminBlock, deleteAdminBlock, createPriceOverride, deletePriceOverride } from '@/lib/api'
-import { Calendar, Tag, ShieldAlert } from 'lucide-react'
+import { Calendar, Tag, ShieldAlert, X } from 'lucide-react'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -414,10 +414,10 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
             aria-label="Close calendar"
             style={{
               background: 'none', border: '1px solid #3d3425', color: '#8a7a5a',
-              width: 36, height: 36, borderRadius: 8, cursor: 'pointer', fontSize: '1.1rem',
+              width: 36, height: 36, borderRadius: 8, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s',
             }}
-          >✕</button>
+          ><X size={18} /></button>
         </div>
 
         {/* Body */}
@@ -440,9 +440,9 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
                 width: 34, height: 34, borderRadius: 8, cursor: 'pointer', fontSize: '1.1rem',
               }}>›</button>
 
-              <div style={{ marginLeft: 'auto', fontSize: '0.75rem', color: '#8a7a5a' }}>
-                Mode: <strong style={{ color: activeTab === 'price' ? '#c084fc' : '#c9a84c' }}>
-                  {activeTab === 'price' ? '🏷️ Date-Range Price Change' : '🚫 Block Dates'}
+              <div style={{ marginLeft: 'auto', fontSize: '0.75rem', color: '#8a7a5a', display: 'flex', alignItems: 'center', gap: 6 }}>
+                Mode: <strong style={{ color: activeTab === 'price' ? '#c084fc' : '#c9a84c', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  {activeTab === 'price' ? <><Tag size={12} /> Price Override</> : <><ShieldAlert size={12} /> Block Dates</>}
                 </strong>
               </div>
             </div>
@@ -481,7 +481,7 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
                   adminEvs.forEach(e => tips.push(`Admin Block${e.note ? ': ' + e.note : ''}`))
                   shadowEvs.forEach(e => tips.push(`Group Block${e.parent_booking_ref ? ': ' + e.parent_booking_ref : ''}`))
                   if (pOverride) {
-                    tips.push(`🏷️ Custom Rate: ₹${pOverride.price_per_night.toLocaleString('en-IN')}/night${pOverride.label ? ` (${pOverride.label})` : ''}`)
+                    tips.push(`Custom Rate: ₹${pOverride.price_per_night.toLocaleString('en-IN')}/night${pOverride.label ? ` (${pOverride.label})` : ''}`)
                   }
                   const tipText = tips.join('\n')
 
@@ -538,7 +538,7 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
                 { bg: '#2a1a0a', border: '1px solid rgba(201,168,76,0.4)', label: 'Guest Booking' },
                 { bg: '#0f0d08', border: '1px solid #c9a84c', label: 'Admin Block' },
                 { bg: 'repeating-linear-gradient(45deg,#1a1611,#1a1611 4px,#221d12 4px,#221d12 8px)', border: '1px solid #2e2618', label: 'Group Shadow Block' },
-                { bg: 'rgba(147, 51, 234, 0.18)', border: '1px solid #c084fc', label: '🏷️ Custom Price Override' },
+                { bg: 'rgba(147, 51, 234, 0.18)', border: '1px solid #c084fc', label: 'Custom Price Override' },
                 { bg: 'rgba(201,168,76,0.22)', border: '1px solid #c9a84c', label: 'Selected Range' },
               ].map(item => (
                 <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: '0.7rem', color: '#8a7a5a' }}>
@@ -667,7 +667,7 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
                   </button>
 
                   <p style={{ fontSize: '0.68rem', color: '#5a5040', marginTop: 8, lineHeight: 1.5 }}>
-                    💡 <strong>Tip:</strong> Click any start date on the calendar, then click an end date — choose 5 days, 5 weeks, or 5 months easily!
+                    <strong>Tip:</strong> Click any start date on the calendar, then click an end date — choose 5 days, 5 weeks, or 5 months easily!
                   </p>
                 </div>
 

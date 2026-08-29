@@ -1,11 +1,12 @@
 import Link from 'next/link'
 import Copy from '@/lib/copy'
+import { Sparkles, Trees, BadgeCheck, Heart } from 'lucide-react'
 
 const values = [
-  { symbol: '✦', title: 'Curated Excellence', description: 'Every property we list is personally verified. We visit, we stay, we approve. No shortcuts, no compromises.' },
-  { symbol: '◈', title: 'Earthy Stays', description: 'We believe earthy and nature are not opposites. Our properties blend comfort with the raw beauty of India.' },
-  { symbol: '◉', title: 'Honest Pricing', description: 'What you see is what you pay. No hidden charges, no last-minute surprises. Just transparent, fair pricing.' },
-  { symbol: '◆', title: 'Guest First', description: 'Every decision we make starts with one question — is this better for our guests? That will never change.' },
+  { icon: Sparkles, title: 'Curated Excellence', description: 'Every property we list is personally verified. We visit, we stay, we approve. No shortcuts, no compromises.' },
+  { icon: Trees, title: 'Earthy Stays', description: 'We believe earthy and nature are not opposites. Our properties blend comfort with the raw beauty of India.' },
+  { icon: BadgeCheck, title: 'Honest Pricing', description: 'What you see is what you pay. No hidden charges, no last-minute surprises. Just transparent, fair pricing.' },
+  { icon: Heart, title: 'Guest First', description: 'Every decision we make starts with one question — is this better for our guests? That will never change.' },
 ]
 
 const team = [
@@ -143,7 +144,7 @@ export default function AboutPage() {
               backgroundColor: '#ffffff', border: '1px solid var(--color-border)',
               borderRadius: '12px', padding: '32px 28px'
             }}>
-              <div style={{ fontSize: '28px', color: 'var(--color-gold)', marginBottom: '16px' }}>{value.symbol}</div>
+              <value.icon size={28} style={{ color: 'var(--color-gold)', marginBottom: '16px' }} />
               <div style={{ width: '32px', height: '2px', backgroundColor: 'var(--color-gold)', marginBottom: '16px' }} />
               <h3 style={{ fontSize: '22px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '12px' }}>{value.title}</h3>
               <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', lineHeight: '1.8' }}>{value.description}</p>

@@ -9,7 +9,7 @@ import { useRequireAuth } from '@/lib/auth/useRequireAuth'
 import { uploadPropertyImage } from '@/lib/supabase/storage'
 // NOTE: admin UI now loads properties from the API via `listAdminProperties`
 import { Property, type PropertyImage, type BathroomDetail, type SpaceDetail } from '@/lib/types'
-import { Folder, Pencil, Trash2, Camera, MapPin, AlertTriangle, Plus, X, Check, Calendar as CalendarIcon, Info } from 'lucide-react'
+import { Folder, Pencil, Trash2, Camera, MapPin, AlertTriangle, Plus, X, Check, Calendar as CalendarIcon, Info, Lightbulb } from 'lucide-react'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -38,7 +38,7 @@ const SECTIONS: Section[] = [
   { id: 'basic',     label: 'Basic Info',   icon: '◈', fields: ['name','description','bedrooms','bathrooms','max_guests','check_in_time','check_out_time','contact_phone','contact_email'] },
   { id: 'location',  label: 'Location',     icon: '◉', fields: ['address','city','state','country','latitude','longitude'] },
   { id: 'photos',    label: 'Photos',       icon: '◆', fields: ['images'] },
-  { id: 'amenities', label: 'Amenities',    icon: '✦', fields: ['amenities'] },
+  { id: 'amenities', label: 'Amenities',    icon: '◇', fields: ['amenities'] },
   { id: 'pricing',   label: 'Pricing',      icon: '◇', fields: ['price_per_night','cleaning_fee','pet_charge_per_night'] },
   { id: 'policies',  label: 'Policies',     icon: '◎', fields: ['min_nights','pets_allowed','is_published'] },
   { id: 'rules',     label: 'House Rules',  icon: '◌', fields: ['house_rules'] },
@@ -1384,7 +1384,8 @@ function AmenitiesSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm:
                     fontFamily: "'Figtree', sans-serif",
                   }}
                 >
-                  {active ? '✓ ' : ''}{amenity}
+                  {active && <Check size={12} style={{ display: 'inline', marginRight: '4px', verticalAlign: '-1px' }} />}
+                  {amenity}
                 </button>
               )
             })}
@@ -1710,7 +1711,8 @@ function HouseRulesSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm
                   textAlign: 'left' as const,
                 }}
               >
-                {active ? '✓ ' : ''}{rule}
+                {active && <Check size={12} style={{ display: 'inline', marginRight: '4px', verticalAlign: '-1px' }} />}
+                {rule}
               </button>
             )
           })}
@@ -2213,8 +2215,9 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
                     <span style={{
                       fontSize: '11px', fontWeight: '700',
                       color: completion === 100 ? '#2E7D32' : completion > 0 ? '#F57F17' : '#ccc',
+                      display: 'inline-flex', alignItems: 'center',
                     }}>
-                      {completion === 100 ? '✓' : completion > 0 ? `${completion}%` : '—'}
+                      {completion === 100 ? <Check size={13} /> : completion > 0 ? `${completion}%` : '—'}
                     </span>
                   </div>
                   {/* Mini progress bar */}
@@ -2229,8 +2232,9 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
 
             {/* Sidebar footer tip */}
             <div style={{ margin: '24px 16px 0', padding: '16px', backgroundColor: 'var(--color-bg-soft)', borderRadius: '10px' }}>
-              <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', lineHeight: '1.6', letterSpacing: '0.2px' }}>
-                💡 Complete all sections for the best listing quality. Listings with full details get more bookings.
+              <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', lineHeight: '1.6', letterSpacing: '0.2px', display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                <Lightbulb size={14} style={{ color: 'var(--color-gold)', flexShrink: 0, marginTop: '2px' }} />
+                <span>Complete all sections for the best listing quality. Listings with full details get more bookings.</span>
               </p>
             </div>
           </div>

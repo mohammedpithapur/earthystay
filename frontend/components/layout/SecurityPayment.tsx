@@ -1,5 +1,7 @@
 'use client'
 
+import { Lock, CheckCircle2, MessageSquare } from 'lucide-react'
+
 export default function SecurityPayment() {
   return (
     <section style={{
@@ -42,8 +44,11 @@ export default function SecurityPayment() {
             borderRadius: '12px',
             border: '1px solid var(--color-border)',
             textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
           }}>
-            <div style={{ fontSize: '28px', marginBottom: '12px' }}>🔒</div>
+            <Lock size={28} style={{ color: 'var(--color-gold)', marginBottom: '12px' }} />
             <h4 style={{
               fontSize: '16px',
               fontWeight: '700',
@@ -67,8 +72,11 @@ export default function SecurityPayment() {
             borderRadius: '12px',
             border: '1px solid var(--color-border)',
             textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
           }}>
-            <div style={{ fontSize: '28px', marginBottom: '12px' }}>✓</div>
+            <CheckCircle2 size={28} style={{ color: 'var(--color-gold)', marginBottom: '12px' }} />
             <h4 style={{
               fontSize: '16px',
               fontWeight: '700',
@@ -92,8 +100,11 @@ export default function SecurityPayment() {
             borderRadius: '12px',
             border: '1px solid var(--color-border)',
             textAlign: 'center',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
           }}>
-            <div style={{ fontSize: '28px', marginBottom: '12px' }}>💬</div>
+            <MessageSquare size={28} style={{ color: 'var(--color-gold)', marginBottom: '12px' }} />
             <h4 style={{
               fontSize: '16px',
               fontWeight: '700',
@@ -107,7 +118,7 @@ export default function SecurityPayment() {
               color: 'var(--color-text-secondary)',
               lineHeight: '1.5',
             }}>
-              Unverified guest reviews for authentic experiences
+              Authentic guest reviews for genuine experiences
             </p>
           </div>
         </div>

@@ -2,7 +2,7 @@
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useEffect, useState, Suspense } from 'react'
-import { Info } from 'lucide-react'
+import { Info, Check } from 'lucide-react'
 
 function ConfirmationPageContent() {
   const searchParams = useSearchParams()
@@ -38,10 +38,9 @@ function ConfirmationPageContent() {
             borderRadius: '50%',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             margin: '0 auto 28px',
-            fontSize: '40px',
             boxShadow: '0 8px 32px rgba(201, 168, 76, 0.4)',
           }}>
-            ✓
+            <Check size={44} style={{ color: '#ffffff' }} />
           </div>
           <h1 style={{ fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '12px' }}>
             Booking Confirmed!
@@ -79,7 +78,7 @@ function ConfirmationPageContent() {
               { label: 'Check In',   value: formatDate(checkIn) },
               { label: 'Check Out',  value: formatDate(checkOut) },
               { label: 'Total Paid', value: total > 0 ? `₹${total.toLocaleString('en-IN')}` : '—' },
-              { label: 'Payment',    value: 'Confirmed ✓' },
+              { label: 'Payment',    value: 'Confirmed' },
             ].map(detail => (
               <div key={detail.label}>
                 <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '6px', fontWeight: '600' }}>

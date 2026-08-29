@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { API_BASE } from '@/lib/api'
+import { AlertTriangle } from 'lucide-react'
 
 /**
  * Google OAuth callback page.
@@ -50,7 +51,9 @@ export default function GoogleCallbackClient() {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', padding: '24px' }}>
         <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '40px', maxWidth: '400px', textAlign: 'center' }}>
-          <p style={{ fontSize: '40px', marginBottom: '16px' }}>⚠️</p>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+            <AlertTriangle size={44} style={{ color: '#E53E3E' }} />
+          </div>
           <h2 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '12px' }}>Sign-In Failed</h2>
           <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', marginBottom: '24px' }}>{error}</p>
           <button

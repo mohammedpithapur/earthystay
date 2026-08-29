@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, X, Check } from 'lucide-react'
 
 const faqs = [
   {
@@ -102,28 +102,28 @@ export default function CancellationPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
             {[
               {
-                icon: '✕',
+                icon: <X size={20} />,
                 iconBg: '#FFEBEE',
                 iconColor: '#C62828',
                 title: 'No Cancellation Refunds',
                 description: 'Cancellations at any point after booking confirmation will not be eligible for a refund, regardless of how far in advance the cancellation is made.',
               },
               {
-                icon: '✕',
+                icon: <X size={20} />,
                 iconBg: '#FFEBEE',
                 iconColor: '#C62828',
                 title: 'No Date Changes',
                 description: 'Check-in and check-out dates cannot be modified after booking. Any changes would require a new booking, subject to availability, with no refund on the original.',
               },
               {
-                icon: '✕',
+                icon: <X size={20} />,
                 iconBg: '#FFEBEE',
                 iconColor: '#C62828',
                 title: 'No Partial Refunds',
                 description: 'Early check-outs, reduced nights, or unused portions of your stay will not be refunded. The full booking amount is charged regardless of actual stay duration.',
               },
               {
-                icon: '✓',
+                icon: <Check size={20} />,
                 iconBg: '#E8F5E9',
                 iconColor: '#2E7D32',
                 title: 'Property Unavailability',

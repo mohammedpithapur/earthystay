@@ -1,24 +1,26 @@
 'use client'
 
+import { Star, CheckCircle2, Home, ShieldCheck } from 'lucide-react'
+
 export default function TrustSignals() {
   const signals = [
     {
-      icon: '★',
+      icon: <Star size={32} style={{ color: 'var(--color-gold)' }} />,
       metric: '4.9/5',
       label: 'Average Rating',
     },
     {
-      icon: '✓',
+      icon: <CheckCircle2 size={32} style={{ color: 'var(--color-gold)' }} />,
       metric: '2,500+',
       label: 'Happy Guests',
     },
     {
-      icon: '🏠',
+      icon: <Home size={32} style={{ color: 'var(--color-gold)' }} />,
       metric: '50+',
       label: 'Verified Properties',
     },
     {
-      icon: '🔒',
+      icon: <ShieldCheck size={32} style={{ color: 'var(--color-gold)' }} />,
       metric: '100%',
       label: 'Secure Payments',
     },

@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createEventRequest } from '@/lib/api'
+import { CheckCircle2 } from 'lucide-react'
 
 export default function EventsPageClient() {
   const searchParams = useSearchParams()
@@ -350,7 +351,9 @@ export default function EventsPageClient() {
       ) : (
         /* Success Message */
         <div style={{ padding: 'clamp(48px, 6vw, 120px) 24px', maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
-          <div style={{ fontSize: '64px', marginBottom: '24px', color: 'var(--color-gold)' }}>✓</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px' }}>
+            <CheckCircle2 size={64} style={{ color: 'var(--color-gold)' }} />
+          </div>
           <h2 style={{ fontSize: '32px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '12px' }}>
             Request Submitted!
           </h2>
