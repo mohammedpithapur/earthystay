@@ -9,6 +9,7 @@ from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 
 # revision identifiers, used by Alembic.
@@ -56,7 +57,7 @@ def upgrade() -> None:
             sa.Column('email', sa.String(length=255), nullable=False),
             sa.Column(
                 'status',
-                sa.Enum(
+                postgresql.ENUM(
                     'pending', 'contacted', 'confirmed', 'cancelled',
                     name='eventstatus',
                     create_type=False,
