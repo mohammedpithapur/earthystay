@@ -29,6 +29,8 @@ async def list_properties(
     guests: int | None = Query(None),
     pets_allowed: bool | None = Query(None),
     amenities: str | None = Query(None),  # comma-separated
+    check_in: str | None = Query(None),   # YYYY-MM-DD — exclude booked properties
+    check_out: str | None = Query(None),  # YYYY-MM-DD — exclude booked properties
     page: int = Query(1, ge=1),
     limit: int = Query(12, ge=1, le=200),
     db: AsyncSession = Depends(get_db),
@@ -46,6 +48,8 @@ async def list_properties(
         "guests": guests,
         "pets_allowed": pets_allowed,
         "amenities": amenities,
+        "check_in": check_in,
+        "check_out": check_out,
         "page": page,
         "limit": limit,
     }
@@ -62,6 +66,7 @@ async def list_properties(
     result = await get_property_filters(
         db, city=city, state=state, min_price=min_price, max_price=max_price,
         guests=guests, pets_allowed=pets_allowed, amenities=amenity_list,
+        check_in=check_in, check_out=check_out,
         page=page, limit=limit,
     )
     response = PropertyListOut.model_validate(result).model_dump(mode="json")

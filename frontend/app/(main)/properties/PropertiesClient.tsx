@@ -51,27 +51,31 @@ const getPropertyType = (property: Property) => {
 export default function PropertiesClient() {
   const searchParams = useSearchParams()
 
-  const initialLocation = searchParams.get('location') || ''
-  const initialPets = searchParams.get('pets') || '0'
+  // ── Read hero search params — always live from URL ───────────────────────
+  const urlLocation = searchParams.get('location') || ''
+  const urlPets     = searchParams.get('pets') || '0'
+  const urlCheckIn  = searchParams.get('checkIn')  || searchParams.get('check_in')  || ''
+  const urlCheckOut = searchParams.get('checkOut') || searchParams.get('check_out') || ''
+  const urlGuests   = searchParams.get('guests')   || ''
 
   const [properties, setProperties] = useState<Property[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
-  const [location, setLocation] = useState(initialLocation)
+  const [location, setLocation] = useState(urlLocation)
   const [maxPrice, setMaxPrice] = useState(1000000)
-  const [minPrice, setMinPrice] = useState(1000)
+  const [minPrice, setMinPrice] = useState(0)
   const [minBedrooms, setMinBedrooms] = useState(1)
-  const [petsOnly, setPetsOnly] = useState(initialPets !== '0')
+  const [petsOnly, setPetsOnly] = useState(urlPets !== '0')
   const [roomType, setRoomType] = useState('all')
   const [propertyType, setPropertyType] = useState('all')
   const [bathroomType, setBathroomType] = useState('all')
   const [sortBy, setSortBy] = useState('rating')
   const [filtersOpen, setFiltersOpen] = useState(false)
 
-  // ── Read hero search params (checkIn, checkOut, guests) ─────────────────
-  const urlCheckIn  = searchParams.get('checkIn')  || searchParams.get('check_in')  || ''
-  const urlCheckOut = searchParams.get('checkOut') || searchParams.get('check_out') || ''
-  const urlGuests   = searchParams.get('guests')   || ''
+  // Sync location + pets from URL if URL changes (e.g. hero re-search)
+  useEffect(() => { setLocation(urlLocation) }, [urlLocation])
+  useEffect(() => { setPetsOnly(urlPets !== '0') }, [urlPets])
+
 
   useEffect(() => {
     let isMounted = true
@@ -138,7 +142,7 @@ export default function PropertiesClient() {
 
   const resetFilters = () => {
     setLocation('')
-    setMinPrice(1000)
+    setMinPrice(0)
     setMaxPrice(1000000)
     setMinBedrooms(1)
     setPetsOnly(false)
@@ -146,6 +150,7 @@ export default function PropertiesClient() {
     setPropertyType('all')
     setBathroomType('all')
     setSortBy('rating')
+    setFiltersOpen(false)
   }
 
   if (loading) {
@@ -403,11 +408,24 @@ export default function PropertiesClient() {
 
               <div>
                 <label style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', display: 'block', marginBottom: '12px', fontWeight: '600' }}>Price Per Night</label>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <span style={{ fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: '600' }}>{formatPrice(minPrice)}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: '600' }}>{minPrice > 0 ? formatPrice(minPrice) : 'Any'}</span>
                   <span style={{ fontSize: '14px', color: 'var(--color-text-primary)', fontWeight: '600' }}>{formatPrice(maxPrice)}</span>
                 </div>
-                <input type="range" min={0} max={1000000} step={5000} value={maxPrice} onChange={e => setMaxPrice(Number(e.target.value))} style={{ width: '100%', accentColor: 'var(--color-gold)' }} />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', minWidth: '24px' }}>Min</span>
+                    <input type="range" min={0} max={1000000} step={5000} value={minPrice}
+                      onChange={e => { const v = Number(e.target.value); setMinPrice(Math.min(v, maxPrice - 5000)) }}
+                      style={{ flex: 1, accentColor: 'var(--color-gold)' }} />
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', minWidth: '24px' }}>Max</span>
+                    <input type="range" min={0} max={1000000} step={5000} value={maxPrice}
+                      onChange={e => { const v = Number(e.target.value); setMaxPrice(Math.max(v, minPrice + 5000)) }}
+                      style={{ flex: 1, accentColor: 'var(--color-gold)' }} />
+                  </div>
+                </div>
               </div>
 
               <div style={{ height: '1px', backgroundColor: 'var(--color-border)' }} />

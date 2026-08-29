@@ -3,6 +3,7 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from app.models.property import Property
 from app.models.review import Review
+from app.models.booking import Booking, BookingStatus
 
 
 async def get_property_filters(
@@ -14,6 +15,8 @@ async def get_property_filters(
     guests: int | None = None,
     pets_allowed: bool | None = None,
     amenities: list[str] | None = None,
+    check_in: str | None = None,
+    check_out: str | None = None,
     page: int = 1,
     limit: int = 12,
 ):
@@ -33,6 +36,30 @@ async def get_property_filters(
         base = base.where(Property.pets_allowed == pets_allowed)
     if amenities:
         base = base.where(Property.amenities.op("?|")(amenities))
+
+    # ── Availability filter: exclude properties booked in requested range ──
+    if check_in and check_out:
+        try:
+            from datetime import date
+            ci = date.fromisoformat(check_in)
+            co = date.fromisoformat(check_out)
+            if ci < co:
+                # A booking overlaps if: booking.check_in < check_out AND booking.check_out > check_in
+                booked_ids_query = (
+                    select(Booking.property_id)
+                    .where(
+                        Booking.status.in_([BookingStatus.confirmed, BookingStatus.pending]),
+                        Booking.check_in < co,
+                        Booking.check_out > ci,
+                    )
+                    .distinct()
+                )
+                booked_result = await db.execute(booked_ids_query)
+                booked_ids = [row[0] for row in booked_result.all()]
+                if booked_ids:
+                    base = base.where(Property.id.notin_(booked_ids))
+        except (ValueError, Exception):
+            pass  # Invalid dates — skip availability filter gracefully
 
     # Count total before pagination
     count_query = select(func.count()).select_from(base.subquery())
