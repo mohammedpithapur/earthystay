@@ -14,6 +14,7 @@ from app.models.user import User
 from app.models.property import Property
 from app.models.property_group import PropertyGroup, PropertyGroupMember
 from app.models.booking import Booking, BookingStatus, PaymentStatus
+from app.models.payment import Payment
 from app.models.review import Review
 from app.models.price_override import PropertyPriceOverride
 from app.schemas.booking import AdminBlockCreate, CalendarEventOut, CalendarOut
@@ -414,10 +415,36 @@ async def delete_property(
     property = await db.get(Property, prop_uuid)
     if not property:
         raise HTTPException(status_code=404, detail="Property not found")
-    await db.delete(property)
-    await db.commit()
-    await invalidate_properties_cache()
-    return {"message": "Property deleted"}
+
+    try:
+        # 1. Delete reviews for this property
+        await db.execute(delete(Review).where(Review.property_id == prop_uuid))
+
+        # 2. Delete price overrides
+        await db.execute(delete(PropertyPriceOverride).where(PropertyPriceOverride.property_id == prop_uuid))
+
+        # 3. Delete property group memberships
+        await db.execute(delete(PropertyGroupMember).where(PropertyGroupMember.property_id == prop_uuid))
+
+        # 4. Delete payments associated with bookings of this property
+        booking_ids_subq = select(Booking.id).where(Booking.property_id == prop_uuid)
+        await db.execute(delete(Payment).where(Payment.booking_id.in_(booking_ids_subq)))
+
+        # 5. Delete bookings / blocks
+        await db.execute(delete(Booking).where(Booking.property_id == prop_uuid))
+
+        # 6. Delete property images
+        await db.execute(delete(PropertyImage).where(PropertyImage.property_id == prop_uuid))
+
+        # 7. Delete the property itself
+        await db.delete(property)
+        await db.commit()
+        await invalidate_properties_cache()
+        return {"message": "Property deleted"}
+    except Exception as exc:
+        await db.rollback()
+        logger.error(f"Failed to delete property {property_id}: {exc}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to delete property: {exc}") from exc
 
 
 @router.post("/properties/{property_id}/duplicate", response_model=PropertyOut)
