@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Property } from '@/lib/types'
-import { Star, MapPin, Bed, Bath, Users, User, Armchair, Sofa, Utensils, TreePalm, LayoutDashboard, UtensilsCrossed, DoorOpen } from 'lucide-react'
+import { Star, MapPin, Bed, Bath, Users, User, Armchair, Sofa, Utensils, TreePalm, LayoutDashboard, UtensilsCrossed, DoorOpen, Share2, Check } from 'lucide-react'
 
 interface Props {
   property: Property
@@ -16,12 +16,41 @@ export default function PropertyCard({ property }: Props) {
     return raw
   }
   const [imgSrc, setImgSrc] = useState(getPrimaryImg)
+  const [copied, setCopied] = useState(false)
 
   // Sync imgSrc when property prop changes (e.g. after edit/save)
   useEffect(() => {
     setImgSrc(getPrimaryImg())
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [property.images])
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    const shareTitle = `Property | EarthyStay | ${property.name}`
+    const shareDesc = 'a hand picked property - book now on earthy stay'
+    const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://earthystays.in'}/properties/${property.id}`
+
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: `${shareTitle}\n${shareDesc}`,
+          url: shareUrl,
+        })
+        return
+      } catch (err) {
+        if ((err as Error).name === 'AbortError') return
+      }
+    }
+
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      await navigator.clipboard.writeText(`${shareTitle}\n${shareDesc}\n${shareUrl}`)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
 
   return (
     <Link href={`/properties/${property.id}`} style={{ textDecoration: 'none' }}>
@@ -65,6 +94,50 @@ export default function PropertyCard({ property }: Props) {
               img.style.transform = 'scale(1)'
             }}
           />
+
+          {/* Share Button */}
+          <button
+            onClick={handleShare}
+            aria-label="Share property"
+            title="Share this property"
+            style={{
+              position: 'absolute',
+              top: '14px',
+              left: '14px',
+              backgroundColor: 'rgba(43,32,23,0.85)',
+              color: copied ? 'var(--color-gold)' : '#ffffff',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '6px 10px',
+              fontSize: '12px',
+              fontWeight: '600',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '5px',
+              cursor: 'pointer',
+              zIndex: 2,
+              backdropFilter: 'blur(4px)',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'var(--color-text-primary)'
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor = 'rgba(43,32,23,0.85)'
+            }}
+          >
+            {copied ? (
+              <>
+                <Check style={{ width: '13px', height: '13px', color: 'var(--color-gold)' }} />
+                <span>Copied!</span>
+              </>
+            ) : (
+              <>
+                <Share2 style={{ width: '13px', height: '13px' }} />
+                <span>Share</span>
+              </>
+            )}
+          </button>
 
           {/* Rating Badge */}
           <div style={{

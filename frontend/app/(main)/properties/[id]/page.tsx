@@ -8,7 +8,7 @@ import { buildApiUrl, fetchPropertyReviews, type PriceOverride } from '@/lib/api
 import type { Property, Review } from '@/lib/types'
 import type { DateRange } from 'react-day-picker'
 import { useAuth } from '@/lib/auth/AuthContext'
-import { Star, MapPin, Users, User, Bed, Bath, Calendar, Moon, Dog, Check, Phone, Mail, Clock, ShieldAlert, Sparkles, ChevronLeft, ChevronRight, Armchair, Sofa, Utensils, UtensilsCrossed, DoorOpen, LayoutDashboard, TreePalm, Camera, X, Folder } from 'lucide-react'
+import { Star, MapPin, Users, User, Bed, Bath, Calendar, Moon, Dog, Check, Phone, Mail, Clock, ShieldAlert, Sparkles, ChevronLeft, ChevronRight, Armchair, Sofa, Utensils, UtensilsCrossed, DoorOpen, LayoutDashboard, TreePalm, Camera, X, Folder, Share2 } from 'lucide-react'
 
 const bathroomLabel: Record<string, string> = {
   ensuite: 'Private Ensuite',
@@ -59,6 +59,7 @@ export default function PropertyDetailPage() {
   // ── Reviews State ────────────────────────────────────────────────────────
   const [reviews, setReviews] = useState<Review[]>([])
   const [reviewsLoading, setReviewsLoading] = useState(false)
+  const [shareCopied, setShareCopied] = useState(false)
 
   const { fetchWithAuth } = useAuth()
 
@@ -253,6 +254,32 @@ export default function PropertyDetailPage() {
     return property && nights > 0 ? basePrice !== property.price_per_night * nights : false
   }, [basePrice, property, nights])
 
+  const handleDetailShare = useCallback(async () => {
+    if (!property) return
+    const shareTitle = `Property | EarthyStay | ${property.name}`
+    const shareDesc = 'a hand picked property - book now on earthy stay'
+    const shareUrl = `${typeof window !== 'undefined' ? window.location.origin : 'https://earthystays.in'}/properties/${property.id}`
+
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: `${shareTitle}\n${shareDesc}`,
+          url: shareUrl,
+        })
+        return
+      } catch (err) {
+        if ((err as Error).name === 'AbortError') return
+      }
+    }
+
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      await navigator.clipboard.writeText(`${shareTitle}\n${shareDesc}\n${shareUrl}`)
+      setShareCopied(true)
+      setTimeout(() => setShareCopied(false), 2000)
+    }
+  }, [property])
+
   if (loading) {
     return (
       <div className="page-shell" style={{ backgroundColor: '#ffffff' }}>
@@ -439,19 +466,51 @@ export default function PropertyDetailPage() {
         {/* Left Column */}
         <div style={{ minWidth: 0 }}>
 
-          {/* Badges */}
-          <div style={{ display: 'flex', gap: '10px', marginBottom: '12px', flexWrap: 'wrap' }}>
-            <span style={{ backgroundColor: 'var(--color-bg-soft)', color: 'var(--color-text-primary)', padding: '5px 12px', fontSize: '12px', letterSpacing: '0.5px', borderRadius: '6px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <MapPin size={13} /> {property.city}, {property.state}
-            </span>
-            <span style={{ backgroundColor: 'var(--color-text-primary)', color: 'var(--color-gold)', padding: '5px 12px', fontSize: '12px', borderRadius: '6px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
-              <Star size={13} fill="currentColor" /> {property.avg_rating} ({property.review_count} reviews)
-            </span>
-            {property.pets_allowed && (
-              <span style={{ backgroundColor: '#E8F5E9', color: '#2E7D32', padding: '5px 12px', fontSize: '12px', borderRadius: '6px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <Dog size={13} /> Pets Welcome{(property as { max_pets?: number }).max_pets ? ` · up to ${(property as { max_pets?: number }).max_pets}` : ''}
+          {/* Badges & Share Button */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ backgroundColor: 'var(--color-bg-soft)', color: 'var(--color-text-primary)', padding: '5px 12px', fontSize: '12px', letterSpacing: '0.5px', borderRadius: '6px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <MapPin size={13} /> {property.city}, {property.state}
               </span>
-            )}
+              <span style={{ backgroundColor: 'var(--color-text-primary)', color: 'var(--color-gold)', padding: '5px 12px', fontSize: '12px', borderRadius: '6px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <Star size={13} fill="currentColor" /> {property.avg_rating} ({property.review_count} reviews)
+              </span>
+              {property.pets_allowed && (
+                <span style={{ backgroundColor: '#E8F5E9', color: '#2E7D32', padding: '5px 12px', fontSize: '12px', borderRadius: '6px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <Dog size={13} /> Pets Welcome{(property as { max_pets?: number }).max_pets ? ` · up to ${(property as { max_pets?: number }).max_pets}` : ''}
+                </span>
+              )}
+            </div>
+
+            <button
+              onClick={handleDetailShare}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 14px',
+                border: '1px solid var(--color-border)',
+                borderRadius: '6px',
+                backgroundColor: '#ffffff',
+                color: 'var(--color-text-primary)',
+                fontSize: '12px',
+                fontWeight: '700',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              {shareCopied ? (
+                <>
+                  <Check size={14} color="var(--color-gold)" />
+                  <span>Link Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Share2 size={14} />
+                  <span>Share</span>
+                </>
+              )}
+            </button>
           </div>
 
           <h1 style={{ fontSize: 'clamp(28px, 4vw, 44px)', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '16px', lineHeight: '1.2' }}>

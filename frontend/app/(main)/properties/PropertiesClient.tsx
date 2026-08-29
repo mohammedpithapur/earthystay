@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation'
 import PropertyCard from '@/components/property/PropertyCard'
 import { buildApiUrl } from '@/lib/api'
 import type { Property } from '@/lib/types'
-import { Building2, SlidersHorizontal, Search, RotateCcw, PawPrint, Calendar, Users } from 'lucide-react'
+import { Building2, SlidersHorizontal, Search, RotateCcw, PawPrint, Calendar, Users, X } from 'lucide-react'
 
 const roomTypeOptions = [
   { value: 'all', label: 'Any Room Type' },
@@ -71,6 +71,7 @@ export default function PropertiesClient() {
   const [bathroomType, setBathroomType] = useState('all')
   const [sortBy, setSortBy] = useState('rating')
   const [filtersOpen, setFiltersOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Sync location + pets from URL if URL changes (e.g. hero re-search)
   useEffect(() => { setLocation(urlLocation) }, [urlLocation])
@@ -118,6 +119,16 @@ export default function PropertiesClient() {
 
   const filtered = useMemo(() => {
     let result = [...properties]
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim()
+      result = result.filter(p =>
+        p.name?.toLowerCase().includes(q) ||
+        p.city?.toLowerCase().includes(q) ||
+        p.state?.toLowerCase().includes(q) ||
+        p.description?.toLowerCase().includes(q) ||
+        (Array.isArray(p.amenities) && p.amenities.some(a => typeof a === 'string' && a.toLowerCase().includes(q)))
+      )
+    }
     if (location) {
       const q = location.toLowerCase()
       // Search by city, state, OR property name
@@ -138,9 +149,10 @@ export default function PropertiesClient() {
     else if (sortBy === 'price_high') result.sort((a, b) => b.price_per_night - a.price_per_night)
     else if (sortBy === 'reviews') result.sort((a, b) => b.review_count - a.review_count)
     return result
-  }, [properties, location, minPrice, maxPrice, minBedrooms, petsOnly, roomType, propertyType, bathroomType, sortBy])
+  }, [properties, searchQuery, location, minPrice, maxPrice, minBedrooms, petsOnly, roomType, propertyType, bathroomType, sortBy])
 
   const resetFilters = () => {
+    setSearchQuery('')
     setLocation('')
     setMinPrice(0)
     setMaxPrice(1000000)
@@ -230,37 +242,101 @@ export default function PropertiesClient() {
           </div>
         )}
 
-        <div style={{ marginBottom: '28px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          <button
-            onClick={() => setFiltersOpen(true)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '12px 20px',
-              border: '1px solid var(--color-border)',
-              borderRadius: '8px',
-              backgroundColor: '#ffffff',
-              color: 'var(--color-text-primary)',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 4a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v2.586a1 1 0 0 1-.293.707l-6.414 6.414a1 1 0 0 0-.293.707V17l-4 4v-6.586a1 1 0 0 0-.293-.707L3.293 7.293A1 1 0 0 1 3 6.586V4z" />
-            </svg>
-            Filters
-          </button>
-          <p style={{ color: 'var(--color-text-secondary)', fontSize: '14px' }}>
-            <strong>{filtered.length}</strong> properties
-          </p>
-        </div>
+        {/* Single-line Actions Bar: Filters & Count (Left) + Search Bar (Middle) + Sort By (Right) */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '16px',
+          marginBottom: '28px',
+          flexWrap: 'wrap',
+        }}>
+          {/* Left: Filters button + count */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+            <button
+              onClick={() => setFiltersOpen(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 18px',
+                border: '1px solid var(--color-border)',
+                borderRadius: '8px',
+                backgroundColor: '#ffffff',
+                color: 'var(--color-text-primary)',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              <SlidersHorizontal style={{ width: '16px', height: '16px' }} />
+              Filters
+            </button>
+            <p style={{ color: 'var(--color-text-secondary)', fontSize: '14px', whiteSpace: 'nowrap', margin: 0 }}>
+              <strong>{filtered.length}</strong> properties
+            </p>
+          </div>
 
-        <div style={{ minWidth: 0 }}>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '28px', gap: '12px' }}>
-            <label style={{ fontSize: '12px', color: 'var(--color-text-muted)', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: '600' }}>Sort By</label>
+          {/* Middle: Search bar */}
+          <div style={{ flex: '1 1 280px', maxWidth: '500px', minWidth: '220px', position: 'relative' }}>
+            <Search style={{
+              position: 'absolute',
+              left: '14px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: '16px',
+              height: '16px',
+              color: 'var(--color-text-muted)',
+              pointerEvents: 'none',
+            }} />
+            <input
+              type="text"
+              placeholder="Search by name, location, or amenities..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 36px 10px 38px',
+                border: '1px solid var(--color-border)',
+                borderRadius: '8px',
+                fontSize: '14px',
+                color: 'var(--color-text-primary)',
+                backgroundColor: '#ffffff',
+                outline: 'none',
+                boxSizing: 'border-box',
+                transition: 'border-color 0.2s ease',
+              }}
+              onFocus={e => { e.currentTarget.style.borderColor = 'var(--color-gold)' }}
+              onBlur={e => { e.currentTarget.style.borderColor = 'var(--color-border)' }}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                aria-label="Clear search"
+                style={{
+                  position: 'absolute',
+                  right: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '4px',
+                  color: 'var(--color-text-muted)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <X style={{ width: '14px', height: '14px' }} />
+              </button>
+            )}
+          </div>
+
+          {/* Right: Sort By */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0, marginLeft: 'auto' }}>
+            <label style={{ fontSize: '11px', color: 'var(--color-text-muted)', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: '700', whiteSpace: 'nowrap' }}>Sort By</label>
             <select
               value={sortBy}
               onChange={e => setSortBy(e.target.value)}
@@ -281,6 +357,9 @@ export default function PropertiesClient() {
               <option value="reviews">Most Reviewed</option>
             </select>
           </div>
+        </div>
+
+        <div style={{ minWidth: 0 }}>
 
           {filtered.length > 0 ? (
             <div className="responsive-card-grid">

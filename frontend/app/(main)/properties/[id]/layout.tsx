@@ -1,54 +1,79 @@
-﻿import type { Metadata } from 'next'
+import type { Metadata } from 'next'
+import { buildApiUrl } from '@/lib/api'
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL ||
-  process.env.API_URL ||
-  'https://api.earthystays.in'
-
-interface Props {
+type Props = {
   params: Promise<{ id: string }>
+  children: React.ReactNode
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
   try {
-    const res = await fetch(`${API_BASE}/properties/${id}`, { next: { revalidate: 3600 } })
-    if (!res.ok) throw new Error('Not found')
-    const p = await res.json()
-    const title = p.name || 'Property | EarthyStay'
-    const description = p.short_description || p.description?.slice(0, 160) || 'A handpicked earthy stay — book now on EarthyStay.'
-    const location = [p.city, p.state].filter(Boolean).join(', ')
-    const rawImage: string = p.images?.[0] || p.cover_image || p.thumbnail || ''
-    const ogImage = rawImage || 'https://earthystays.in/og-image.jpg'
-    const canonicalUrl = `https://earthystays.in/properties/${id}`
+    const res = await fetch(buildApiUrl(`/properties/${id}`), {
+      next: { revalidate: 60 },
+    })
+
+    if (!res.ok) {
+      return {
+        title: 'Property | EarthyStay',
+        description: 'A hand-picked property - book now on EarthyStay',
+        openGraph: {
+          title: 'Property | EarthyStay',
+          description: 'A hand-picked property - book now on EarthyStay',
+          images: ['https://earthystays.in/og-image.jpg'],
+        },
+      }
+    }
+
+    const property = await res.json()
+    const primaryImg = property.images?.find((img: any) => img.is_primary)?.image_url
+    const firstImg = property.images?.[0]?.image_url
+    const rawCover = primaryImg || firstImg || 'https://earthystays.in/og-image.jpg'
+    const coverImage = rawCover.startsWith('blob:') ? 'https://earthystays.in/og-image.jpg' : rawCover
+
+    const title = property.name ? `Property | EarthyStay | ${property.name}` : 'Property | EarthyStay'
+    const description = 'A hand-picked property - book now on EarthyStay'
+    const url = `https://earthystays.in/properties/${id}`
+
     return {
       title,
       description,
-      alternates: { canonical: canonicalUrl },
       openGraph: {
-        type: 'website',
-        url: canonicalUrl,
+        title,
+        description,
+        url,
         siteName: 'EarthyStay',
-        title: `${title} | EarthyStay`,
-        description: location ? `${description} Located in ${location}.` : description,
-        images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
+        type: 'website',
+        images: [
+          {
+            url: coverImage,
+            secureUrl: coverImage,
+            width: 1200,
+            height: 630,
+            alt: property.name || 'Property Cover',
+          },
+        ],
       },
       twitter: {
         card: 'summary_large_image',
-        title: `${title} | EarthyStay`,
+        title,
         description,
-        images: [ogImage],
+        images: [coverImage],
       },
     }
   } catch {
     return {
       title: 'Property | EarthyStay',
-      description: 'A handpicked earthy stay — book now on EarthyStay.',
-      openGraph: { images: ['https://earthystays.in/og-image.jpg'] },
+      description: 'A hand-picked property - book now on EarthyStay',
+      openGraph: {
+        title: 'Property | EarthyStay',
+        description: 'A hand-picked property - book now on EarthyStay',
+        images: ['https://earthystays.in/og-image.jpg'],
+      },
     }
   }
 }
 
-export default function PropertyLayout({ children }: { children: React.ReactNode }) {
+export default function PropertyDetailLayout({ children }: Props) {
   return <>{children}</>
 }
