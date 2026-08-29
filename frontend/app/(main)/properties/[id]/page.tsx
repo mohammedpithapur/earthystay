@@ -226,6 +226,33 @@ export default function PropertyDetailPage() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleKeyDown])
 
+  const calcNights = () => {
+    if (!checkIn || !checkOut) return 0
+    const diff = new Date(checkOut).getTime() - new Date(checkIn).getTime()
+    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
+  }
+
+  const nights = calcNights()
+  const basePrice = useMemo(() => {
+    if (!checkIn || !checkOut || !property || nights <= 0) return (property?.price_per_night || 0) * nights
+    let sum = 0
+    const [y, m, d] = checkIn.split('-').map(Number)
+    for (let i = 0; i < nights; i++) {
+      const cur = new Date(y, m - 1, d + i)
+      const yr = cur.getFullYear()
+      const mo = String(cur.getMonth() + 1).padStart(2, '0')
+      const da = String(cur.getDate()).padStart(2, '0')
+      const curStr = `${yr}-${mo}-${da}`
+      const ov = priceOverrides.find(o => curStr >= o.start_date && curStr < o.end_date)
+      sum += ov ? ov.price_per_night : property.price_per_night
+    }
+    return sum
+  }, [checkIn, checkOut, property, nights, priceOverrides])
+
+  const hasCustomPricing = useMemo(() => {
+    return property && nights > 0 ? basePrice !== property.price_per_night * nights : false
+  }, [basePrice, property, nights])
+
   if (loading) {
     return (
       <div className="page-shell" style={{ backgroundColor: '#ffffff' }}>
@@ -296,33 +323,6 @@ export default function PropertyDetailPage() {
       </div>
     )
   }
-
-  const calcNights = () => {
-    if (!checkIn || !checkOut) return 0
-    const diff = new Date(checkOut).getTime() - new Date(checkIn).getTime()
-    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
-  }
-
-  const nights = calcNights()
-  const basePrice = useMemo(() => {
-    if (!checkIn || !checkOut || !property || nights <= 0) return (property?.price_per_night || 0) * nights
-    let sum = 0
-    const [y, m, d] = checkIn.split('-').map(Number)
-    for (let i = 0; i < nights; i++) {
-      const cur = new Date(y, m - 1, d + i)
-      const yr = cur.getFullYear()
-      const mo = String(cur.getMonth() + 1).padStart(2, '0')
-      const da = String(cur.getDate()).padStart(2, '0')
-      const curStr = `${yr}-${mo}-${da}`
-      const ov = priceOverrides.find(o => curStr >= o.start_date && curStr < o.end_date)
-      sum += ov ? ov.price_per_night : property.price_per_night
-    }
-    return sum
-  }, [checkIn, checkOut, property, nights, priceOverrides])
-
-  const hasCustomPricing = useMemo(() => {
-    return property && nights > 0 ? basePrice !== property.price_per_night * nights : false
-  }, [basePrice, property, nights])
 
   const baseGuests = property.base_guests || 2
   const extraGuestRate = property.extra_guest_charge_per_night || 0
