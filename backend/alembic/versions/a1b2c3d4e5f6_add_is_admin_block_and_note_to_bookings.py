@@ -14,14 +14,19 @@ depends_on = None
 
 
 def upgrade():
-    op.add_column(
-        'bookings',
-        sa.Column('is_admin_block', sa.Boolean(), server_default='false', nullable=False)
-    )
-    op.add_column(
-        'bookings',
-        sa.Column('note', sa.Text(), nullable=True)
-    )
+    conn = op.get_bind()
+    inspector = sa.inspect(conn)
+    cols = [c['name'] for c in inspector.get_columns('bookings')]
+    if 'is_admin_block' not in cols:
+        op.add_column(
+            'bookings',
+            sa.Column('is_admin_block', sa.Boolean(), server_default='false', nullable=False)
+        )
+    if 'note' not in cols:
+        op.add_column(
+            'bookings',
+            sa.Column('note', sa.Text(), nullable=True)
+        )
 
 
 def downgrade():

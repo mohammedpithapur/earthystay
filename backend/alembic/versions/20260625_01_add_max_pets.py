@@ -15,7 +15,11 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column('properties', sa.Column('max_pets', sa.Integer(), nullable=False, server_default='0'))
+    conn = op.get_bind()
+    inspector = sa.inspect(conn)
+    cols = [c['name'] for c in inspector.get_columns('properties')]
+    if 'max_pets' not in cols:
+        op.add_column('properties', sa.Column('max_pets', sa.Integer(), nullable=False, server_default='0'))
 
 
 def downgrade() -> None:
