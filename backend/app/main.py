@@ -15,7 +15,7 @@ from app.config import settings
 from app.database import get_db
 from app.rate_limit import limiter
 from app.routers import admin, auth, bookings, ical, payments, properties, reviews, users, events, push
-from app.models import push_subscription  # noqa: F401 — ensures table is created
+from app.models import push_subscription, price_override  # noqa: F401 — ensures table is created
 
 
 logger = logging.getLogger("earthystay.api")

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, model_validator, Field
 from uuid import UUID
 from datetime import datetime, date
 from typing import Literal
@@ -98,5 +98,9 @@ class CalendarEventOut(BaseModel):
     model_config = {"from_attributes": True}
 
 
+from app.schemas.price_override import PriceOverrideOut
+
+
 class CalendarOut(BaseModel):
     events: list[CalendarEventOut]
+    price_overrides: list[PriceOverrideOut] = Field(default_factory=list)

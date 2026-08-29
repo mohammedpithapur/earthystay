@@ -14,7 +14,9 @@ from app.models.property import Property
 from app.models.property_group import PropertyGroup, PropertyGroupMember
 from app.models.booking import Booking, BookingStatus, PaymentStatus
 from app.models.review import Review
+from app.models.price_override import PropertyPriceOverride
 from app.schemas.booking import AdminBlockCreate, CalendarEventOut, CalendarOut
+from app.schemas.price_override import PriceOverrideCreate, PriceOverrideOut
 from app.schemas.property import PropertyCreate, PropertyUpdate, PropertyOut, PropertyImageCreate, PropertyImageUpdate, PropertyImageOut
 from app.schemas.property_group import PropertyGroupCreate, PropertyGroupMemberCreate, PropertyGroupMemberUpdate, PropertyGroupOut
 from app.services.booking import apply_group_blocking, remove_shadow_blocks
@@ -861,7 +863,18 @@ async def get_property_calendar(
             parent_booking_ref=parent_ref,
         ))
 
-    return CalendarOut(events=events)
+    # Also query price overrides for the window
+    overrides_res = await db.execute(
+        select(PropertyPriceOverride).where(
+            PropertyPriceOverride.property_id == prop_uuid,
+            PropertyPriceOverride.start_date < to_date,
+            PropertyPriceOverride.end_date > from_date,
+        ).order_by(PropertyPriceOverride.start_date)
+    )
+    overrides = overrides_res.scalars().all()
+    price_overrides_out = [PriceOverrideOut.model_validate(ov) for ov in overrides]
+
+    return CalendarOut(events=events, price_overrides=price_overrides_out)
 
 
 @router.post("/properties/{property_id}/blocks", response_model=CalendarEventOut, status_code=201)
@@ -963,3 +976,113 @@ async def delete_admin_block(
     await db.delete(block)
     await db.commit()
     return {"message": "Block removed"}
+
+
+# ── Price Overrides ───────────────────────────────────────────────────────────
+
+@router.get("/properties/{property_id}/price-overrides", response_model=list[PriceOverrideOut])
+async def list_price_overrides(
+    property_id: str,
+    admin: User = Depends(get_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """List all price overrides for a property."""
+    try:
+        prop_uuid = uuid.UUID(property_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid property ID format")
+
+    result = await db.execute(
+        select(PropertyPriceOverride)
+        .where(PropertyPriceOverride.property_id == prop_uuid)
+        .order_by(PropertyPriceOverride.start_date.asc())
+    )
+    overrides = result.scalars().all()
+    return overrides
+
+
+@router.post("/properties/{property_id}/price-overrides", response_model=PriceOverrideOut, status_code=201)
+async def create_price_override(
+    property_id: str,
+    data: PriceOverrideCreate,
+    admin: User = Depends(get_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Create a price override for a date range."""
+    try:
+        prop_uuid = uuid.UUID(property_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid property ID format")
+
+    if data.end_date <= data.start_date:
+        raise HTTPException(status_code=400, detail="End date must be after start date")
+
+    if data.price_per_night <= 0:
+        raise HTTPException(status_code=400, detail="Price per night must be greater than 0")
+
+    property_obj = await db.get(Property, prop_uuid)
+    if not property_obj:
+        raise HTTPException(status_code=404, detail="Property not found")
+
+    # Check for existing overlapping overrides
+    overlap_res = await db.execute(
+        select(PropertyPriceOverride).where(
+            PropertyPriceOverride.property_id == prop_uuid,
+            PropertyPriceOverride.start_date < data.end_date,
+            PropertyPriceOverride.end_date > data.start_date,
+        )
+    )
+    if overlap_res.scalar_one_or_none():
+        raise HTTPException(
+            status_code=400,
+            detail="A price override already exists for these dates. Please remove the existing override first."
+        )
+
+    override = PropertyPriceOverride(
+        property_id=prop_uuid,
+        start_date=data.start_date,
+        end_date=data.end_date,
+        price_per_night=data.price_per_night,
+        label=data.label.strip() if data.label else None,
+    )
+    db.add(override)
+    await db.commit()
+    await db.refresh(override)
+
+    try:
+        await invalidate_properties_cache()
+    except Exception:
+        pass
+
+    return override
+
+
+@router.delete("/properties/{property_id}/price-overrides/{override_id}")
+async def delete_price_override(
+    property_id: str,
+    override_id: str,
+    admin: User = Depends(get_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete a price override."""
+    try:
+        prop_uuid = uuid.UUID(property_id)
+        override_uuid = uuid.UUID(override_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid UUID format")
+
+    override = await db.get(PropertyPriceOverride, override_uuid)
+    if not override:
+        raise HTTPException(status_code=404, detail="Price override not found")
+    if override.property_id != prop_uuid:
+        raise HTTPException(status_code=404, detail="Price override not found for this property")
+
+    await db.delete(override)
+    await db.commit()
+
+    try:
+        await invalidate_properties_cache()
+    except Exception:
+        pass
+
+    return {"message": "Price override removed"}

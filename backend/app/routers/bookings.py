@@ -11,6 +11,7 @@ from app.rate_limit import limiter
 from app.models.property import Property
 from app.models.property_group import PropertyGroup, PropertyGroupMember
 from app.models.booking import Booking, BookingStatus
+from app.models.price_override import PropertyPriceOverride
 from app.schemas.booking import BookingCreate, BookingOut, BookingStatusUpdate, BookingListOut
 from app.services.booking import calculate_pricing, apply_group_blocking, remove_shadow_blocks, auto_cleanup_expired_bookings
 from app.services.email import send_booking_cancellation_email
@@ -51,6 +52,16 @@ async def create_booking(
             .with_for_update()
         )
 
+    # Fetch active price overrides that overlap the stay dates
+    overrides_res = await db.execute(
+        select(PropertyPriceOverride).where(
+            PropertyPriceOverride.property_id == data.property_id,
+            PropertyPriceOverride.start_date < data.check_out,
+            PropertyPriceOverride.end_date > data.check_in,
+        )
+    )
+    price_overrides = list(overrides_res.scalars().all())
+
     # 1. Check if the CURRENT GUEST already has a pending booking for these exact dates & property
     existing_pending = await db.scalar(
         select(Booking).where(
@@ -64,7 +75,7 @@ async def create_booking(
 
     if existing_pending:
         # Reuse the existing pending booking for this guest, update pricing/info if needed
-        pricing = calculate_pricing(property, data.check_in, data.check_out, data.pets, data.guests)
+        pricing = calculate_pricing(property, data.check_in, data.check_out, data.pets, data.guests, price_overrides=price_overrides)
         existing_pending.guests = data.guests
         existing_pending.pets = data.pets
         existing_pending.nights = pricing["nights"]
@@ -100,7 +111,7 @@ async def create_booking(
         if data.pets > property.max_pets:
             raise HTTPException(status_code=400, detail=f"Maximum allowed pets is {property.max_pets}")
 
-    pricing = calculate_pricing(property, data.check_in, data.check_out, data.pets, data.guests)
+    pricing = calculate_pricing(property, data.check_in, data.check_out, data.pets, data.guests, price_overrides=price_overrides)
 
     booking = Booking(
         property_id=data.property_id,

@@ -12,6 +12,8 @@ from app.dependencies import get_optional_current_user
 from app.models.booking import Booking, BookingStatus
 from app.models.property import Property
 from app.models.user import User, UserRole
+from app.models.price_override import PropertyPriceOverride
+from app.schemas.price_override import PriceOverrideOut
 from app.schemas.property import PropertyListOut, PropertyOut
 from app.services.property import get_property_filters, apply_property_inheritance
 from app.services.cache import cache_get_json, cache_set_json
@@ -167,3 +169,22 @@ async def get_property_availability(
         {"check_in": check_in, "check_out": check_out}
         for check_in, check_out in result.all()
     ]
+
+
+@router.get("/{property_id}/price-overrides", response_model=list[PriceOverrideOut])
+async def get_public_price_overrides(
+    property_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        target_uuid = uuid.UUID(property_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid property ID format")
+
+    result = await db.execute(
+        select(PropertyPriceOverride)
+        .where(PropertyPriceOverride.property_id == target_uuid)
+        .order_by(PropertyPriceOverride.start_date.asc())
+    )
+    return result.scalars().all()
+

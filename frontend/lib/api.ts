@@ -213,6 +213,28 @@ export type AdminBlockCreate = {
   note?: string | null
 }
 
+export type PriceOverride = {
+  id: string
+  property_id: string
+  start_date: string  // "YYYY-MM-DD"
+  end_date: string    // "YYYY-MM-DD"
+  price_per_night: number
+  label: string | null
+  created_at: string
+}
+
+export type PriceOverrideCreate = {
+  start_date: string  // "YYYY-MM-DD"
+  end_date: string    // "YYYY-MM-DD"
+  price_per_night: number
+  label?: string | null
+}
+
+export type CalendarData = {
+  events: CalendarEvent[]
+  price_overrides: PriceOverride[]
+}
+
 
 export type ListAdminBookingsParams = {
   search?: string
@@ -552,6 +574,58 @@ export async function deleteAdminBlock(
     method: "DELETE",
   })
   if (!response.ok) throw new Error(`Failed to delete block (${response.status})`)
+}
+
+export async function getPropertyCalendarFull(
+  propertyId: string,
+  fromDate: string | null,
+  toDate: string | null,
+  fetcher: ApiFetcher,
+): Promise<CalendarData> {
+  const qs = new URLSearchParams()
+  if (fromDate) qs.set("from_date", fromDate)
+  if (toDate) qs.set("to_date", toDate)
+  const query = qs.toString()
+  const response = await fetcher(buildApiUrl(`/admin/properties/${propertyId}/calendar${query ? `?${query}` : ""}`))
+  if (!response.ok) throw new Error(`Failed to load calendar (${response.status})`)
+  const data = await response.json()
+  return {
+    events: (data.events || []) as CalendarEvent[],
+    price_overrides: (data.price_overrides || []) as PriceOverride[],
+  }
+}
+
+export async function createPriceOverride(
+  propertyId: string,
+  data: PriceOverrideCreate,
+  fetcher: ApiFetcher,
+): Promise<PriceOverride> {
+  const response = await fetcher(buildApiUrl(`/admin/properties/${propertyId}/price-overrides`), {
+    method: "POST",
+    body: JSON.stringify(data),
+  })
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}))
+    throw new Error((err as { detail?: string }).detail || `Failed to set price override (${response.status})`)
+  }
+  return response.json()
+}
+
+export async function deletePriceOverride(
+  propertyId: string,
+  overrideId: string,
+  fetcher: ApiFetcher,
+): Promise<void> {
+  const response = await fetcher(buildApiUrl(`/admin/properties/${propertyId}/price-overrides/${overrideId}`), {
+    method: "DELETE",
+  })
+  if (!response.ok) throw new Error(`Failed to remove price override (${response.status})`)
+}
+
+export async function fetchPropertyPriceOverrides(propertyId: string): Promise<PriceOverride[]> {
+  const response = await fetch(buildApiUrl(`/properties/${propertyId}/price-overrides`), { cache: "no-store" })
+  if (!response.ok) return []
+  return response.json()
 }
 
 

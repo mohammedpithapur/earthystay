@@ -4,7 +4,7 @@ import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
 import { DayPicker } from 'react-day-picker'
 import MapWrapper from '@/components/shared/MapWrapper'
-import { buildApiUrl, fetchPropertyReviews } from '@/lib/api'
+import { buildApiUrl, fetchPropertyReviews, type PriceOverride } from '@/lib/api'
 import type { Property, Review } from '@/lib/types'
 import type { DateRange } from 'react-day-picker'
 import { useAuth } from '@/lib/auth/AuthContext'
@@ -39,6 +39,7 @@ export default function PropertyDetailPage() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [blockedRanges, setBlockedRanges] = useState<Array<{ check_in: string; check_out: string }>>([])
+  const [priceOverrides, setPriceOverrides] = useState<PriceOverride[]>([])
 
   const [activeImage, setActiveImage] = useState(0)
   const [checkIn, setCheckIn] = useState('')
@@ -100,17 +101,22 @@ export default function PropertyDetailPage() {
 
     const loadAvailability = async () => {
       try {
-        const response = await fetch(buildApiUrl(`/properties/${propertyId}/availability`), { cache: 'no-store' })
-        if (!response.ok) {
-          throw new Error('Failed to load availability')
+        const [availRes, priceRes] = await Promise.all([
+          fetch(buildApiUrl(`/properties/${propertyId}/availability`), { cache: 'no-store' }),
+          fetch(buildApiUrl(`/properties/${propertyId}/price-overrides`), { cache: 'no-store' }),
+        ])
+        if (availRes.ok) {
+          const data = await availRes.json()
+          if (isMounted) setBlockedRanges(Array.isArray(data) ? data : [])
         }
-        const data = await response.json()
-        if (isMounted) {
-          setBlockedRanges(Array.isArray(data) ? data : [])
+        if (priceRes.ok) {
+          const pData = await priceRes.json()
+          if (isMounted) setPriceOverrides(Array.isArray(pData) ? pData : [])
         }
       } catch {
         if (isMounted) {
           setBlockedRanges([])
+          setPriceOverrides([])
         }
       }
     }
@@ -298,7 +304,26 @@ export default function PropertyDetailPage() {
   }
 
   const nights = calcNights()
-  const basePrice = nights * property.price_per_night
+  const basePrice = useMemo(() => {
+    if (!checkIn || !checkOut || !property || nights <= 0) return (property?.price_per_night || 0) * nights
+    let sum = 0
+    const [y, m, d] = checkIn.split('-').map(Number)
+    for (let i = 0; i < nights; i++) {
+      const cur = new Date(y, m - 1, d + i)
+      const yr = cur.getFullYear()
+      const mo = String(cur.getMonth() + 1).padStart(2, '0')
+      const da = String(cur.getDate()).padStart(2, '0')
+      const curStr = `${yr}-${mo}-${da}`
+      const ov = priceOverrides.find(o => curStr >= o.start_date && curStr < o.end_date)
+      sum += ov ? ov.price_per_night : property.price_per_night
+    }
+    return sum
+  }, [checkIn, checkOut, property, nights, priceOverrides])
+
+  const hasCustomPricing = useMemo(() => {
+    return property && nights > 0 ? basePrice !== property.price_per_night * nights : false
+  }, [basePrice, property, nights])
+
   const baseGuests = property.base_guests || 2
   const extraGuestRate = property.extra_guest_charge_per_night || 0
   const extraGuests = Math.max(0, guests - baseGuests)
@@ -1136,7 +1161,7 @@ export default function PropertyDetailPage() {
           {nights > 0 && (
             <div style={{ backgroundColor: 'var(--color-bg-soft)', padding: '16px', marginBottom: '16px', fontSize: '14px', borderRadius: '8px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: 'var(--color-text-secondary)' }}>
-                <span>&#8377;{property.price_per_night.toLocaleString('en-IN')} x {nights} nights</span>
+                <span>{hasCustomPricing ? `Base rate (${nights} nights · custom rates apply)` : `₹${property.price_per_night.toLocaleString('en-IN')} x ${nights} nights`}</span>
                 <span>&#8377;{basePrice.toLocaleString('en-IN')}</span>
               </div>
               {extraGuestCharge > 0 && (

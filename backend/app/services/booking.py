@@ -1,4 +1,5 @@
-from datetime import date
+from datetime import date, timedelta
+from typing import Any
 
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,10 +9,39 @@ from app.models.property import Property
 from app.models.property_group import PropertyGroupMember
 
 
-def calculate_pricing(property: Property, check_in: date, check_out: date, pets: int, guests: int = 1) -> dict:
+def calculate_pricing(
+    property: Property,
+    check_in: date,
+    check_out: date,
+    pets: int,
+    guests: int = 1,
+    price_overrides: list[Any] | None = None,
+) -> dict:
     nights_diff = check_out - check_in
     nights = max(0, nights_diff.days)
-    base_price = property.price_per_night * nights
+
+    base_price = 0
+    nightly_rates = []
+    default_price = property.price_per_night
+
+    for i in range(nights):
+        night_date = check_in + timedelta(days=i)
+        matched_override = None
+        if price_overrides:
+            for ov in price_overrides:
+                if ov.start_date <= night_date < ov.end_date:
+                    matched_override = ov
+                    break
+
+        night_rate = matched_override.price_per_night if matched_override else default_price
+        base_price += night_rate
+        nightly_rates.append({
+            "date": night_date.isoformat(),
+            "price": night_rate,
+            "is_override": matched_override is not None,
+            "label": getattr(matched_override, "label", None) if matched_override else None,
+        })
+
     base_guests = getattr(property, "base_guests", 2) or 2
     extra_guest_rate = getattr(property, "extra_guest_charge_per_night", 0) or 0
     extra_guests = max(0, guests - base_guests)
@@ -25,6 +55,7 @@ def calculate_pricing(property: Property, check_in: date, check_out: date, pets:
         "cleaning_fee": property.cleaning_fee,
         "pet_charge": pet_charge,
         "total": total,
+        "nightly_rates": nightly_rates,
     }
 
 

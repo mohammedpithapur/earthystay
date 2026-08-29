@@ -117,6 +117,12 @@ class Property(Base):
         back_populates="property",
         cascade="all, delete-orphan",
     )
+    price_overrides: Mapped[list["PropertyPriceOverride"]] = relationship(
+        "PropertyPriceOverride",
+        back_populates="property",
+        cascade="all, delete-orphan",
+        order_by="PropertyPriceOverride.start_date",
+    )
     owner: Mapped["User"] = relationship("User")
 
 

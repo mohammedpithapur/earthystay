@@ -7,6 +7,7 @@ from app.models.review import Review
 from app.models.ical import ICalLink
 from app.models.password_reset import PasswordResetToken
 from app.models.event import EventRequest, EventStatus
+from app.models.price_override import PropertyPriceOverride
 
 __all__ = [
 	"User",
@@ -21,4 +22,5 @@ __all__ = [
 	"PasswordResetToken",
 	"EventRequest",
 	"EventStatus",
+	"PropertyPriceOverride",
 ]

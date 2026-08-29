@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import type { ApiFetcher, CalendarEvent } from '@/lib/api'
-import { getPropertyCalendar, createAdminBlock, deleteAdminBlock } from '@/lib/api'
-import { Calendar } from 'lucide-react'
+import type { ApiFetcher, CalendarEvent, PriceOverride } from '@/lib/api'
+import { getPropertyCalendarFull, createAdminBlock, deleteAdminBlock, createPriceOverride, deletePriceOverride } from '@/lib/api'
+import { Calendar, Tag, ShieldAlert } from 'lucide-react'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -24,6 +24,17 @@ function firstDayOfMonth(year: number, month: number): number {
 
 function getEventsForDate(dateStr: string, events: CalendarEvent[]): CalendarEvent[] {
   return events.filter(ev => dateStr >= ev.check_in && dateStr < ev.check_out)
+}
+
+function getOverrideForDate(dateStr: string, overrides: PriceOverride[]): PriceOverride | undefined {
+  return overrides.find(ov => dateStr >= ov.start_date && dateStr < ov.end_date)
+}
+
+function countNights(startStr: string, endStr: string): number {
+  if (!startStr || !endStr) return 0
+  const d1 = new Date(startStr).getTime()
+  const d2 = new Date(endStr).getTime()
+  return Math.max(0, Math.round((d2 - d1) / (1000 * 60 * 60 * 24)))
 }
 
 const MONTH_NAMES = [
@@ -53,10 +64,10 @@ function Tooltip({ children, tip }: { children: React.ReactNode; tip: string }) 
       {children}
       {show && (
         <div style={{
-          position: 'absolute', zIndex: 20, bottom: 'calc(100% + 8px)', left: '50%',
+          position: 'absolute', zIndex: 30, bottom: 'calc(100% + 8px)', left: '50%',
           transform: 'translateX(-50%)',
           background: '#0d0b07', border: '1px solid #3d3425',
-          color: '#c4a96d', fontSize: '0.72rem', lineHeight: 1.5,
+          color: '#e8d5a3', fontSize: '0.72rem', lineHeight: 1.5,
           padding: '8px 10px', borderRadius: '8px', whiteSpace: 'pre-line',
           boxShadow: '0 4px 16px rgba(0,0,0,0.6)', pointerEvents: 'none',
           minWidth: '170px', textAlign: 'left',
@@ -75,8 +86,12 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
   const [viewYear, setViewYear] = useState(today.getFullYear())
   const [viewMonth, setViewMonth] = useState(today.getMonth())
   const [events, setEvents] = useState<CalendarEvent[]>([])
+  const [priceOverrides, setPriceOverrides] = useState<PriceOverride[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  // Mode: 'price' (set custom price for period) or 'block' (block dates)
+  const [activeTab, setActiveTab] = useState<'block' | 'price'>('price')
 
   // Block form
   const [blockStart, setBlockStart] = useState('')
@@ -85,6 +100,15 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
   const [blocking, setBlocking] = useState(false)
   const [blockError, setBlockError] = useState<string | null>(null)
   const [blockSuccess, setBlockSuccess] = useState<string | null>(null)
+
+  // Price Override form
+  const [priceStart, setPriceStart] = useState('')
+  const [priceEnd, setPriceEnd] = useState('')
+  const [priceRate, setPriceRate] = useState('')
+  const [priceLabel, setPriceLabel] = useState('')
+  const [priceSaving, setPriceSaving] = useState(false)
+  const [priceError, setPriceError] = useState<string | null>(null)
+  const [priceSuccess, setPriceSuccess] = useState<string | null>(null)
 
   // Click-to-select range state
   const [selStart, setSelStart] = useState<string | null>(null)
@@ -96,13 +120,14 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
     setLoading(true)
     setError(null)
     try {
-      // Load current month + 1 month either side
-      const fromD = new Date(viewYear, viewMonth - 1, 1)
-      const toD = new Date(viewYear, viewMonth + 2, 0)
+      // Load current month + 2 months either side
+      const fromD = new Date(viewYear, viewMonth - 2, 1)
+      const toD = new Date(viewYear, viewMonth + 3, 0)
       const from = toDateStr(fromD)
       const to = toDateStr(toD)
-      const data = await getPropertyCalendar(propertyId, from, to, fetchWithAuth)
-      setEvents(data)
+      const data = await getPropertyCalendarFull(propertyId, from, to, fetchWithAuth)
+      setEvents(data.events)
+      setPriceOverrides(data.price_overrides)
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to load calendar')
     } finally {
@@ -122,49 +147,88 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
   }
 
   function handleDayClick(dateStr: string) {
-    const dayEvents = getEventsForDate(dateStr, events)
-    // Cannot start selection on a day with a guest booking
-    if (dayEvents.some(e => e.type === 'guest_booking')) return
+    if (activeTab === 'block') {
+      const dayEvents = getEventsForDate(dateStr, events)
+      if (dayEvents.some(e => e.type === 'guest_booking')) return
 
-    if (!selStart) {
-      setSelStart(dateStr)
-      setBlockStart(dateStr)
-      setBlockEnd('')
-      setBlockError(null)
-      setBlockSuccess(null)
+      if (!selStart) {
+        setSelStart(dateStr)
+        setBlockStart(dateStr)
+        setBlockEnd('')
+        setBlockError(null)
+        setBlockSuccess(null)
+      } else {
+        const s = selStart < dateStr ? selStart : dateStr
+        const e = selStart < dateStr ? dateStr : selStart
+        const eDate = new Date(e)
+        eDate.setDate(eDate.getDate() + 1)
+        const eNext = toDateStr(eDate)
+        setBlockStart(s)
+        setBlockEnd(eNext)
+        setSelStart(null)
+        setSelHover(null)
+      }
     } else {
-      const s = selStart < dateStr ? selStart : dateStr
-      const e = selStart < dateStr ? dateStr : selStart
-      // check_out = day after last night
-      const eDate = new Date(e)
-      eDate.setDate(eDate.getDate() + 1)
-      const eNext = toDateStr(eDate)
-      setBlockStart(s)
-      setBlockEnd(eNext)
-      setSelStart(null)
-      setSelHover(null)
+      // Price override mode: click start date, then click end date
+      if (!selStart) {
+        setSelStart(dateStr)
+        setPriceStart(dateStr)
+        setPriceEnd('')
+        setPriceError(null)
+        setPriceSuccess(null)
+      } else {
+        const s = selStart < dateStr ? selStart : dateStr
+        const e = selStart < dateStr ? dateStr : selStart
+        const eDate = new Date(e)
+        eDate.setDate(eDate.getDate() + 1)
+        const eNext = toDateStr(eDate)
+        setPriceStart(s)
+        setPriceEnd(eNext)
+        setSelStart(null)
+        setSelHover(null)
+      }
     }
   }
 
   function getCellStyle(dateStr: string): React.CSSProperties {
     const dayEvents = getEventsForDate(dateStr, events)
     const types = new Set(dayEvents.map(e => e.type))
+    const pOverride = getOverrideForDate(dateStr, priceOverrides)
 
     const selMin = selStart && selHover ? (selStart < selHover ? selStart : selHover) : null
     const selMax = selStart && selHover ? (selStart > selHover ? selStart : selHover) : null
     const inSel = selMin && selMax && dateStr >= selMin && dateStr <= selMax
-    const inBlock = blockStart && blockEnd && dateStr >= blockStart && dateStr < blockEnd
 
-    const isToday = dateStr === todayStr
+    if (activeTab === 'price') {
+      const inPriceRange = priceStart && priceEnd && dateStr >= priceStart && dateStr < priceEnd
+      if (inSel || inPriceRange) {
+        return { background: 'rgba(168, 85, 247, 0.28)', border: '1px solid #c084fc', color: '#f3e8ff', fontWeight: '700' }
+      }
+    } else {
+      const inBlockRange = blockStart && blockEnd && dateStr >= blockStart && dateStr < blockEnd
+      if (inSel || inBlockRange) {
+        return { background: 'rgba(201,168,76,0.22)', border: '1px solid #c9a84c', color: '#e8d5a3', fontWeight: '600' }
+      }
+    }
 
-    if (inSel || inBlock) return { background: 'rgba(201,168,76,0.22)', border: '1px solid #c9a84c', color: '#e8d5a3', fontWeight: '600' }
     if (types.has('guest_booking')) return { background: '#2a1a0a', border: '1px solid rgba(201,168,76,0.4)', color: '#c9a84c' }
     if (types.has('admin_block')) return { background: '#0f0d08', border: '1px solid #c9a84c', color: '#5a5040' }
     if (types.has('shadow_block')) return {
       background: 'repeating-linear-gradient(45deg,#1a1611,#1a1611 4px,#221d12 4px,#221d12 8px)',
       border: '1px solid #2e2618', color: '#4a4030',
     }
-    if (isToday) return { border: '1px solid rgba(201,168,76,0.5)', color: '#e8d5a3', fontWeight: '700' }
+
+    // Price override highlight when not booked/blocked
+    if (pOverride) {
+      return {
+        background: 'rgba(147, 51, 234, 0.12)',
+        border: '1px solid rgba(192, 132, 252, 0.5)',
+        color: '#e9d5ff',
+        fontWeight: '600',
+      }
+    }
+
+    if (dateStr === todayStr) return { border: '1px solid rgba(201,168,76,0.5)', color: '#e8d5a3', fontWeight: '700' }
     return { border: '1px solid transparent', color: '#c4a96d' }
   }
 
@@ -199,6 +263,45 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
     }
   }
 
+  async function handleCreatePriceOverride() {
+    if (!priceStart || !priceEnd) { setPriceError('Please select start and end dates'); return }
+    if (priceEnd <= priceStart) { setPriceError('End date must be after start date'); return }
+    const rateNum = parseInt(priceRate, 10)
+    if (isNaN(rateNum) || rateNum <= 0) { setPriceError('Please enter a valid price per night greater than ₹0'); return }
+
+    setPriceSaving(true); setPriceError(null); setPriceSuccess(null)
+    try {
+      await createPriceOverride(
+        propertyId,
+        {
+          start_date: priceStart,
+          end_date: priceEnd,
+          price_per_night: rateNum,
+          label: priceLabel.trim() || null,
+        },
+        fetchWithAuth
+      )
+      setPriceSuccess(`Price updated to ₹${rateNum.toLocaleString('en-IN')}/night for ${countNights(priceStart, priceEnd)} nights!`)
+      setPriceStart(''); setPriceEnd(''); setPriceRate(''); setPriceLabel(''); setSelStart(null)
+      await fetchEvents()
+    } catch (e: unknown) {
+      setPriceError(e instanceof Error ? e.message : 'Failed to apply price override')
+    } finally {
+      setPriceSaving(false)
+    }
+  }
+
+  async function handleDeletePriceOverride(overrideId: string) {
+    setPriceError(null); setPriceSuccess(null)
+    try {
+      await deletePriceOverride(propertyId, overrideId, fetchWithAuth)
+      setPriceSuccess('Price override removed')
+      await fetchEvents()
+    } catch (e: unknown) {
+      setPriceError(e instanceof Error ? e.message : 'Failed to remove price override')
+    }
+  }
+
   // Build grid
   const totalDays = daysInMonth(viewYear, viewMonth)
   const firstDay = firstDayOfMonth(viewYear, viewMonth)
@@ -210,6 +313,8 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
   const adminBlocks = events
     .filter(e => e.type === 'admin_block')
     .sort((a, b) => a.check_in.localeCompare(b.check_in))
+
+  const activeOverrides = [...priceOverrides].sort((a, b) => a.start_date.localeCompare(b.start_date))
 
   const inputStyle: React.CSSProperties = {
     width: '100%', background: '#1a1611', border: '1px solid #3d3425',
@@ -227,7 +332,7 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
           position: fixed;
           inset: 0;
           z-index: 1000;
-          background: rgba(0,0,0,0.82);
+          background: rgba(0,0,0,0.85);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -238,8 +343,8 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
           border: 1px solid #3d3425;
           border-radius: 16px;
           width: 100%;
-          max-width: 1060px;
-          max-height: 92vh;
+          max-width: 1100px;
+          max-height: 94vh;
           display: flex;
           flex-direction: column;
           box-shadow: 0 30px 80px rgba(0,0,0,0.75);
@@ -257,7 +362,7 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
           overflow-y: auto;
         }
         .cal-sidebar {
-          width: 285px;
+          width: 320px;
           border-left: 1px solid #2e2618;
           display: flex;
           flex-direction: column;
@@ -266,7 +371,7 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
           flex-shrink: 0;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 820px) {
           .cal-wrapper {
             padding: 8px;
           }
@@ -300,7 +405,7 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
         }}>
           <div>
             <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#e8d5a3', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Calendar size={18} style={{ color: '#c9a84c' }} /> Property Calendar
+              <Calendar size={18} style={{ color: '#c9a84c' }} /> Property Calendar & Pricing
             </div>
             <div style={{ fontSize: '0.78rem', color: '#8a7a5a', marginTop: 2 }}>{propertyName}</div>
           </div>
@@ -334,6 +439,12 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
                 background: 'none', border: '1px solid #3d3425', color: '#c9a84c',
                 width: 34, height: 34, borderRadius: 8, cursor: 'pointer', fontSize: '1.1rem',
               }}>›</button>
+
+              <div style={{ marginLeft: 'auto', fontSize: '0.75rem', color: '#8a7a5a' }}>
+                Mode: <strong style={{ color: activeTab === 'price' ? '#c084fc' : '#c9a84c' }}>
+                  {activeTab === 'price' ? '🏷️ Date-Range Price Change' : '🚫 Block Dates'}
+                </strong>
+              </div>
             </div>
 
             {loading ? (
@@ -356,18 +467,22 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
 
                 {/* Day cells */}
                 {cells.map((day, idx) => {
-                  if (!day) return <div key={`e${idx}`} style={{ minHeight: 50 }} />
+                  if (!day) return <div key={`e${idx}`} style={{ minHeight: 52 }} />
 
                   const dateStr = `${viewYear}-${String(viewMonth + 1).padStart(2,'0')}-${String(day).padStart(2,'0')}`
                   const dayEvents = getEventsForDate(dateStr, events)
                   const guestEvs = dayEvents.filter(e => e.type === 'guest_booking')
                   const adminEvs = dayEvents.filter(e => e.type === 'admin_block')
                   const shadowEvs = dayEvents.filter(e => e.type === 'shadow_block')
+                  const pOverride = getOverrideForDate(dateStr, priceOverrides)
 
                   const tips: string[] = []
                   guestEvs.forEach(e => tips.push(`Guest: ${e.guest_name} | ${e.booking_ref} | ₹${(e.total ?? 0).toLocaleString('en-IN')}`))
                   adminEvs.forEach(e => tips.push(`Admin Block${e.note ? ': ' + e.note : ''}`))
                   shadowEvs.forEach(e => tips.push(`Group Block${e.parent_booking_ref ? ': ' + e.parent_booking_ref : ''}`))
+                  if (pOverride) {
+                    tips.push(`🏷️ Custom Rate: ₹${pOverride.price_per_night.toLocaleString('en-IN')}/night${pOverride.label ? ` (${pOverride.label})` : ''}`)
+                  }
                   const tipText = tips.join('\n')
 
                   const isGuest = guestEvs.length > 0
@@ -376,17 +491,32 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
                     <div
                       key={dateStr}
                       style={{
-                        minHeight: 50, borderRadius: 8,
+                        minHeight: 52, borderRadius: 8,
                         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '0.85rem', cursor: isGuest ? 'not-allowed' : 'pointer',
-                        position: 'relative', userSelect: 'none', transition: 'filter 0.12s',
+                        fontSize: '0.85rem', cursor: (activeTab === 'block' && isGuest) ? 'not-allowed' : 'pointer',
+                        position: 'relative', userSelect: 'none', transition: 'all 0.12s',
                         ...getCellStyle(dateStr),
                       }}
                       onClick={() => handleDayClick(dateStr)}
                       onMouseEnter={() => selStart && setSelHover(dateStr)}
                       onMouseLeave={() => setSelHover(null)}
                     >
-                      <span>{day}</span>
+                      <span style={{ lineHeight: 1 }}>{day}</span>
+
+                      {/* Overridden price mini-tag */}
+                      {pOverride && !isGuest && adminEvs.length === 0 && (
+                        <span style={{
+                          fontSize: '0.58rem',
+                          color: '#c084fc',
+                          marginTop: 3,
+                          fontWeight: 700,
+                          letterSpacing: '-0.3px',
+                        }}>
+                          ₹{pOverride.price_per_night >= 1000 ? `${(pOverride.price_per_night / 1000).toFixed(pOverride.price_per_night % 1000 === 0 ? 0 : 1)}k` : pOverride.price_per_night}
+                        </span>
+                      )}
+
+                      {/* Event indicators */}
                       {dayEvents.length > 0 && (
                         <span style={{ fontSize: '0.55rem', marginTop: 2 }}>
                           {guestEvs.length > 0 ? '•' : adminEvs.length > 0 ? '■' : '◦'}
@@ -407,7 +537,8 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
               {[
                 { bg: '#2a1a0a', border: '1px solid rgba(201,168,76,0.4)', label: 'Guest Booking' },
                 { bg: '#0f0d08', border: '1px solid #c9a84c', label: 'Admin Block' },
-                { bg: 'repeating-linear-gradient(45deg,#1a1611,#1a1611 4px,#221d12 4px,#221d12 8px)', border: '1px solid #2e2618', label: 'Shadow Block (Group)' },
+                { bg: 'repeating-linear-gradient(45deg,#1a1611,#1a1611 4px,#221d12 4px,#221d12 8px)', border: '1px solid #2e2618', label: 'Group Shadow Block' },
+                { bg: 'rgba(147, 51, 234, 0.18)', border: '1px solid #c084fc', label: '🏷️ Custom Price Override' },
                 { bg: 'rgba(201,168,76,0.22)', border: '1px solid #c9a84c', label: 'Selected Range' },
               ].map(item => (
                 <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: '0.7rem', color: '#8a7a5a' }}>
@@ -420,117 +551,285 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
 
           {/* Side panel */}
           <div className="cal-sidebar">
-            {/* Block form */}
-            <div style={{ padding: 20, borderBottom: '1px solid #1f1a10' }}>
-              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#8a7a5a', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>
-                Block Dates
-              </div>
 
-              {blockError && (
-                <div style={{ background: '#2a0a0a', border: '1px solid #7a2020', color: '#e57373', borderRadius: 8, padding: '8px 10px', fontSize: '0.75rem', marginBottom: 10, lineHeight: 1.4 }}>
-                  {blockError}
-                </div>
-              )}
-              {blockSuccess && (
-                <div style={{ background: '#0a2a0a', border: '1px solid #2a5a2a', color: '#81c784', borderRadius: 8, padding: '8px 10px', fontSize: '0.75rem', marginBottom: 10 }}>
-                  {blockSuccess}
-                </div>
-              )}
-
-              <label style={{ fontSize: '0.7rem', color: '#8a7a5a', display: 'block', marginBottom: 4 }}>Check-in</label>
-              <input
-                id="cal-block-start"
-                type="date"
-                value={blockStart}
-                min={todayStr}
-                onChange={e => { setBlockStart(e.target.value); setBlockError(null); setBlockSuccess(null) }}
-                style={inputStyle}
-              />
-
-              <label style={{ fontSize: '0.7rem', color: '#8a7a5a', display: 'block', marginBottom: 4 }}>Check-out</label>
-              <input
-                id="cal-block-end"
-                type="date"
-                value={blockEnd}
-                min={blockStart || todayStr}
-                onChange={e => { setBlockEnd(e.target.value); setBlockError(null); setBlockSuccess(null) }}
-                style={inputStyle}
-              />
-
-              <label style={{ fontSize: '0.7rem', color: '#8a7a5a', display: 'block', marginBottom: 4 }}>Reason (optional)</label>
-              <input
-                id="cal-block-note"
-                type="text"
-                placeholder="e.g. Maintenance, Owner stay…"
-                value={blockNote}
-                maxLength={200}
-                onChange={e => setBlockNote(e.target.value)}
-                style={inputStyle}
-              />
-
+            {/* Mode Switcher Tabs */}
+            <div style={{ display: 'flex', borderBottom: '1px solid #2e2618', background: '#0e0b08' }}>
               <button
-                id="cal-block-submit"
-                onClick={handleCreateBlock}
-                disabled={blocking || !blockStart || !blockEnd}
+                onClick={() => { setActiveTab('price'); setSelStart(null); setSelHover(null) }}
                 style={{
-                  width: '100%',
-                  background: (blocking || !blockStart || !blockEnd) ? '#2e2618' : 'linear-gradient(135deg,#c9a84c,#a07c30)',
-                  color: (blocking || !blockStart || !blockEnd) ? '#6b5e3e' : '#0d0b07',
-                  border: 'none', borderRadius: 8, padding: '10px',
-                  fontSize: '0.82rem', fontWeight: 700,
-                  cursor: (blocking || !blockStart || !blockEnd) ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.2s', marginTop: 2,
+                  flex: 1, padding: '14px 8px', fontSize: '0.78rem', fontWeight: 700,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  border: 'none', cursor: 'pointer', transition: 'all 0.2s',
+                  background: activeTab === 'price' ? '#1a1611' : 'transparent',
+                  color: activeTab === 'price' ? '#c084fc' : '#8a7a5a',
+                  borderBottom: activeTab === 'price' ? '2px solid #c084fc' : '2px solid transparent',
                 }}
               >
-                {blocking ? 'Blocking…' : 'Block Dates'}
+                <Tag size={14} /> Price Override
               </button>
-
-              <p style={{ fontSize: '0.68rem', color: '#5a5040', marginTop: 8, lineHeight: 1.5 }}>
-                Click two calendar days to pick a range, or use the date pickers above.
-                Blocks cannot overlap guest bookings.
-              </p>
+              <button
+                onClick={() => { setActiveTab('block'); setSelStart(null); setSelHover(null) }}
+                style={{
+                  flex: 1, padding: '14px 8px', fontSize: '0.78rem', fontWeight: 700,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  border: 'none', cursor: 'pointer', transition: 'all 0.2s',
+                  background: activeTab === 'block' ? '#1a1611' : 'transparent',
+                  color: activeTab === 'block' ? '#c9a84c' : '#8a7a5a',
+                  borderBottom: activeTab === 'block' ? '2px solid #c9a84c' : '2px solid transparent',
+                }}
+              >
+                <ShieldAlert size={14} /> Block Dates
+              </button>
             </div>
 
-            {/* Active blocks */}
-            <div style={{ padding: 20, flex: 1 }}>
-              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#8a7a5a', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>
-                Active Blocks{adminBlocks.length > 0 ? ` (${adminBlocks.length})` : ''}
-              </div>
-
-              {adminBlocks.length === 0 ? (
-                <p style={{ fontSize: '0.75rem', color: '#5a5040', lineHeight: 1.5 }}>
-                  No admin blocks in the current view period.
-                </p>
-              ) : adminBlocks.map(block => (
-                <div key={block.id} style={{
-                  background: '#1a1611', border: '1px solid #2e2618', borderRadius: 8,
-                  padding: '10px 12px', marginBottom: 8,
-                  display: 'flex', alignItems: 'flex-start', gap: 8,
-                }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '0.77rem', color: '#c4a96d', fontWeight: 600 }}>
-                      {block.check_in} → {block.check_out}
-                    </div>
-                    {block.note && (
-                      <div style={{ fontSize: '0.7rem', color: '#7a6a4a', marginTop: 2, wordBreak: 'break-word' }}>
-                        {block.note}
-                      </div>
-                    )}
+            {/* Tab 1: Price Override */}
+            {activeTab === 'price' && (
+              <>
+                <div style={{ padding: 20, borderBottom: '1px solid #1f1a10' }}>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#c084fc', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Tag size={13} /> Change Price for Period
                   </div>
+
+                  {priceError && (
+                    <div style={{ background: '#2a0a0a', border: '1px solid #7a2020', color: '#e57373', borderRadius: 8, padding: '8px 10px', fontSize: '0.75rem', marginBottom: 10, lineHeight: 1.4 }}>
+                      {priceError}
+                    </div>
+                  )}
+                  {priceSuccess && (
+                    <div style={{ background: '#0a2a0a', border: '1px solid #2a5a2a', color: '#81c784', borderRadius: 8, padding: '8px 10px', fontSize: '0.75rem', marginBottom: 10 }}>
+                      {priceSuccess}
+                    </div>
+                  )}
+
+                  <label style={{ fontSize: '0.7rem', color: '#8a7a5a', display: 'block', marginBottom: 4 }}>Start Date (First Night)</label>
+                  <input
+                    type="date"
+                    value={priceStart}
+                    min={todayStr}
+                    onChange={e => { setPriceStart(e.target.value); setPriceError(null); setPriceSuccess(null) }}
+                    style={inputStyle}
+                  />
+
+                  <label style={{ fontSize: '0.7rem', color: '#8a7a5a', display: 'block', marginBottom: 4 }}>End Date (Check-out Date)</label>
+                  <input
+                    type="date"
+                    value={priceEnd}
+                    min={priceStart || todayStr}
+                    onChange={e => { setPriceEnd(e.target.value); setPriceError(null); setPriceSuccess(null) }}
+                    style={inputStyle}
+                  />
+
+                  {priceStart && priceEnd && countNights(priceStart, priceEnd) > 0 && (
+                    <div style={{
+                      background: 'rgba(168, 85, 247, 0.12)', border: '1px solid rgba(168, 85, 247, 0.3)',
+                      borderRadius: 6, padding: '6px 10px', marginBottom: 10,
+                      fontSize: '0.75rem', color: '#e9d5ff', display: 'flex', justifyContent: 'space-between',
+                    }}>
+                      <span>Selected duration:</span>
+                      <strong>{countNights(priceStart, priceEnd)} night{countNights(priceStart, priceEnd) > 1 ? 's' : ''}</strong>
+                    </div>
+                  )}
+
+                  <label style={{ fontSize: '0.7rem', color: '#8a7a5a', display: 'block', marginBottom: 4 }}>New Price Per Night (₹)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    placeholder="e.g. 12000"
+                    value={priceRate}
+                    onChange={e => { setPriceRate(e.target.value); setPriceError(null) }}
+                    style={inputStyle}
+                  />
+
+                  <label style={{ fontSize: '0.7rem', color: '#8a7a5a', display: 'block', marginBottom: 4 }}>Label / Reason (optional)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Diwali, Peak Season, Weekend…"
+                    value={priceLabel}
+                    maxLength={100}
+                    onChange={e => setPriceLabel(e.target.value)}
+                    style={inputStyle}
+                  />
+
                   <button
-                    onClick={() => handleUnblock(block)}
-                    aria-label={`Unblock ${block.check_in} to ${block.check_out}`}
+                    onClick={handleCreatePriceOverride}
+                    disabled={priceSaving || !priceStart || !priceEnd || !priceRate}
                     style={{
-                      background: 'none', border: '1px solid #7a2020', color: '#e57373',
-                      borderRadius: 6, padding: '4px 8px', fontSize: '0.7rem',
-                      cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, transition: 'all 0.15s',
+                      width: '100%',
+                      background: (priceSaving || !priceStart || !priceEnd || !priceRate) ? '#2e2618' : 'linear-gradient(135deg, #a855f7, #7c3aed)',
+                      color: (priceSaving || !priceStart || !priceEnd || !priceRate) ? '#6b5e3e' : '#ffffff',
+                      border: 'none', borderRadius: 8, padding: '10px',
+                      fontSize: '0.82rem', fontWeight: 700,
+                      cursor: (priceSaving || !priceStart || !priceEnd || !priceRate) ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.2s', marginTop: 2,
                     }}
                   >
-                    Unblock
+                    {priceSaving ? 'Applying Price…' : 'Apply Price for Period'}
                   </button>
+
+                  <p style={{ fontSize: '0.68rem', color: '#5a5040', marginTop: 8, lineHeight: 1.5 }}>
+                    💡 <strong>Tip:</strong> Click any start date on the calendar, then click an end date — choose 5 days, 5 weeks, or 5 months easily!
+                  </p>
                 </div>
-              ))}
-            </div>
+
+                {/* Active price overrides list */}
+                <div style={{ padding: 20, flex: 1 }}>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#c084fc', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>
+                    Active Price Overrides{activeOverrides.length > 0 ? ` (${activeOverrides.length})` : ''}
+                  </div>
+
+                  {activeOverrides.length === 0 ? (
+                    <p style={{ fontSize: '0.75rem', color: '#5a5040', lineHeight: 1.5 }}>
+                      No custom price overrides set for this property. Base nightly rate applies to all dates.
+                    </p>
+                  ) : activeOverrides.map(ov => {
+                    const nights = countNights(ov.start_date, ov.end_date)
+                    return (
+                      <div key={ov.id} style={{
+                        background: '#1a1611', border: '1px solid rgba(168, 85, 247, 0.3)', borderRadius: 8,
+                        padding: '10px 12px', marginBottom: 8,
+                        display: 'flex', alignItems: 'flex-start', gap: 8,
+                      }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '0.82rem', color: '#c084fc', fontWeight: 700 }}>
+                            ₹{ov.price_per_night.toLocaleString('en-IN')} <span style={{ fontSize: '0.7rem', color: '#8a7a5a', fontWeight: 400 }}>/ night</span>
+                          </div>
+                          <div style={{ fontSize: '0.74rem', color: '#e8d5a3', marginTop: 2 }}>
+                            {ov.start_date} → {ov.end_date}
+                          </div>
+                          <div style={{ fontSize: '0.68rem', color: '#8a7a5a', marginTop: 2 }}>
+                            {nights} night{nights > 1 ? 's' : ''}{ov.label ? ` · ${ov.label}` : ''}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleDeletePriceOverride(ov.id)}
+                          aria-label="Remove price override"
+                          style={{
+                            background: 'none', border: '1px solid #7a2020', color: '#e57373',
+                            borderRadius: 6, padding: '4px 8px', fontSize: '0.7rem',
+                            cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, transition: 'all 0.15s',
+                          }}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              </>
+            )}
+
+            {/* Tab 2: Block Dates */}
+            {activeTab === 'block' && (
+              <>
+                <div style={{ padding: 20, borderBottom: '1px solid #1f1a10' }}>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#8a7a5a', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>
+                    Block Dates
+                  </div>
+
+                  {blockError && (
+                    <div style={{ background: '#2a0a0a', border: '1px solid #7a2020', color: '#e57373', borderRadius: 8, padding: '8px 10px', fontSize: '0.75rem', marginBottom: 10, lineHeight: 1.4 }}>
+                      {blockError}
+                    </div>
+                  )}
+                  {blockSuccess && (
+                    <div style={{ background: '#0a2a0a', border: '1px solid #2a5a2a', color: '#81c784', borderRadius: 8, padding: '8px 10px', fontSize: '0.75rem', marginBottom: 10 }}>
+                      {blockSuccess}
+                    </div>
+                  )}
+
+                  <label style={{ fontSize: '0.7rem', color: '#8a7a5a', display: 'block', marginBottom: 4 }}>Check-in</label>
+                  <input
+                    type="date"
+                    value={blockStart}
+                    min={todayStr}
+                    onChange={e => { setBlockStart(e.target.value); setBlockError(null); setBlockSuccess(null) }}
+                    style={inputStyle}
+                  />
+
+                  <label style={{ fontSize: '0.7rem', color: '#8a7a5a', display: 'block', marginBottom: 4 }}>Check-out</label>
+                  <input
+                    type="date"
+                    value={blockEnd}
+                    min={blockStart || todayStr}
+                    onChange={e => { setBlockEnd(e.target.value); setBlockError(null); setBlockSuccess(null) }}
+                    style={inputStyle}
+                  />
+
+                  <label style={{ fontSize: '0.7rem', color: '#8a7a5a', display: 'block', marginBottom: 4 }}>Reason (optional)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Maintenance, Owner stay…"
+                    value={blockNote}
+                    maxLength={200}
+                    onChange={e => setBlockNote(e.target.value)}
+                    style={inputStyle}
+                  />
+
+                  <button
+                    onClick={handleCreateBlock}
+                    disabled={blocking || !blockStart || !blockEnd}
+                    style={{
+                      width: '100%',
+                      background: (blocking || !blockStart || !blockEnd) ? '#2e2618' : 'linear-gradient(135deg,#c9a84c,#a07c30)',
+                      color: (blocking || !blockStart || !blockEnd) ? '#6b5e3e' : '#0d0b07',
+                      border: 'none', borderRadius: 8, padding: '10px',
+                      fontSize: '0.82rem', fontWeight: 700,
+                      cursor: (blocking || !blockStart || !blockEnd) ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.2s', marginTop: 2,
+                    }}
+                  >
+                    {blocking ? 'Blocking…' : 'Block Dates'}
+                  </button>
+
+                  <p style={{ fontSize: '0.68rem', color: '#5a5040', marginTop: 8, lineHeight: 1.5 }}>
+                    Click two calendar days to pick a range, or use the date pickers above.
+                    Blocks cannot overlap guest bookings.
+                  </p>
+                </div>
+
+                {/* Active blocks */}
+                <div style={{ padding: 20, flex: 1 }}>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#8a7a5a', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>
+                    Active Blocks{adminBlocks.length > 0 ? ` (${adminBlocks.length})` : ''}
+                  </div>
+
+                  {adminBlocks.length === 0 ? (
+                    <p style={{ fontSize: '0.75rem', color: '#5a5040', lineHeight: 1.5 }}>
+                      No admin blocks in the current view period.
+                    </p>
+                  ) : adminBlocks.map(block => (
+                    <div key={block.id} style={{
+                      background: '#1a1611', border: '1px solid #2e2618', borderRadius: 8,
+                      padding: '10px 12px', marginBottom: 8,
+                      display: 'flex', alignItems: 'flex-start', gap: 8,
+                    }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '0.77rem', color: '#c4a96d', fontWeight: 600 }}>
+                          {block.check_in} → {block.check_out}
+                        </div>
+                        {block.note && (
+                          <div style={{ fontSize: '0.7rem', color: '#7a6a4a', marginTop: 2, wordBreak: 'break-word' }}>
+                            {block.note}
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleUnblock(block)}
+                        aria-label={`Unblock ${block.check_in} to ${block.check_out}`}
+                        style={{
+                          background: 'none', border: '1px solid #7a2020', color: '#e57373',
+                          borderRadius: 6, padding: '4px 8px', fontSize: '0.7rem',
+                          cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, transition: 'all 0.15s',
+                        }}
+                      >
+                        Unblock
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
           </div>
         </div>
       </div>

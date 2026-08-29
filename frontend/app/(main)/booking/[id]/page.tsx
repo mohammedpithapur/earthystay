@@ -304,8 +304,10 @@ function BookingPageContent() {
   const isProcessing = paymentStep !== 'form' && paymentStep !== 'error'
   const buttonLabel = STEP_LABELS[paymentStep].replace('{{amount}}', total.toLocaleString('en-IN'))
 
-  const basePrice = property.price_per_night * nights
   const petCharge = pets * nights * property.pet_charge_per_night
+  const basePrice = total > 0
+    ? Math.max(0, total - property.cleaning_fee - petCharge)
+    : property.price_per_night * nights
 
   const inputStyle = (field: string) => ({
     width: '100%',
@@ -482,7 +484,7 @@ function BookingPageContent() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--color-text-secondary)' }}>
-                <span>₹{property.price_per_night.toLocaleString('en-IN')} × {nights} nights</span>
+                <span>{basePrice !== property.price_per_night * nights ? `Base rate (${nights} nights · custom rate)` : `₹${property.price_per_night.toLocaleString('en-IN')} × ${nights} nights`}</span>
                 <span>₹{basePrice.toLocaleString('en-IN')}</span>
               </div>
               {pets > 0 && (
