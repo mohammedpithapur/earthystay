@@ -140,6 +140,9 @@ export default function AdminPage() {
   // ── Calendar / date-blocking state ───────────────────────────────────────
   const [calendarProperty, setCalendarProperty] = useState<{ id: string; name: string } | null>(null)
 
+  // ── Featured property toggle state ───────────────────────────────────────
+  const [featuredLoading, setFeaturedLoading] = useState<Record<string, boolean>>({})
+
   // ── Confirmation Modal state ─────────────────────────────────────────────
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean
@@ -356,6 +359,23 @@ export default function AdminPage() {
         }
       }
     })
+  }
+
+  const handleToggleFeatured = async (propertyId: string, currentFeatured: boolean) => {
+    setFeaturedLoading(prev => ({ ...prev, [propertyId]: true }))
+    try {
+      const res = await fetchWithAuth(buildApiUrl(`/admin/properties/${propertyId}`), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_featured: !currentFeatured }),
+      })
+      if (!res.ok) throw new Error('Failed to update featured status')
+      setApiProperties(prev => prev.map(p => p.id === propertyId ? { ...p, is_featured: !currentFeatured } : p))
+    } catch {
+      // noop — will revert on next reload
+    } finally {
+      setFeaturedLoading(prev => ({ ...prev, [propertyId]: false }))
+    }
   }
 
   const handleIcalSync = async (propertyId: string) => {
@@ -1676,13 +1696,24 @@ export default function AdminPage() {
                       </div>
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '6px', flexWrap: 'wrap' }}>
                         <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{property.name}</h3>
                         <span style={{
                           backgroundColor: property.is_published ? '#E8F5E9' : '#FFF8E7',
                           color: property.is_published ? '#2E7D32' : '#F57F17',
                           padding: '3px 10px', fontSize: '11px', fontWeight: '700', borderRadius: '6px'
                         }}>{property.is_published ? 'Published' : 'Draft'}</span>
+                        {property.is_featured && (
+                          <span style={{
+                            backgroundColor: '#FFFBE7',
+                            color: '#B7791F',
+                            padding: '3px 10px', fontSize: '11px', fontWeight: '700', borderRadius: '6px',
+                            display: 'inline-flex', alignItems: 'center', gap: '4px',
+                          }}>
+                            <Star size={11} fill="currentColor" />
+                            Featured
+                          </span>
+                        )}
                       </div>
                       <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '8px' }}>{property.city}, {property.state}</p>
                       <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
@@ -1708,6 +1739,29 @@ export default function AdminPage() {
                           title="View & manage calendar"
                           style={{ ...buttonStyle, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                         ><Calendar size={14} /> Calendar</button>
+                        <button
+                          onClick={() => handleToggleFeatured(property.id, !!property.is_featured)}
+                          disabled={!!featuredLoading[property.id]}
+                          title={property.is_featured ? 'Remove from featured on home page' : 'Feature this property on the home page'}
+                          style={{
+                            padding: '8px 14px',
+                            border: property.is_featured ? '1.5px solid #B7791F' : '1px solid var(--color-border)',
+                            borderRadius: '8px',
+                            backgroundColor: property.is_featured ? '#FFFBE7' : '#ffffff',
+                            color: property.is_featured ? '#B7791F' : 'var(--color-text-primary)',
+                            fontSize: '13px',
+                            cursor: featuredLoading[property.id] ? 'not-allowed' : 'pointer',
+                            fontWeight: '700',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            opacity: featuredLoading[property.id] ? 0.6 : 1,
+                            transition: 'all 0.15s ease',
+                          }}
+                        >
+                          <Star size={13} fill={property.is_featured ? 'currentColor' : 'none'} />
+                          {featuredLoading[property.id] ? '...' : property.is_featured ? 'Featured' : 'Set Featured'}
+                        </button>
                         <button onClick={() => router.push(`/admin/properties?id=${property.id}`)} style={buttonStyle}>Edit</button>
                         <Link href={`/properties/${property.id}`} style={{ ...buttonStyle, display: 'inline-block', textDecoration: 'none', textAlign: 'center' }}>View</Link>
                         <button onClick={() => handleDuplicateProperty(property.id, property.name)} style={buttonStyle}>Duplicate</button>

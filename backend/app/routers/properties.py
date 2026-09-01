@@ -108,6 +108,59 @@ async def get_unique_locations(db: AsyncSession = Depends(get_db)):
 
 
 
+@router.get("/featured", response_model=list[PropertyOut])
+async def list_featured_properties(
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Return up to 8 admin-featured published properties.
+    Falls back to the 6 highest-rated published properties when none are featured.
+    """
+    cache_key = "properties:featured"
+    try:
+        cached = await cache_get_json(cache_key)
+        if cached and isinstance(cached, list):
+            return cached
+    except Exception:
+        pass
+
+    # Try featured first
+    result = await db.execute(
+        select(Property)
+        .options(selectinload(Property.images))
+        .where(Property.is_published == True, Property.is_featured == True)
+        .order_by(Property.avg_rating.desc())
+        .limit(8)
+    )
+    properties = list(result.scalars().all())
+
+    # Fallback: top-rated published properties
+    if not properties:
+        result = await db.execute(
+            select(Property)
+            .options(selectinload(Property.images))
+            .where(Property.is_published == True)
+            .order_by(Property.avg_rating.desc())
+            .limit(6)
+        )
+        properties = list(result.scalars().all())
+
+    # Apply group inheritance for each property
+    inherited = []
+    for p in properties:
+        try:
+            inherited.append(await apply_property_inheritance(db, p))
+        except Exception:
+            inherited.append(PropertyOut.model_validate(p))
+
+    response = [PropertyOut.model_validate(p).model_dump(mode="json") if not isinstance(p, PropertyOut) else p.model_dump(mode="json") for p in inherited]
+    try:
+        await cache_set_json(cache_key, response, ttl_seconds=300)
+    except Exception:
+        pass
+    return response
+
+
 @router.get("/{property_id}", response_model=PropertyOut)
 async def get_property(
     property_id: str,

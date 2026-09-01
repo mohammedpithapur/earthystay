@@ -49,6 +49,7 @@ class Property(Base):
     max_pets: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     amenities: Mapped[dict] = mapped_column(JSONB, default=list, nullable=False)
     is_published: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_featured: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     override_house_rules: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     override_amenities: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     override_details: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

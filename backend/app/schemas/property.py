@@ -71,6 +71,7 @@ class PropertyOut(BaseModel):
     pet_charge_per_night: int = 0
     amenities: list[str] = Field(default_factory=list)
     is_published: bool = True
+    is_featured: bool = False
     override_house_rules: bool = False
     override_amenities: bool = False
     override_details: bool = False
@@ -187,6 +188,7 @@ class PropertyCreate(BaseModel):
     pet_charge_per_night: int = 0
     amenities: list[str] = []
     is_published: bool = False
+    is_featured: bool = False
     override_house_rules: bool = False
     override_amenities: bool = False
     override_details: bool = False
@@ -225,6 +227,7 @@ class PropertyUpdate(BaseModel):
     pet_charge_per_night: int | None = None
     amenities: list[str] | None = None
     is_published: bool | None = None
+    is_featured: bool | None = None
     override_house_rules: bool | None = None
     override_amenities: bool | None = None
     override_details: bool | None = None

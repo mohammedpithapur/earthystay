@@ -42,6 +42,7 @@ export interface Property {
   latitude: number
   longitude: number
   is_published: boolean
+  is_featured?: boolean
   min_nights: number
   pets_allowed: boolean
   pet_charge_per_night: number

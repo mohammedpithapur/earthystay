@@ -39,11 +39,12 @@ export default function FeaturedProperties() {
 
     const load = async () => {
       try {
-        const response = await fetch(buildApiUrl('/properties?limit=6'), { cache: 'no-store' })
+        const response = await fetch(buildApiUrl('/properties/featured'), { cache: 'no-store' })
         if (!response.ok) throw new Error('Failed to load properties')
         const data = await response.json()
         if (isMounted) {
-          setProperties(Array.isArray(data.items) ? data.items : [])
+          // /properties/featured returns a plain array
+          setProperties(Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : []))
         }
       } catch {
         if (isMounted) setProperties([])
