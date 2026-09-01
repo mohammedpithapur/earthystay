@@ -45,9 +45,9 @@ class Settings(BaseSettings):
     RAZORPAY_KEY_SECRET: str = ""
 
     # Web Push (VAPID) — generate keys with: python backend/generate_vapid.py
-    VAPID_PUBLIC_KEY: str = ""
-    VAPID_PRIVATE_KEY: str = ""
-    VAPID_CONTACT_EMAIL: str = "noreply@earthystays.in"
+    VAPID_PUBLIC_KEY: str = "BBEvrlgw4jr6bqlZQOnvleXIfzbvVH9cc95CfV_1yTltNL5mHAFuI48Sn0PMMO84_hzG9mh0-akMvaOrvshL2dc"
+    VAPID_PRIVATE_KEY: str = "EpU8uIDaX8g-etzbY5Ehlm5djZM4vAhYasKm4bs-tZo"
+    VAPID_CONTACT_EMAIL: str = "staysearthy@gmail.com"
 
     model_config = {"env_file": ".env"}
 

@@ -15,6 +15,7 @@ from app.models.price_override import PropertyPriceOverride
 from app.schemas.booking import BookingCreate, BookingOut, BookingStatusUpdate, BookingListOut
 from app.services.booking import calculate_pricing, apply_group_blocking, remove_shadow_blocks, auto_cleanup_expired_bookings
 from app.services.email import send_booking_cancellation_email
+from app.services.push import send_push_to_user, send_push_to_admins
 
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
@@ -242,6 +243,17 @@ async def update_booking_status(
             total=str(booking.total),
         )
 
+    # Push notification to guest when booking status changes
+    if booking.guest_id and booking.status != old_status:
+        property_obj = await db.get(Property, booking.property_id)
+        prop_name = property_obj.name if property_obj else "EarthyStay Property"
+        background_tasks.add_task(
+            send_push_to_user,
+            user_id=booking.guest_id,
+            title=f"Booking {booking.status.value.title()} — {prop_name}",
+            body=f"Your booking (Ref: {booking.booking_ref}) status is now {booking.status.value}.",
+            url="/dashboard",
+        )
 
     return booking
 

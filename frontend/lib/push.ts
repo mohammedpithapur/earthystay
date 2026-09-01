@@ -3,7 +3,7 @@
  * Used by the PushSubscribeButton component.
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://api.earthystays.in';
+import { buildApiUrl } from '@/lib/api';
 
 /** Converts a base64url string to Uint8Array (required for applicationServerKey). */
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
@@ -28,7 +28,7 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
 export async function subscribeToPush(token: string): Promise<boolean> {
   try {
     // 1. Fetch VAPID public key from backend
-    const keyRes = await fetch(`${API_BASE}/push/vapid-public-key`);
+    const keyRes = await fetch(buildApiUrl('/push/vapid-public-key'));
     if (!keyRes.ok) throw new Error('Failed to fetch VAPID public key');
     const { public_key } = await keyRes.json();
 
@@ -52,7 +52,7 @@ export async function subscribeToPush(token: string): Promise<boolean> {
     if (!p256dh || !auth) throw new Error('Missing subscription keys');
 
     // 4. Send to backend
-    const res = await fetch(`${API_BASE}/push/subscribe`, {
+    const res = await fetch(buildApiUrl('/push/subscribe'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -79,7 +79,7 @@ export async function unsubscribeFromPush(token: string): Promise<boolean> {
     const p256dh = json.keys?.p256dh ?? '';
     const auth = json.keys?.auth ?? '';
 
-    await fetch(`${API_BASE}/push/unsubscribe`, {
+    await fetch(buildApiUrl('/push/unsubscribe'), {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
@@ -92,6 +92,23 @@ export async function unsubscribeFromPush(token: string): Promise<boolean> {
     return true;
   } catch (err) {
     console.error('[Push] Unsubscribe error:', err);
+    return false;
+  }
+}
+
+/** Send a test notification to the current user's subscribed devices. */
+export async function sendTestPush(token: string): Promise<boolean> {
+  try {
+    const res = await fetch(buildApiUrl('/push/test'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return res.ok;
+  } catch (err) {
+    console.error('[Push] Test push error:', err);
     return false;
   }
 }

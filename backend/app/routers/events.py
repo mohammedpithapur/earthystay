@@ -79,6 +79,14 @@ async def create_event_request(
         additional_details=data.additional_details or "",
     ))
 
+    # Send push notification to admin devices
+    from app.services.push import send_push_to_admins
+    asyncio.create_task(send_push_to_admins(
+        title=f"New Event Enquiry — {data.nature_of_event}",
+        body=f"{data.name} · {data.destination} · {data.no_of_guests} guests",
+        url="/admin",
+    ))
+
     return event_req
 
 

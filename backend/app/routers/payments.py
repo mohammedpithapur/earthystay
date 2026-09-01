@@ -47,7 +47,7 @@ from app.models.property import Property
 from app.schemas.booking import BookingOut
 from app.schemas.payment import PaymentOrderCreate, PaymentOrderOut, PaymentOut, PaymentVerifyIn
 from app.services.email import send_booking_confirmation_email
-from app.services.push import send_push_to_all
+from app.services.push import send_push_to_admins, send_push_to_user, send_push_to_all
 from app.services.booking import remove_shadow_blocks
 
 
@@ -272,14 +272,23 @@ async def verify_payment(
     for recipient in admin_emails:
         background_tasks.add_task(send_booking_confirmation_email, to_email=recipient, **_email_kwargs)
 
-    # Push notification to all subscribed devices
+    # Push notification to admin devices
     background_tasks.add_task(
-        send_push_to_all,
-        db=db,
+        send_push_to_admins,
         title=f"New Booking — {property_name}",
-        body=f"{booking.guest_name} · {booking.check_in} → {booking.check_out} · ₹{booking.total:,}",
+        body=f"Ref: {booking.booking_ref} · {booking.guest_name} · {booking.check_in} → {booking.check_out} · ₹{booking.total:,}",
         url="/admin",
     )
+
+    # Push notification to guest device
+    if booking.guest_id:
+        background_tasks.add_task(
+            send_push_to_user,
+            user_id=booking.guest_id,
+            title="Booking Confirmed! 🎉",
+            body=f"Your stay at {property_name} ({booking.check_in} → {booking.check_out}) is confirmed! Ref: {booking.booking_ref}",
+            url="/dashboard",
+        )
 
     return booking
 
@@ -388,6 +397,24 @@ async def razorpay_webhook(
                     admin_emails = {email for email in [c_email, "staysearthy@gmail.com"] if email and email != booking.guest_email}
                     for recipient in admin_emails:
                         background_tasks.add_task(send_booking_confirmation_email, to_email=recipient, **_email_kwargs)
+
+                    # Push notification to admin devices
+                    background_tasks.add_task(
+                        send_push_to_admins,
+                        title=f"New Booking — {property_name}",
+                        body=f"Ref: {booking.booking_ref} · {booking.guest_name} · {booking.check_in} → {booking.check_out} · ₹{booking.total:,}",
+                        url="/admin",
+                    )
+
+                    # Push notification to guest device
+                    if booking.guest_id:
+                        background_tasks.add_task(
+                            send_push_to_user,
+                            user_id=booking.guest_id,
+                            title="Booking Confirmed! 🎉",
+                            body=f"Your stay at {property_name} ({booking.check_in} → {booking.check_out}) is confirmed! Ref: {booking.booking_ref}",
+                            url="/dashboard",
+                        )
 
                 else:
                     await db.commit()

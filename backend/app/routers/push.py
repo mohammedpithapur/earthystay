@@ -78,3 +78,30 @@ async def unsubscribe(
         await db.delete(sub)
         await db.commit()
     return {"status": "unsubscribed"}
+
+
+@router.post("/test")
+async def test_notification(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Send a test push notification to the authenticated user's registered devices."""
+    from app.services.push import send_push_to_user
+
+    is_admin = getattr(user, "role", None) and user.role.value == "admin"
+    title = "EarthyStay Admin Notification" if is_admin else "EarthyStay Notifications"
+    body = (
+        "Push notifications are working properly on this device! 🔔"
+        if is_admin
+        else "You will now receive booking updates and stay reminders on this device! 🏡"
+    )
+    url = "/admin" if is_admin else "/dashboard"
+
+    sent_count = await send_push_to_user(
+        user_id=user.id,
+        title=title,
+        body=body,
+        url=url,
+        db=db,
+    )
+    return {"status": "sent", "devices_notified": sent_count}

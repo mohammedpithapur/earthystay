@@ -1,17 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { isPushSupported, isSubscribed, subscribeToPush, unsubscribeFromPush } from "@/lib/push";
+import { isPushSupported, isSubscribed, subscribeToPush, unsubscribeFromPush, sendTestPush } from "@/lib/push";
 
 interface Props {
   /** JWT access token from auth context */
   token: string | null;
+  /** Whether to show a Test Push button when subscribed */
+  showTestButton?: boolean;
+  /** Custom label */
+  label?: string;
 }
 
-export default function PushSubscribeButton({ token }: Props) {
+export default function PushSubscribeButton({ token, showTestButton = false, label }: Props) {
   const [supported, setSupported] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testSuccess, setTestSuccess] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission>("default");
 
   useEffect(() => {
@@ -44,47 +50,85 @@ export default function PushSubscribeButton({ token }: Props) {
     setLoading(false);
   };
 
+  const handleTest = async () => {
+    if (!token || testing) return;
+    setTesting(true);
+    const ok = await sendTestPush(token);
+    if (ok) {
+      setTestSuccess(true);
+      setTimeout(() => setTestSuccess(false), 3000);
+    }
+    setTesting(false);
+  };
+
   const blocked = permission === "denied";
 
   return (
-    <button
-      onClick={handleToggle}
-      disabled={loading || blocked || !token}
-      title={
-        blocked
-          ? "Notifications blocked in browser settings"
+    <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+      <button
+        onClick={handleToggle}
+        disabled={loading || blocked || !token}
+        title={
+          blocked
+            ? "Notifications blocked in browser settings"
+            : subscribed
+            ? "Disable push notifications"
+            : "Enable push notifications"
+        }
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+          padding: "7px 12px",
+          borderRadius: "8px",
+          border: subscribed ? "1px solid #b7895f" : "1px solid #d4cdc4",
+          background: subscribed ? "#fffdf5" : "#ffffff",
+          color: subscribed ? "#8a5d35" : "#5f574d",
+          fontSize: "13px",
+          fontWeight: 600,
+          cursor: loading || blocked ? "not-allowed" : "pointer",
+          opacity: blocked ? 0.5 : 1,
+          transition: "all 0.2s",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {loading ? (
+          <LoadingSpinner />
+        ) : (
+          <BellIcon active={subscribed} />
+        )}
+        {blocked
+          ? "Notifications Blocked"
           : subscribed
-          ? "Disable booking notifications"
-          : "Enable booking notifications"
-      }
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "6px",
-        padding: "7px 12px",
-        borderRadius: "6px",
-        border: subscribed ? "1px solid #c9a84a" : "1px solid #d4cdc4",
-        background: subscribed ? "#fffdf5" : "#ffffff",
-        color: subscribed ? "#9a7a2f" : "#5f574d",
-        fontSize: "13px",
-        fontWeight: 600,
-        cursor: loading || blocked ? "not-allowed" : "pointer",
-        opacity: blocked ? 0.5 : 1,
-        transition: "all 0.2s",
-        whiteSpace: "nowrap",
-      }}
-    >
-      {loading ? (
-        <LoadingSpinner />
-      ) : (
-        <BellIcon active={subscribed} />
+          ? (label ? `${label} On` : "Notifications On")
+          : (label ? `Enable ${label}` : "Enable Notifications")}
+      </button>
+
+      {subscribed && showTestButton && (
+        <button
+          onClick={handleTest}
+          disabled={testing}
+          title="Send a test notification to verify your device"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "4px",
+            padding: "6px 10px",
+            borderRadius: "6px",
+            border: "1px solid #d4cdc4",
+            background: testSuccess ? "#E8F5E9" : "#ffffff",
+            color: testSuccess ? "#2E7D32" : "#5f574d",
+            fontSize: "12px",
+            fontWeight: 600,
+            cursor: testing ? "not-allowed" : "pointer",
+            transition: "all 0.2s",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {testing ? "Sending..." : testSuccess ? "Sent! ✓" : "Test Push"}
+        </button>
       )}
-      {blocked
-        ? "Notifications Blocked"
-        : subscribed
-        ? "Notifications On"
-        : "Enable Notifications"}
-    </button>
+    </div>
   );
 }
 

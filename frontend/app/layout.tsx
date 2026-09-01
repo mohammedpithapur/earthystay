@@ -48,10 +48,21 @@ export const metadata: Metadata = {
     description: 'Discover and book one-of-a-kind earthy villas, cottages, and estates across India. Perfect for stays, weddings, and corporate retreats.',
     images: ['https://earthystays.in/og-image.jpg'],
   },
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'EarthyStay',
+  },
   icons: {
-    icon: '/Untitled_design-removebg-preview.png?v=2',
-    shortcut: '/Untitled_design-removebg-preview.png?v=2',
-    apple: '/Untitled_design-removebg-preview.png?v=2',
+    icon: [
+      { url: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/Untitled_design-removebg-preview.png?v=2' },
+    ],
+    shortcut: '/icons/icon-192x192.png',
+    apple: [
+      { url: '/icons/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
   },
 }
 

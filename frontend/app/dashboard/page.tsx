@@ -11,6 +11,7 @@ import {
 } from '@/lib/api'
 import type { Property } from '@/lib/types'
 import { Building2, Share2, Download, Calendar, Users, Check, X, Shield, Clock, MapPin, Plus, LogOut } from 'lucide-react'
+import PushSubscribeButton from '@/components/shared/PushSubscribeButton'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -409,7 +410,7 @@ function BookingCard({ booking, property, expanded, onToggle, onVoucher }: {
 
 export default function DashboardPage() {
   const router = useRouter()
-  const { user, loading, logout, fetchWithAuth } = useAuth()
+  const { user, loading, logout, fetchWithAuth, accessToken } = useAuth()
   useRequireAuth()
 
   // ── State ──
@@ -647,10 +648,13 @@ export default function DashboardPage() {
             </h1>
             <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', marginTop: '4px' }}>{user.email}</p>
           </div>
-          <Link href="/properties"
-            style={{ backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', padding: '14px 28px', fontSize: '13px', letterSpacing: '1.5px', fontWeight: '800', textTransform: 'uppercase', textDecoration: 'none', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-            <Plus size={16} /> Book New Stay
-          </Link>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <PushSubscribeButton token={accessToken} showTestButton={true} label="Stay Notifications" />
+            <Link href="/properties"
+              style={{ backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', padding: '14px 28px', fontSize: '13px', letterSpacing: '1.5px', fontWeight: '800', textTransform: 'uppercase', textDecoration: 'none', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <Plus size={16} /> Book New Stay
+            </Link>
+          </div>
         </div>
       </div>
 

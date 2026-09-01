@@ -12,13 +12,13 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'EarthyStay';
   const options = {
     body: data.body || 'You have a new notification',
-    icon: data.icon || '/logo.svg',
-    badge: '/logo.svg',
-    tag: 'earthystay-booking',
+    icon: data.icon || '/icons/icon-192x192.png',
+    badge: data.badge || '/icons/icon-192x192.png',
+    tag: data.tag || 'earthystay-notification',
     renotify: true,
-    data: { url: data.url || '/admin' },
+    data: { url: data.url || '/' },
     actions: [
-      { action: 'open', title: 'Open Admin' },
+      { action: 'open', title: 'Open' },
       { action: 'dismiss', title: 'Dismiss' },
     ],
   };
@@ -30,18 +30,27 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   if (event.action === 'dismiss') return;
 
-  const url = event.notification.data?.url || '/admin';
+  const targetUrl = event.notification.data?.url || '/';
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // If admin tab is already open, focus it
+      // If a window is already open with this URL or origin, focus it
       for (const client of clientList) {
-        if (client.url.includes('/admin') && 'focus' in client) {
-          return client.focus();
+        if ('focus' in client) {
+          if (client.url.includes(targetUrl)) {
+            return client.focus();
+          }
         }
       }
-      // Otherwise open a new tab
+      // If any client exists, navigate and focus
+      if (clientList.length > 0 && 'focus' in clientList[0]) {
+        clientList[0].focus();
+        if ('navigate' in clientList[0]) {
+          return clientList[0].navigate(targetUrl);
+        }
+      }
+      // Otherwise open a new window
       if (clients.openWindow) {
-        return clients.openWindow(url);
+        return clients.openWindow(targetUrl);
       }
     })
   );
