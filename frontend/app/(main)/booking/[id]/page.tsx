@@ -487,6 +487,12 @@ function BookingPageContent() {
                 <span>{basePrice !== property.price_per_night * nights ? `Base rate (${nights} nights · custom rate)` : `₹${property.price_per_night.toLocaleString('en-IN')} × ${nights} nights`}</span>
                 <span>₹{basePrice.toLocaleString('en-IN')}</span>
               </div>
+              {property && basePrice < property.price_per_night * nights && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#137333', fontWeight: '600', backgroundColor: '#e6f4ea', padding: '6px 10px', borderRadius: '6px' }}>
+                  <span>🎉 Coupon Discount Applied</span>
+                  <span>−₹{((property.price_per_night * nights) - basePrice).toLocaleString('en-IN')}</span>
+                </div>
+              )}
               {pets > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--color-text-secondary)' }}>
                   <span>{pets} pet{pets > 1 ? 's' : ''} × {nights} nights</span>

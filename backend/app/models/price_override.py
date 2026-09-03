@@ -26,6 +26,7 @@ class PropertyPriceOverride(Base):
     start_date: Mapped[date] = mapped_column(Date, nullable=False)
     end_date: Mapped[date] = mapped_column(Date, nullable=False)
     price_per_night: Mapped[int] = mapped_column(Integer, nullable=False)
+    discount_percent: Mapped[int | None] = mapped_column(Integer, nullable=True)
     label: Mapped[str | None] = mapped_column(String(100), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, nullable=False)
 

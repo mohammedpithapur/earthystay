@@ -357,35 +357,16 @@ async def send_admin_event_enquiry_email(
         ("Email", guest_email),
     ]
     rows_html = "".join(
-        f"<tr><td style='padding:5px 16px 5px 0;color:#7a7167;white-space:nowrap;'>{label}</td>"
-        f"<td style='padding:5px 0;color:#2b2017;font-weight:600;word-break:break-all;'>{value}</td></tr>"
+        f"<tr><td style='padding:6px 16px 6px 0;color:#7a7167;white-space:nowrap;'>{label}</td>"
+        f"<td style='padding:6px 0;color:#2b2017;font-weight:600;word-break:break-all;'>{value}</td></tr>"
         for label, value in rows
     )
-    note_block = (
-        f"<div style='background:#fffaf4;border-left:3px solid #ead0af;border-radius:0 8px 8px 0;"
-        f"padding:16px 20px;margin-bottom:24px;'>"
-        f"<p style='margin:0 0 6px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#b7895f;font-weight:700;'>Message</p>"
-        f"<p style='margin:0;font-size:14px;color:#000;line-height:1.7;'>{additional_details}</p></div>"
-        if additional_details else ""
-    )
-    html = (
-        f"<!doctype html><html><body style='margin:0;padding:0;background:#f7efe6;font-family:Arial,sans-serif;'>"
-        f"<div style='max-width:600px;margin:0 auto;padding:32px 16px;'>"
-        f"<div style='background:#2b2017;border-radius:10px 10px 0 0;padding:24px 32px;text-align:center;'>"
-        f"<p style='margin:0 0 4px;font-size:12px;letter-spacing:4px;text-transform:uppercase;color:#ffffff;font-weight:700;'>EarthyStay Admin</p>"
-        f"<h1 style='margin:0;font-size:22px;color:#ead0af;font-weight:700;'>New Event Enquiry</h1></div>"
-        f"<div style='background:#ffffff;padding:32px;'>"
-        f"<p style='margin:0 0 20px;font-size:15px;color:#000000;'>A new <strong>{nature_of_event}</strong> enquiry has been submitted.</p>"
-        f"<div style='background:#fffaf4;border:1px solid #d9c2a8;border-radius:8px;padding:20px;margin-bottom:24px;'>"
-        f"<table style='width:100%;border-collapse:collapse;font-size:14px;'>{rows_html}</table></div>"
-        f"{note_block}"
-        f"<div style='text-align:center;'>"
-        f"<a href='{admin_url}' style='display:inline-block;background:#b7895f;color:#ffffff;text-decoration:none;"
-        f"border-radius:6px;padding:12px 28px;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;'>"
-        f"Open Admin Panel</a></div></div>"
-        f"<div style='background:#ead1b3;border-radius:0 0 10px 10px;padding:16px 32px;text-align:center;border-top:1px solid #d9c2a8;'>"
-        f"<p style='margin:0;font-size:12px;color:#2b2017;'>EarthyStay Admin Notification</p></div>"
-        f"</div></body></html>"
+    html = _render_template(
+        "admin_event_enquiry.html",
+        nature_of_event=nature_of_event,
+        rows_html=rows_html,
+        additional_details=additional_details,
+        admin_url=admin_url,
     )
 
     subject = f"[Admin] New {nature_of_event} Enquiry — {name} ({destination})"
@@ -412,4 +393,51 @@ async def send_admin_event_enquiry_email(
         return False
     except Exception as exc:
         logger.exception("Error sending admin event email: %s", exc)
+        return False
+
+
+async def send_contact_enquiry_email(
+    name: str,
+    email: str,
+    phone: str,
+    subject: str,
+    message: str,
+) -> bool:
+    """Send contact form enquiry to admin (staysearthy@gmail.com)."""
+    admin_url = f"{settings.FRONTEND_BASE_URL}/admin"
+    html = _render_template(
+        "contact_enquiry_admin.html",
+        name=name,
+        email=email,
+        phone=phone or "Not provided",
+        subject=subject,
+        message=message,
+        admin_url=admin_url,
+    )
+    subject_line = f"[Contact] {subject} — {name}"
+
+    if not settings.RESEND_API_KEY:
+        logger.info("[DEV EMAIL] Contact enquiry from %s", email)
+        return True
+
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.post(
+                "https://api.resend.com/emails",
+                headers={"Authorization": f"Bearer {settings.RESEND_API_KEY}"},
+                json={
+                    "from": settings.RESEND_FROM_EMAIL,
+                    "to": [settings.ADMIN_EMAIL],
+                    "reply_to": [email],
+                    "subject": subject_line,
+                    "html": html,
+                },
+            )
+        if response.is_success:
+            logger.info("Sent contact enquiry email from %s", email)
+            return True
+        logger.error("Contact email failed: %s %s", response.status_code, response.text)
+        return False
+    except Exception as exc:
+        logger.exception("Error sending contact email: %s", exc)
         return False

@@ -12,7 +12,8 @@ const Map = dynamic(() => import('./Map'), {
       alignItems: 'center',
       justifyContent: 'center',
       flexDirection: 'column',
-      gap: '12px'
+      gap: '12px',
+      borderRadius: '12px',
     }}>
       <MapPin size={32} color="var(--color-gold)" />
       <p style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Loading map...</p>

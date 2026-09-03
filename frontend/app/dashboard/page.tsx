@@ -554,7 +554,7 @@ export default function DashboardPage() {
           <h3 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '10px' }}>{emptyTitle}</h3>
           <p style={{ color: 'var(--color-text-muted)', fontSize: '14px', marginBottom: '24px' }}>{emptyBody}</p>
           <Link href="/properties" style={{ backgroundColor: 'var(--color-gold)', color: 'var(--color-text-primary)', padding: '14px 32px', fontSize: '13px', letterSpacing: '1.5px', textTransform: 'uppercase', fontWeight: '700', textDecoration: 'none', borderRadius: '8px', display: 'inline-block' }}>
-            Explore Our Hotels
+            Explore Our Properties
           </Link>
         </div>
       )

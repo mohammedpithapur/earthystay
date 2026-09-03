@@ -61,6 +61,7 @@ export interface Property {
   check_in_time: string  // e.g. "2:00 PM"
   check_out_time: string // e.g. "11:00 AM"
   house_rules: string[]  // list of rules
+  local_recommendations?: string[] // list of local recommendations
   override_house_rules?: boolean
   override_amenities?: boolean
   override_details?: boolean
@@ -122,4 +123,19 @@ export interface ICalLink {
   direction: 'import' | 'export'
   last_synced_at: string
   is_active: boolean
+}
+
+export interface Article {
+  id: string
+  title: string
+  slug: string
+  excerpt?: string | null
+  content: string
+  cover_image_url?: string | null
+  author_name: string
+  read_time_minutes: number
+  tags: string[]
+  is_published: boolean
+  created_at: string
+  updated_at: string
 }

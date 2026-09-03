@@ -120,6 +120,7 @@ type PropertyFormState = {
   max_pets: number
   is_published: boolean
   house_rules: string[]
+  local_recommendations: string[]
 }
 
 type PhotosSectionProps = {
@@ -150,6 +151,7 @@ const EMPTY_FORM: PropertyFormState = {
   price_per_night: 5000, cleaning_fee: 800, extra_guest_charge_per_night: 0, base_guests: 2, pet_charge_per_night: 300,
   min_nights: 1, pets_allowed: false, max_pets: 0, is_published: true,
   house_rules: [] as string[],
+  local_recommendations: [] as string[],
 }
 
 function createFormFromProperty(property?: Property | null): PropertyFormState {
@@ -190,6 +192,7 @@ function createFormFromProperty(property?: Property | null): PropertyFormState {
     max_pets: (property as { max_pets?: number }).max_pets ?? 0,
     is_published: property.is_published,
     house_rules: [...(property.house_rules ?? [])],
+    local_recommendations: [...(property.local_recommendations ?? [])],
   }
 }
 
@@ -954,10 +957,14 @@ function PhotosSection({
     setUploadNotice('')
     const targetAlbum = activeFolder === 'All' ? 'General' : activeFolder
 
+    // Add all files to form state immediately with local preview URLs
+    const fileQueue: Array<{ tempId: string; file: File; localPreviewUrl: string }> = []
+    
     for (const [index, file] of files.entries()) {
       const tempId = `upload-${Date.now()}-${index}-${Math.random().toString(16).slice(2)}`
       const localPreviewUrl = URL.createObjectURL(file)
       uploadFilesRef.current[tempId] = file
+      fileQueue.push({ tempId, file, localPreviewUrl })
 
       setForm(prev => ({
         ...prev,
@@ -967,20 +974,31 @@ function PhotosSection({
             id: tempId,
             property_id: '',
             image_url: localPreviewUrl,
-            is_primary: prev.images.length === 0,
-            display_order: prev.images.length + 1,
+            is_primary: prev.images.length === 0 && index === 0,
+            display_order: prev.images.length + index + 1,
             album_name: targetAlbum,
           },
         ],
       }))
       setUploadProgress(prev => ({ ...prev, [tempId]: 0 }))
       setUploadErrors(prev => { const n = { ...prev }; delete n[tempId]; return n })
+    }
 
-      activeUploadCountRef.current += 1
-      setIsUploading(true)
+    activeUploadCountRef.current += files.length
+    setIsUploading(true)
 
-      void (async () => {
+    // Upload with concurrency limit of 3 at a time
+    const CONCURRENCY = 3
+    const MAX_RETRIES = 2
+
+    const uploadOne = async ({ tempId, file, localPreviewUrl }: typeof fileQueue[0]) => {
+      let lastError: Error | null = null
+      for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
         try {
+          if (attempt > 0) {
+            // Wait before retry: 1s, 2s
+            await new Promise(r => setTimeout(r, attempt * 1000))
+          }
           const publicUrl = await uploadPropertyImage(file, percent => {
             setUploadProgress(prev => ({ ...prev, [tempId]: percent }))
           }, fetchWithAuth)
@@ -998,24 +1016,33 @@ function PhotosSection({
           }))
           setUploadProgress(prev => { const n = { ...prev }; delete n[tempId]; return n })
           delete uploadFilesRef.current[tempId]
+          return // success
         } catch (error) {
-          try { URL.revokeObjectURL(localPreviewUrl) } catch {}
-          const message = error instanceof Error ? error.message : 'Image upload failed'
-          setForm(prev => ({
-            ...prev,
-            images: prev.images.filter(img => img.id !== tempId),
-          }))
-          setUploadErrors(prev => ({ ...prev, [tempId]: message }))
-          setUploadNotice(message || 'Image upload failed. Please try again or use a smaller file under 10MB.')
-          setUploadProgress(prev => { const n = { ...prev }; delete n[tempId]; return n })
-          delete uploadFilesRef.current[tempId]
-        } finally {
-          activeUploadCountRef.current = Math.max(0, activeUploadCountRef.current - 1)
-          if (activeUploadCountRef.current === 0) {
-            setIsUploading(false)
-          }
+          lastError = error instanceof Error ? error : new Error('Upload failed')
         }
-      })()
+      }
+      // All retries failed
+      try { URL.revokeObjectURL(localPreviewUrl) } catch {}
+      const message = lastError?.message ?? 'Image upload failed'
+      setForm(prev => ({
+        ...prev,
+        images: prev.images.filter(img => img.id !== tempId),
+      }))
+      setUploadErrors(prev => ({ ...prev, [tempId]: message }))
+      setUploadNotice(`Some images failed to upload. Please try adding them again.`)
+      setUploadProgress(prev => { const n = { ...prev }; delete n[tempId]; return n })
+      delete uploadFilesRef.current[tempId]
+    }
+
+    // Run in batches of CONCURRENCY
+    for (let i = 0; i < fileQueue.length; i += CONCURRENCY) {
+      const batch = fileQueue.slice(i, i + CONCURRENCY)
+      await Promise.all(batch.map(uploadOne))
+    }
+
+    activeUploadCountRef.current = Math.max(0, activeUploadCountRef.current - files.length)
+    if (activeUploadCountRef.current === 0) {
+      setIsUploading(false)
     }
   }
 
@@ -1664,6 +1691,7 @@ function PoliciesSection({
 
 function HouseRulesSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: (f: typeof EMPTY_FORM) => void }) {
   const [customInput, setCustomInput] = useState('')
+  const [recInput, setRecInput] = useState('')
 
   const togglePredefined = (rule: string) => {
     const next = form.house_rules.includes(rule)
@@ -1682,6 +1710,21 @@ function HouseRulesSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm
 
   const removeRule = (rule: string) => {
     setForm({ ...form, house_rules: form.house_rules.filter(r => r !== rule) })
+  }
+
+  const addRec = () => {
+    const trimmed = recInput.trim()
+    if (trimmed && !(form.local_recommendations || []).includes(trimmed)) {
+      setForm({ ...form, local_recommendations: [...(form.local_recommendations || []), trimmed] })
+      setRecInput('')
+    }
+  }
+
+  const removeRec = (index: number) => {
+    setForm({
+      ...form,
+      local_recommendations: (form.local_recommendations || []).filter((_, idx) => idx !== index),
+    })
   }
 
   const isCustom = (rule: string) => !PREDEFINED_RULES.includes(rule)
@@ -1768,6 +1811,80 @@ function HouseRulesSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm
           </div>
         </div>
       )}
+
+      {/* Local Recommendations */}
+      <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '28px' }}>
+        <FieldLabel>Local Recommendations</FieldLabel>
+        <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '16px' }}>
+          Add nearby attractions, food spots, local tips, or places to visit for guests staying at this property
+        </p>
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
+          <input
+            style={{ ...inputStyle, flex: 1 }}
+            value={recInput}
+            placeholder="e.g. Flurys Bakery on Park Street (10 mins walk) - Iconic breakfast"
+            onChange={e => setRecInput(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                addRec()
+              }
+            }}
+          />
+          <button
+            type="button"
+            onClick={addRec}
+            disabled={!recInput.trim()}
+            style={{
+              padding: '12px 20px',
+              backgroundColor: recInput.trim() ? 'var(--color-gold)' : 'var(--color-border)',
+              color: recInput.trim() ? '#ffffff' : 'var(--color-text-muted)',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '13px',
+              fontWeight: '700',
+              cursor: recInput.trim() ? 'pointer' : 'not-allowed',
+              fontFamily: "'Figtree', sans-serif",
+              whiteSpace: 'nowrap',
+            }}
+          >
+            + Add
+          </button>
+        </div>
+
+        {/* List of Recommendations */}
+        {(form.local_recommendations || []).length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {form.local_recommendations.map((rec, i) => (
+              <div
+                key={i}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '12px 16px',
+                  backgroundColor: 'var(--color-bg-card)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: '8px',
+                  gap: '12px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: 0 }}>
+                  <span style={{ color: 'var(--color-gold)', fontSize: '14px', flexShrink: 0 }}>📍</span>
+                  <span style={{ fontSize: '14px', color: 'var(--color-text-primary)' }}>{rec}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeRec(i)}
+                  style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '18px', flexShrink: 0, padding: '0 4px' }}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -1964,6 +2081,7 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
       max_pets: form.pets_allowed ? form.max_pets : 0,
       is_published: form.is_published,
       house_rules: form.house_rules,
+      local_recommendations: form.local_recommendations ?? [],
       avg_rating: property?.avg_rating ?? 0,
       review_count: property?.review_count ?? 0,
       created_at: property?.created_at ?? new Date().toISOString().slice(0, 10),

@@ -38,7 +38,9 @@ def calculate_pricing(
         nightly_rates.append({
             "date": night_date.isoformat(),
             "price": night_rate,
+            "original_price": default_price,
             "is_override": matched_override is not None,
+            "discount_percent": getattr(matched_override, "discount_percent", None) if matched_override else None,
             "label": getattr(matched_override, "label", None) if matched_override else None,
         })
 

@@ -1047,12 +1047,24 @@ async def create_price_override(
     if data.end_date <= data.start_date:
         raise HTTPException(status_code=400, detail="End date must be after start date")
 
-    if data.price_per_night <= 0:
-        raise HTTPException(status_code=400, detail="Price per night must be greater than 0")
+    if data.discount_percent is not None:
+        if not (1 <= data.discount_percent <= 90):
+            raise HTTPException(status_code=400, detail="Discount percentage must be between 1% and 90%")
+    elif data.price_per_night is None or data.price_per_night <= 0:
+        raise HTTPException(status_code=400, detail="Either price_per_night or discount_percent is required")
 
     property_obj = await db.get(Property, prop_uuid)
     if not property_obj:
         raise HTTPException(status_code=404, detail="Property not found")
+
+    if data.discount_percent is not None:
+        # Calculate discounted price from base property price
+        effective_price = max(1, int(round(property_obj.price_per_night * (1.0 - data.discount_percent / 100.0))))
+        default_tag = f"{data.discount_percent}% OFF"
+        effective_label = f"{data.label.strip()} ({default_tag})" if data.label and data.label.strip() else default_tag
+    else:
+        effective_price = data.price_per_night
+        effective_label = data.label.strip() if data.label else None
 
     # Check for existing overlapping overrides
     overlap_res = await db.execute(
@@ -1072,8 +1084,9 @@ async def create_price_override(
         property_id=prop_uuid,
         start_date=data.start_date,
         end_date=data.end_date,
-        price_per_night=data.price_per_night,
-        label=data.label.strip() if data.label else None,
+        price_per_night=effective_price,
+        discount_percent=data.discount_percent,
+        label=effective_label,
     )
     db.add(override)
     await db.commit()

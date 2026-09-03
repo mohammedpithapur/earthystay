@@ -1,4 +1,4 @@
-import type { Property, PropertyImage, Review } from "@/lib/types"
+import type { Property, PropertyImage, Review, Article } from "@/lib/types"
 
 function getCleanApiBase(): string {
   const raw = (process.env.NEXT_PUBLIC_API_BASE || "").trim()
@@ -219,6 +219,7 @@ export type PriceOverride = {
   start_date: string  // "YYYY-MM-DD"
   end_date: string    // "YYYY-MM-DD"
   price_per_night: number
+  discount_percent?: number | null
   label: string | null
   created_at: string
 }
@@ -226,7 +227,8 @@ export type PriceOverride = {
 export type PriceOverrideCreate = {
   start_date: string  // "YYYY-MM-DD"
   end_date: string    // "YYYY-MM-DD"
-  price_per_night: number
+  price_per_night?: number
+  discount_percent?: number | null
   label?: string | null
 }
 
@@ -967,4 +969,73 @@ export async function getPaymentSummary(
   const response = await fetcher(buildApiUrl('/payments/admin/summary'))
   if (!response.ok) throw new Error(`Failed to load payment summary (${response.status})`)
   return response.json()
-}
+}
+
+// ─── Articles ─────────────────────────────────────────────────────────────────
+
+export type ArticleListResponse = {
+  items: Article[]
+  total: number
+  page: number
+  limit: number
+}
+
+export async function listPublicArticles(params?: { page?: number; limit?: number; search?: string; tag?: string }): Promise<ArticleListResponse> {
+  const query = new URLSearchParams()
+  if (params?.page) query.set('page', String(params.page))
+  if (params?.limit) query.set('limit', String(params.limit))
+  if (params?.search) query.set('search', params.search)
+  if (params?.tag) query.set('tag', params.tag)
+  const res = await fetch(buildApiUrl(`/articles${query.toString() ? '?' + query.toString() : ''}`), { next: { revalidate: 60 } })
+  if (!res.ok) throw new Error('Failed to load articles')
+  return res.json()
+}
+
+export async function getArticleBySlugOrId(slugOrId: string): Promise<Article> {
+  const res = await fetch(buildApiUrl(`/articles/${slugOrId}`), { next: { revalidate: 60 } })
+  if (!res.ok) throw new Error('Article not found')
+  return res.json()
+}
+
+export async function listAdminArticles(fetcher: ApiFetcher, params?: { page?: number; limit?: number; search?: string }): Promise<ArticleListResponse> {
+  const query = new URLSearchParams()
+  if (params?.page) query.set('page', String(params.page))
+  if (params?.limit) query.set('limit', String(params.limit))
+  if (params?.search) query.set('search', params.search)
+  const res = await fetcher(buildApiUrl(`/articles/admin/all${query.toString() ? '?' + query.toString() : ''}`))
+  if (!res.ok) throw new Error('Failed to load admin articles')
+  return res.json()
+}
+
+export async function createAdminArticle(fetcher: ApiFetcher, data: Partial<Article>): Promise<Article> {
+  const res = await fetcher(buildApiUrl('/articles/admin'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.detail || 'Failed to create article')
+  }
+  return res.json()
+}
+
+export async function updateAdminArticle(fetcher: ApiFetcher, articleId: string, data: Partial<Article>): Promise<Article> {
+  const res = await fetcher(buildApiUrl(`/articles/admin/${articleId}`), {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error(err.detail || 'Failed to update article')
+  }
+  return res.json()
+}
+
+export async function deleteAdminArticle(fetcher: ApiFetcher, articleId: string): Promise<void> {
+  const res = await fetcher(buildApiUrl(`/articles/admin/${articleId}`), {
+    method: 'DELETE',
+  })
+  if (!res.ok) throw new Error('Failed to delete article')
+}

@@ -96,9 +96,39 @@ export async function unsubscribeFromPush(token: string): Promise<boolean> {
   }
 }
 
+/** Ensure current browser push subscription is synced with backend for the current user. */
+export async function syncSubscription(token: string): Promise<boolean> {
+  try {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return false;
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (!sub) return false;
+    const json = sub.toJSON();
+    const p256dh = json.keys?.p256dh;
+    const auth = json.keys?.auth;
+    if (!p256dh || !auth) return false;
+
+    const res = await fetch(buildApiUrl('/push/subscribe'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ endpoint: sub.endpoint, p256dh, auth }),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error('[Push] Sync subscription error:', err);
+    return false;
+  }
+}
+
 /** Send a test notification to the current user's subscribed devices. */
 export async function sendTestPush(token: string): Promise<boolean> {
   try {
+    // Ensure subscription is synced to backend DB first
+    await syncSubscription(token);
+
     const res = await fetch(buildApiUrl('/push/test'), {
       method: 'POST',
       headers: {
@@ -106,7 +136,9 @@ export async function sendTestPush(token: string): Promise<boolean> {
         Authorization: `Bearer ${token}`,
       },
     });
-    return res.ok;
+    if (!res.ok) return false;
+    const data = await res.json().catch(() => ({}));
+    return (data.devices_notified ?? 0) > 0;
   } catch (err) {
     console.error('[Push] Test push error:', err);
     return false;

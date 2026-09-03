@@ -30,7 +30,7 @@ export default function EventsPageClient() {
   const validate = () => {
     const newErrors: Record<string, string> = {}
     if (!form.destination.trim()) newErrors.destination = 'Destination is required'
-    if (!form.hotel.trim()) newErrors.hotel = 'Hotel selection is required'
+    if (!form.hotel.trim()) newErrors.hotel = 'Property selection is required'
     if (!form.natureOfEvent.trim()) newErrors.natureOfEvent = 'Nature of event is required'
     if (!form.eventStartDate) newErrors.eventStartDate = 'Event start date is required'
     if (!form.eventEndDate) newErrors.eventEndDate = 'Event end date is required'
@@ -112,7 +112,7 @@ export default function EventsPageClient() {
       {/* Form Container */}
       {!submitted ? (
         <div style={{ padding: 'clamp(48px, 6vw, 72px) 24px', maxWidth: '900px', margin: '0 auto' }}>
-          {/* Destination and Hotel Selection */}
+          {/* Destination and Property Selection */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', marginBottom: '32px' }}>
             <div>
               <label style={labelStyle}>DESTINATION</label>
@@ -131,13 +131,13 @@ export default function EventsPageClient() {
             </div>
 
             <div>
-              <label style={labelStyle}>HOTEL/RESORT</label>
+              <label style={labelStyle}>PROPERTY</label>
               <select
                 value={form.hotel}
                 onChange={e => setForm({ ...form, hotel: e.target.value })}
                 style={inputStyle('hotel')}
               >
-                <option value="">Select Hotel</option>
+                <option value="">Select Property</option>
                 <option value="heritage">Heritage Resort</option>
                 <option value="earthy">Earthy Palace</option>
                 <option value="modern">Modern Retreat</option>
@@ -343,7 +343,7 @@ export default function EventsPageClient() {
                   transition: 'all 0.3s ease',
                 }}
               >
-                Our Hotels
+                Our Properties
               </button>
             </div>
           </div>

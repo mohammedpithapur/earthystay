@@ -84,9 +84,10 @@ export default function Navbar() {
         {/* Desktop nav links */}
         <div className="hidden md:flex items-center gap-8">
           {[
-            { label: 'Our Hotels', href: '/properties' },
+            { label: 'Our Properties', href: '/properties' },
             { label: 'Corporate', href: '/corporate' },
             { label: 'Wedding', href: '/wedding' },
+            { label: 'Articles', href: '/articles' },
             { label: 'Contact Us', href: '/contact' },
           ].map(link => (
             <Link key={link.href} href={link.href} style={navLinkStyle}
@@ -201,9 +202,10 @@ export default function Navbar() {
       {mounted && menuOpen && (
         <div className="md:hidden flex flex-col w-full" style={{ backgroundColor: 'var(--color-navbar)', borderTop: '1px solid var(--color-navbar-border)', padding: '16px 24px', gap: '16px', maxWidth: '1400px', margin: '0 auto' }}>
           {[
-            { label: 'Our Hotels', href: '/properties' },
+            { label: 'Our Properties', href: '/properties' },
             { label: 'Corporate', href: '/corporate' },
             { label: 'Wedding', href: '/wedding' },
+            { label: 'Articles', href: '/articles' },
             { label: 'Contact Us', href: '/contact' },
           ].map(link => (
             <Link key={link.href} href={link.href}

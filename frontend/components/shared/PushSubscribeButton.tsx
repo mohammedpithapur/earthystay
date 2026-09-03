@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { isPushSupported, isSubscribed, subscribeToPush, unsubscribeFromPush, sendTestPush } from "@/lib/push";
+import { isPushSupported, isSubscribed, subscribeToPush, unsubscribeFromPush, sendTestPush, syncSubscription } from "@/lib/push";
 
 interface Props {
   /** JWT access token from auth context */
@@ -24,8 +24,13 @@ export default function PushSubscribeButton({ token, showTestButton = false, lab
     if (!isPushSupported()) return;
     setSupported(true);
     setPermission(Notification.permission);
-    isSubscribed().then(setSubscribed);
-  }, []);
+    isSubscribed().then((isSub) => {
+      setSubscribed(isSub);
+      if (isSub && token) {
+        syncSubscription(token);
+      }
+    });
+  }, [token]);
 
   if (!supported) return null;
 
@@ -50,13 +55,19 @@ export default function PushSubscribeButton({ token, showTestButton = false, lab
     setLoading(false);
   };
 
+  const [testError, setTestError] = useState(false);
+
   const handleTest = async () => {
     if (!token || testing) return;
     setTesting(true);
+    setTestError(false);
     const ok = await sendTestPush(token);
     if (ok) {
       setTestSuccess(true);
       setTimeout(() => setTestSuccess(false), 3000);
+    } else {
+      setTestError(true);
+      setTimeout(() => setTestError(false), 4000);
     }
     setTesting(false);
   };
@@ -115,9 +126,9 @@ export default function PushSubscribeButton({ token, showTestButton = false, lab
             gap: "4px",
             padding: "6px 10px",
             borderRadius: "6px",
-            border: "1px solid #d4cdc4",
-            background: testSuccess ? "#E8F5E9" : "#ffffff",
-            color: testSuccess ? "#2E7D32" : "#5f574d",
+            border: testError ? "1px solid #E53E3E" : "1px solid #d4cdc4",
+            background: testSuccess ? "#E8F5E9" : testError ? "#FFF5F5" : "#ffffff",
+            color: testSuccess ? "#2E7D32" : testError ? "#E53E3E" : "#5f574d",
             fontSize: "12px",
             fontWeight: 600,
             cursor: testing ? "not-allowed" : "pointer",
@@ -125,7 +136,7 @@ export default function PushSubscribeButton({ token, showTestButton = false, lab
             whiteSpace: "nowrap",
           }}
         >
-          {testing ? "Sending..." : testSuccess ? "Sent! ✓" : "Test Push"}
+          {testing ? "Sending..." : testSuccess ? "Sent! ✓" : testError ? "Failed — Re-subscribe?" : "Test Push"}
         </button>
       )}
     </div>

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f7efe6;font-family:Arial,sans-serif;">
+  <div style="max-width:600px;margin:0 auto;padding:32px 16px;">
+
+    <!-- Header -->
+    <div style="background:#fffaf4;border:1px solid #ead0af;border-radius:10px 10px 0 0;padding:28px 32px;text-align:center;">
+      <p style="margin:0 0 4px;font-size:11px;letter-spacing:4px;text-transform:uppercase;color:#b7895f;font-weight:700;">EarthyStay Admin</p>
+      <h1 style="margin:0;font-size:22px;color:#2b2017;font-weight:800;">New Event Enquiry</h1>
+      <div style="width:48px;height:2px;background:#b7895f;margin:12px auto 0;"></div>
+    </div>
+
+    <!-- Body -->
+    <div style="background:#ffffff;padding:32px;border-left:1px solid #ead0af;border-right:1px solid #ead0af;">
+      <p style="margin:0 0 20px;font-size:15px;color:#2b2017;">
+        A new <strong>{{ nature_of_event }}</strong> enquiry has been submitted.
+      </p>
+
+      <!-- Details -->
+      <div style="background:#fffaf4;border:1px solid #ead0af;border-radius:8px;padding:20px;margin-bottom:24px;">
+        <table style="width:100%;border-collapse:collapse;font-size:14px;">
+          {{ rows_html }}
+        </table>
+      </div>
+
+      {% if additional_details %}
+      <!-- Message -->
+      <div style="background:#fffaf4;border-left:3px solid #b7895f;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:24px;">
+        <p style="margin:0 0 6px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#b7895f;font-weight:700;">Message</p>
+        <p style="margin:0;font-size:14px;color:#2b2017;line-height:1.7;">{{ additional_details }}</p>
+      </div>
+      {% endif %}
+
+      <!-- CTA -->
+      <div style="text-align:center;">
+        <a href="{{ admin_url }}" style="display:inline-block;background:#b7895f;color:#ffffff;text-decoration:none;border-radius:6px;padding:12px 28px;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">
+          Open Admin Panel
+        </a>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="background:#fffaf4;border:1px solid #ead0af;border-top:none;border-radius:0 0 10px 10px;padding:16px 32px;text-align:center;">
+      <p style="margin:0;font-size:12px;color:#7a7167;">EarthyStay Admin Notification &middot; <a href="{{ admin_url }}" style="color:#b7895f;text-decoration:none;">Admin Panel</a></p>
+    </div>
+
+  </div>
+</body>
+</html>

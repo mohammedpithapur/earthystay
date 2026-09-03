@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { ApiFetcher, CalendarEvent, PriceOverride } from '@/lib/api'
 import { getPropertyCalendarFull, createAdminBlock, deleteAdminBlock, createPriceOverride, deletePriceOverride } from '@/lib/api'
-import { Calendar, Tag, ShieldAlert, X } from 'lucide-react'
+import { Calendar, Tag, ShieldAlert, X, Percent } from 'lucide-react'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -90,8 +90,8 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Mode: 'price' (set custom price for period) or 'block' (block dates)
-  const [activeTab, setActiveTab] = useState<'block' | 'price'>('price')
+  // Mode: 'price' (set custom price for period), 'discount' (apply discount coupon %), or 'block' (block dates)
+  const [activeTab, setActiveTab] = useState<'block' | 'price' | 'discount'>('price')
 
   // Block form
   const [blockStart, setBlockStart] = useState('')
@@ -109,6 +109,15 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
   const [priceSaving, setPriceSaving] = useState(false)
   const [priceError, setPriceError] = useState<string | null>(null)
   const [priceSuccess, setPriceSuccess] = useState<string | null>(null)
+
+  // Discount / Coupon form
+  const [discountStart, setDiscountStart] = useState('')
+  const [discountEnd, setDiscountEnd] = useState('')
+  const [discountPercent, setDiscountPercent] = useState('15')
+  const [discountLabel, setDiscountLabel] = useState('')
+  const [discountSaving, setDiscountSaving] = useState(false)
+  const [discountError, setDiscountError] = useState<string | null>(null)
+  const [discountSuccess, setDiscountSuccess] = useState<string | null>(null)
 
   // Click-to-select range state
   const [selStart, setSelStart] = useState<string | null>(null)
@@ -168,6 +177,24 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
         setSelStart(null)
         setSelHover(null)
       }
+    } else if (activeTab === 'discount') {
+      if (!selStart) {
+        setSelStart(dateStr)
+        setDiscountStart(dateStr)
+        setDiscountEnd('')
+        setDiscountError(null)
+        setDiscountSuccess(null)
+      } else {
+        const s = selStart < dateStr ? selStart : dateStr
+        const e = selStart < dateStr ? dateStr : selStart
+        const eDate = new Date(e)
+        eDate.setDate(eDate.getDate() + 1)
+        const eNext = toDateStr(eDate)
+        setDiscountStart(s)
+        setDiscountEnd(eNext)
+        setSelStart(null)
+        setSelHover(null)
+      }
     } else {
       // Price override mode: click start date, then click end date
       if (!selStart) {
@@ -204,6 +231,11 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
       if (inSel || inPriceRange) {
         return { background: 'rgba(168, 85, 247, 0.28)', border: '1px solid #c084fc', color: '#f3e8ff', fontWeight: '700' }
       }
+    } else if (activeTab === 'discount') {
+      const inDiscountRange = discountStart && discountEnd && dateStr >= discountStart && dateStr < discountEnd
+      if (inSel || inDiscountRange) {
+        return { background: 'rgba(74, 222, 128, 0.22)', border: '1px solid #4ade80', color: '#86efac', fontWeight: '700' }
+      }
     } else {
       const inBlockRange = blockStart && blockEnd && dateStr >= blockStart && dateStr < blockEnd
       if (inSel || inBlockRange) {
@@ -220,6 +252,14 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
 
     // Price override highlight when not booked/blocked
     if (pOverride) {
+      if (pOverride.discount_percent) {
+        return {
+          background: 'rgba(74, 222, 128, 0.12)',
+          border: '1px solid rgba(74, 222, 128, 0.5)',
+          color: '#86efac',
+          fontWeight: '600',
+        }
+      }
       return {
         background: 'rgba(147, 51, 234, 0.12)',
         border: '1px solid rgba(192, 132, 252, 0.5)',
@@ -299,6 +339,34 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
       await fetchEvents()
     } catch (e: unknown) {
       setPriceError(e instanceof Error ? e.message : 'Failed to remove price override')
+    }
+  }
+
+  async function handleCreateDiscount() {
+    if (!discountStart || !discountEnd) { setDiscountError('Please select start and end dates'); return }
+    if (discountEnd <= discountStart) { setDiscountError('End date must be after start date'); return }
+    const pct = parseInt(discountPercent, 10)
+    if (isNaN(pct) || pct < 1 || pct > 90) { setDiscountError('Please enter a valid discount between 1% and 90%'); return }
+
+    setDiscountSaving(true); setDiscountError(null); setDiscountSuccess(null)
+    try {
+      await createPriceOverride(
+        propertyId,
+        {
+          start_date: discountStart,
+          end_date: discountEnd,
+          discount_percent: pct,
+          label: discountLabel.trim() || `${pct}% Discount Offer`,
+        },
+        fetchWithAuth
+      )
+      setDiscountSuccess(`${pct}% discount applied for ${countNights(discountStart, discountEnd)} nights!`)
+      setDiscountStart(''); setDiscountEnd(''); setDiscountLabel(''); setSelStart(null)
+      await fetchEvents()
+    } catch (e: unknown) {
+      setDiscountError(e instanceof Error ? e.message : 'Failed to apply discount coupon')
+    } finally {
+      setDiscountSaving(false)
     }
   }
 
@@ -441,8 +509,8 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
               }}>›</button>
 
               <div style={{ marginLeft: 'auto', fontSize: '0.75rem', color: '#8a7a5a', display: 'flex', alignItems: 'center', gap: 6 }}>
-                Mode: <strong style={{ color: activeTab === 'price' ? '#c084fc' : '#c9a84c', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                  {activeTab === 'price' ? <><Tag size={12} /> Price Override</> : <><ShieldAlert size={12} /> Block Dates</>}
+                Mode: <strong style={{ color: activeTab === 'price' ? '#c084fc' : activeTab === 'discount' ? '#4ade80' : '#c9a84c', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                  {activeTab === 'price' ? <><Tag size={12} /> Price Override</> : activeTab === 'discount' ? <><Percent size={12} /> Discount Coupon</> : <><ShieldAlert size={12} /> Block Dates</>}
                 </strong>
               </div>
             </div>
@@ -503,16 +571,18 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
                     >
                       <span style={{ lineHeight: 1 }}>{day}</span>
 
-                      {/* Overridden price mini-tag */}
+                      {/* Overridden price or discount mini-tag */}
                       {pOverride && !isGuest && adminEvs.length === 0 && (
                         <span style={{
                           fontSize: '0.58rem',
-                          color: '#c084fc',
+                          color: pOverride.discount_percent ? '#4ade80' : '#c084fc',
                           marginTop: 3,
                           fontWeight: 700,
                           letterSpacing: '-0.3px',
                         }}>
-                          ₹{pOverride.price_per_night >= 1000 ? `${(pOverride.price_per_night / 1000).toFixed(pOverride.price_per_night % 1000 === 0 ? 0 : 1)}k` : pOverride.price_per_night}
+                          {pOverride.discount_percent
+                            ? `${pOverride.discount_percent}%`
+                            : `₹${pOverride.price_per_night >= 1000 ? `${(pOverride.price_per_night / 1000).toFixed(pOverride.price_per_night % 1000 === 0 ? 0 : 1)}k` : pOverride.price_per_night}`}
                         </span>
                       )}
 
@@ -557,28 +627,41 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
               <button
                 onClick={() => { setActiveTab('price'); setSelStart(null); setSelHover(null) }}
                 style={{
-                  flex: 1, padding: '14px 8px', fontSize: '0.78rem', fontWeight: 700,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  flex: 1, padding: '14px 6px', fontSize: '0.74rem', fontWeight: 700,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
                   border: 'none', cursor: 'pointer', transition: 'all 0.2s',
                   background: activeTab === 'price' ? '#1a1611' : 'transparent',
                   color: activeTab === 'price' ? '#c084fc' : '#8a7a5a',
                   borderBottom: activeTab === 'price' ? '2px solid #c084fc' : '2px solid transparent',
                 }}
               >
-                <Tag size={14} /> Price Override
+                <Tag size={13} /> Price
+              </button>
+              <button
+                onClick={() => { setActiveTab('discount'); setSelStart(null); setSelHover(null) }}
+                style={{
+                  flex: 1, padding: '14px 6px', fontSize: '0.74rem', fontWeight: 700,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+                  border: 'none', cursor: 'pointer', transition: 'all 0.2s',
+                  background: activeTab === 'discount' ? '#1a1611' : 'transparent',
+                  color: activeTab === 'discount' ? '#4ade80' : '#8a7a5a',
+                  borderBottom: activeTab === 'discount' ? '2px solid #4ade80' : '2px solid transparent',
+                }}
+              >
+                <Percent size={13} /> Discount
               </button>
               <button
                 onClick={() => { setActiveTab('block'); setSelStart(null); setSelHover(null) }}
                 style={{
-                  flex: 1, padding: '14px 8px', fontSize: '0.78rem', fontWeight: 700,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  flex: 1, padding: '14px 6px', fontSize: '0.74rem', fontWeight: 700,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
                   border: 'none', cursor: 'pointer', transition: 'all 0.2s',
                   background: activeTab === 'block' ? '#1a1611' : 'transparent',
                   color: activeTab === 'block' ? '#c9a84c' : '#8a7a5a',
                   borderBottom: activeTab === 'block' ? '2px solid #c9a84c' : '2px solid transparent',
                 }}
               >
-                <ShieldAlert size={14} /> Block Dates
+                <ShieldAlert size={13} /> Block
               </button>
             </div>
 
@@ -718,7 +801,170 @@ export default function CalendarModal({ propertyId, propertyName, onClose, fetch
               </>
             )}
 
-            {/* Tab 2: Block Dates */}
+            {/* Tab 2: Discount Coupon */}
+            {activeTab === 'discount' && (
+              <>
+                <div style={{ padding: 20, borderBottom: '1px solid #1f1a10' }}>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#4ade80', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Percent size={13} /> Apply Discount Coupon / Offer
+                  </div>
+
+                  {discountError && (
+                    <div style={{ background: '#2a0a0a', border: '1px solid #7a2020', color: '#e57373', borderRadius: 8, padding: '8px 10px', fontSize: '0.75rem', marginBottom: 10, lineHeight: 1.4 }}>
+                      {discountError}
+                    </div>
+                  )}
+                  {discountSuccess && (
+                    <div style={{ background: '#0a2a0a', border: '1px solid #2a5a2a', color: '#81c784', borderRadius: 8, padding: '8px 10px', fontSize: '0.75rem', marginBottom: 10 }}>
+                      {discountSuccess}
+                    </div>
+                  )}
+
+                  <label style={{ fontSize: '0.7rem', color: '#8a7a5a', display: 'block', marginBottom: 4 }}>Start Date (First Night)</label>
+                  <input
+                    type="date"
+                    value={discountStart}
+                    min={todayStr}
+                    onChange={e => { setDiscountStart(e.target.value); setDiscountError(null); setDiscountSuccess(null) }}
+                    style={inputStyle}
+                  />
+
+                  <label style={{ fontSize: '0.7rem', color: '#8a7a5a', display: 'block', marginBottom: 4 }}>End Date (Check-out Date)</label>
+                  <input
+                    type="date"
+                    value={discountEnd}
+                    min={discountStart || todayStr}
+                    onChange={e => { setDiscountEnd(e.target.value); setDiscountError(null); setDiscountSuccess(null) }}
+                    style={inputStyle}
+                  />
+
+                  {discountStart && discountEnd && countNights(discountStart, discountEnd) > 0 && (
+                    <div style={{
+                      background: 'rgba(74, 222, 128, 0.12)', border: '1px solid rgba(74, 222, 128, 0.3)',
+                      borderRadius: 6, padding: '6px 10px', marginBottom: 10,
+                      fontSize: '0.75rem', color: '#86efac', display: 'flex', justifyContent: 'space-between',
+                    }}>
+                      <span>Selected duration:</span>
+                      <strong>{countNights(discountStart, discountEnd)} night{countNights(discountStart, discountEnd) > 1 ? 's' : ''}</strong>
+                    </div>
+                  )}
+
+                  <label style={{ fontSize: '0.7rem', color: '#8a7a5a', display: 'block', marginBottom: 4 }}>Discount Percentage (%)</label>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+                    {[10, 15, 20, 25, 30, 50].map(p => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => { setDiscountPercent(String(p)); setDiscountError(null) }}
+                        style={{
+                          padding: '4px 9px',
+                          borderRadius: 6,
+                          border: discountPercent === String(p) ? '1.5px solid #4ade80' : '1px solid #3d3425',
+                          background: discountPercent === String(p) ? 'rgba(74, 222, 128, 0.2)' : '#1a1611',
+                          color: discountPercent === String(p) ? '#86efac' : '#8a7a5a',
+                          fontSize: '0.72rem',
+                          fontWeight: discountPercent === String(p) ? 700 : 500,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {p}%
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    type="number"
+                    min="1"
+                    max="90"
+                    placeholder="Enter discount % (e.g. 15)"
+                    value={discountPercent}
+                    onChange={e => { setDiscountPercent(e.target.value); setDiscountError(null) }}
+                    style={inputStyle}
+                  />
+
+                  <label style={{ fontSize: '0.7rem', color: '#8a7a5a', display: 'block', marginBottom: 4 }}>Offer Title / Coupon Name (optional)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Monsoon Special, Weekend Deal…"
+                    value={discountLabel}
+                    maxLength={100}
+                    onChange={e => setDiscountLabel(e.target.value)}
+                    style={inputStyle}
+                  />
+
+                  <button
+                    onClick={handleCreateDiscount}
+                    disabled={discountSaving || !discountStart || !discountEnd || !discountPercent}
+                    style={{
+                      width: '100%',
+                      background: (discountSaving || !discountStart || !discountEnd || !discountPercent) ? '#2e2618' : 'linear-gradient(135deg, #16a34a, #15803d)',
+                      color: (discountSaving || !discountStart || !discountEnd || !discountPercent) ? '#6b5e3e' : '#ffffff',
+                      border: 'none', borderRadius: 8, padding: '10px',
+                      fontSize: '0.82rem', fontWeight: 700,
+                      cursor: (discountSaving || !discountStart || !discountEnd || !discountPercent) ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.2s', marginTop: 2,
+                    }}
+                  >
+                    {discountSaving ? 'Applying Discount…' : `Apply ${discountPercent || 0}% Discount`}
+                  </button>
+
+                  <p style={{ fontSize: '0.68rem', color: '#5a5040', marginTop: 8, lineHeight: 1.5 }}>
+                    <strong>Tip:</strong> Guests booking these dates will automatically receive {discountPercent || 0}% off each night, clearly displayed as a discount coupon on the property details and checkout!
+                  </p>
+                </div>
+
+                {/* Active discount offers list */}
+                <div style={{ padding: 20, flex: 1 }}>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#4ade80', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>
+                    Active Discount Coupons ({activeOverrides.filter(ov => ov.discount_percent).length})
+                  </div>
+
+                  {activeOverrides.filter(ov => ov.discount_percent).length === 0 ? (
+                    <p style={{ fontSize: '0.75rem', color: '#5a5040', lineHeight: 1.5 }}>
+                      No active discount coupons set. Select dates and a discount percentage above to offer a seasonal coupon.
+                    </p>
+                  ) : activeOverrides.filter(ov => ov.discount_percent).map(ov => {
+                    const nights = countNights(ov.start_date, ov.end_date)
+                    return (
+                      <div key={ov.id} style={{
+                        background: '#1a1611', border: '1px solid rgba(74, 222, 128, 0.3)', borderRadius: 8,
+                        padding: '10px 12px', marginBottom: 8,
+                        display: 'flex', alignItems: 'flex-start', gap: 8,
+                      }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ fontSize: '0.82rem', color: '#4ade80', fontWeight: 800 }}>
+                              {ov.discount_percent}% OFF
+                            </span>
+                            <span style={{ fontSize: '0.74rem', color: '#e8d5a3' }}>
+                              (₹{ov.price_per_night.toLocaleString('en-IN')}/nt)
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '0.74rem', color: '#e8d5a3', marginTop: 2 }}>
+                            {ov.start_date} → {ov.end_date}
+                          </div>
+                          <div style={{ fontSize: '0.68rem', color: '#8a7a5a', marginTop: 2 }}>
+                            {nights} night{nights > 1 ? 's' : ''}{ov.label ? ` · ${ov.label}` : ''}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleDeletePriceOverride(ov.id)}
+                          aria-label="Remove discount coupon"
+                          style={{
+                            background: 'none', border: '1px solid #7a2020', color: '#e57373',
+                            borderRadius: 6, padding: '4px 8px', fontSize: '0.7rem',
+                            cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0, transition: 'all 0.15s',
+                          }}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )
+                  })}
+                </div>
+              </>
+            )}
+
+            {/* Tab 3: Block Dates */}
             {activeTab === 'block' && (
               <>
                 <div style={{ padding: 20, borderBottom: '1px solid #1f1a10' }}>

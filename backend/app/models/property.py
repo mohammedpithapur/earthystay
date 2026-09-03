@@ -35,6 +35,7 @@ class Property(Base):
     check_in_time: Mapped[str] = mapped_column(String(20), default="2:00 PM", nullable=False)
     check_out_time: Mapped[str] = mapped_column(String(20), default="11:00 AM", nullable=False)
     house_rules: Mapped[dict] = mapped_column(JSONB, default=list, nullable=False)
+    local_recommendations: Mapped[dict] = mapped_column(JSONB, default=list, nullable=False)
     price_per_night: Mapped[int] = mapped_column(Integer, nullable=False)
     cleaning_fee: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     extra_guest_charge_per_night: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

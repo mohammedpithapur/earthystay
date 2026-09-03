@@ -231,7 +231,7 @@ export default function Hero() {
           width: '100%',
           maxWidth: '1000px',
           display: 'flex',
-          justifyContent: 'flex-end',
+          justifyContent: 'center',
         }}>
           <div style={{
             backgroundColor: 'rgba(255,255,255,0.98)',
@@ -241,7 +241,6 @@ export default function Hero() {
             width: 'min(100%, 920px)',
             boxShadow: '0 24px 64px rgba(0,0,0,0.28)',
             display: 'grid',
-            marginLeft: 'auto',
           }}
           className="hero-search-container">
 

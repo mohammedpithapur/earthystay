@@ -6,7 +6,8 @@ from pydantic import BaseModel, Field
 class PriceOverrideCreate(BaseModel):
     start_date: date
     end_date: date
-    price_per_night: int = Field(gt=0, description="Price per night in INR")
+    price_per_night: int | None = Field(default=None, description="Direct price per night in INR")
+    discount_percent: int | None = Field(default=None, ge=1, le=90, description="Discount percentage between 1 and 90")
     label: str | None = None
 
 
@@ -16,6 +17,7 @@ class PriceOverrideOut(BaseModel):
     start_date: date
     end_date: date
     price_per_night: int
+    discount_percent: int | None = None
     label: str | None = None
     created_at: datetime
 

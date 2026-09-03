@@ -14,7 +14,7 @@ from starlette.responses import JSONResponse
 from app.config import settings
 from app.database import get_db
 from app.rate_limit import limiter
-from app.routers import admin, auth, bookings, ical, payments, properties, reviews, users, events, push
+from app.routers import admin, auth, bookings, ical, payments, properties, reviews, users, events, push, contact, articles
 from app.models import push_subscription, price_override  # noqa: F401 — ensures table is created
 
 
@@ -117,6 +117,8 @@ app.include_router(reviews.router)
 app.include_router(payments.router)
 app.include_router(events.router)
 app.include_router(push.router)
+app.include_router(contact.router)
+app.include_router(articles.router)
 
 
 @app.get("/")

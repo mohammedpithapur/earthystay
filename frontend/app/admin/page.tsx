@@ -15,13 +15,15 @@ import {
   listICalLinks, createICalLink, deleteICalLink, syncPropertyICal, getICalExportUrl,
   listAdminEvents, updateAdminEventStatus, getAdminAnalytics,
   getAdminPayments, getAdminSettlements, getPaymentSummary,
+  listAdminArticles, createAdminArticle, updateAdminArticle, deleteAdminArticle,
   type PropertyGroup, type CreateReviewPayload, type AdminBooking, type AdminDashboard, type ICalLink,
   type EventRequest, type EventStatus, type AdminAnalyticsResponse,
   type AdminPayment, type AdminPaymentList, type SettlementBatch, type PaymentSummary,
 } from '@/lib/api'
-import type { Property, Review } from '@/lib/types'
-import { Printer, Building2, Users, Calendar, Download, Share2, Plus, Trash2, Edit3, Star, Check, X, Bed, Mail, Phone, Wallet, BadgeCheck, Clock, RefreshCw, AlertTriangle, CheckCircle, XCircle, CreditCard } from 'lucide-react'
+import type { Property, Review, Article } from '@/lib/types'
+import { Printer, Building2, Users, Calendar, Download, Share2, Plus, Trash2, Edit3, Star, Check, X, Bed, Mail, Phone, Wallet, BadgeCheck, Clock, RefreshCw, AlertTriangle, CheckCircle, XCircle, CreditCard, BookOpen, Eye, FileText, Sparkles } from 'lucide-react'
 import CalendarModal from './properties/CalendarModal'
+import MarkdownRenderer from '@/components/shared/MarkdownRenderer'
 
 const BOOKINGS_PER_PAGE = 15
 const E2E_SKIP_AUTH = process.env.NEXT_PUBLIC_E2E_SKIP_AUTH === '1'
@@ -254,6 +256,161 @@ export default function AdminPage() {
     finally { setPaymentsLoading(false); setSettlementsLoading(false) }
   }, [fetchWithAuth, loading, user])
 
+  // ── Articles state ────────────────────────────────────────────────────────
+  const [adminArticles, setAdminArticles] = useState<Article[]>([])
+  const [articlesTotal, setArticlesTotal] = useState(0)
+  const [articlesPage, setArticlesPage] = useState(1)
+  const [articlesLoading, setArticlesLoading] = useState(false)
+  const [searchArticle, setSearchArticle] = useState('')
+  const [isArticleModalOpen, setIsArticleModalOpen] = useState(false)
+  const [editingArticle, setEditingArticle] = useState<Article | null>(null)
+  const [articleForm, setArticleForm] = useState({
+    title: '',
+    slug: '',
+    excerpt: '',
+    content: '',
+    cover_image_url: '',
+    author_name: 'EarthyStay Team',
+    read_time_minutes: 3,
+    tags: '',
+    is_published: true,
+  })
+  const [articleSaving, setArticleSaving] = useState(false)
+  const [articleError, setArticleError] = useState<string | null>(null)
+  const [articleSuccess, setArticleSuccess] = useState<string | null>(null)
+  const [articleEditorTab, setArticleEditorTab] = useState<'write' | 'preview'>('write')
+
+  const loadArticles = useCallback(async (page = 1, search = '') => {
+    if (loading || !user) return
+    setArticlesLoading(true)
+    try {
+      const data = await listAdminArticles(fetchWithAuth, { page, limit: 20, search: search || undefined })
+      setAdminArticles(data.items || [])
+      setArticlesTotal(data.total || 0)
+      setArticlesPage(page)
+    } catch {
+      // ignore
+    } finally {
+      setArticlesLoading(false)
+    }
+  }, [fetchWithAuth, loading, user])
+
+  const openNewArticleModal = () => {
+    setEditingArticle(null)
+    setArticleForm({
+      title: '',
+      slug: '',
+      excerpt: '',
+      content: '',
+      cover_image_url: '',
+      author_name: 'EarthyStay Team',
+      read_time_minutes: 3,
+      tags: '',
+      is_published: true,
+    })
+    setArticleError(null)
+    setArticleSuccess(null)
+    setArticleEditorTab('write')
+    setIsArticleModalOpen(true)
+  }
+
+  const openEditArticleModal = (art: Article) => {
+    setEditingArticle(art)
+    setArticleForm({
+      title: art.title,
+      slug: art.slug,
+      excerpt: art.excerpt || '',
+      content: art.content,
+      cover_image_url: art.cover_image_url || '',
+      author_name: art.author_name || 'EarthyStay Team',
+      read_time_minutes: art.read_time_minutes || 3,
+      tags: (art.tags || []).join(', '),
+      is_published: art.is_published,
+    })
+    setArticleError(null)
+    setArticleSuccess(null)
+    setArticleEditorTab('write')
+    setIsArticleModalOpen(true)
+  }
+
+  const handleSaveArticle = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
+    if (!articleForm.title.trim()) { setArticleError('Title is required'); return }
+    if (!articleForm.content.trim()) { setArticleError('Content is required'); return }
+
+    setArticleSaving(true)
+    setArticleError(null)
+    try {
+      const tagsList = articleForm.tags
+        .split(',')
+        .map(t => t.trim())
+        .filter(Boolean)
+
+      const payload = {
+        title: articleForm.title.trim(),
+        slug: articleForm.slug.trim() || undefined,
+        excerpt: articleForm.excerpt.trim() || undefined,
+        content: articleForm.content,
+        cover_image_url: articleForm.cover_image_url.trim() || undefined,
+        author_name: articleForm.author_name.trim() || 'EarthyStay Team',
+        read_time_minutes: Number(articleForm.read_time_minutes) || 3,
+        tags: tagsList,
+        is_published: articleForm.is_published,
+      }
+
+      if (editingArticle) {
+        await updateAdminArticle(fetchWithAuth, editingArticle.id, payload)
+        setArticleSuccess('Article updated successfully!')
+      } else {
+        await createAdminArticle(fetchWithAuth, payload)
+        setArticleSuccess('Article created successfully!')
+      }
+
+      await loadArticles(1, searchArticle)
+      setTimeout(() => {
+        setIsArticleModalOpen(false)
+      }, 900)
+    } catch (err: unknown) {
+      setArticleError(err instanceof Error ? err.message : 'Failed to save article')
+    } finally {
+      setArticleSaving(false)
+    }
+  }
+
+  const handleDeleteArticle = async (articleId: string, title: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Delete Article',
+      subtitle: `Are you sure you want to delete "${title}"?`,
+      description: 'This will permanently remove this article from the database and public blog.',
+      confirmLabel: 'Delete Article',
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          await deleteAdminArticle(fetchWithAuth, articleId)
+          await loadArticles(articlesPage, searchArticle)
+        } catch {
+          alert('Failed to delete article')
+        }
+      },
+    })
+  }
+
+  const insertMarkdown = (prefix: string, suffix: string = '') => {
+    const textarea = document.getElementById('article-content-textarea') as HTMLTextAreaElement | null
+    if (!textarea) return
+    const start = textarea.selectionStart
+    const end = textarea.selectionEnd
+    const currentText = articleForm.content
+    const selectedText = currentText.substring(start, end) || 'text'
+    const newText = currentText.substring(0, start) + prefix + selectedText + suffix + currentText.substring(end)
+    setArticleForm(prev => ({ ...prev, content: newText }))
+    setTimeout(() => {
+      textarea.focus()
+      textarea.setSelectionRange(start + prefix.length, start + prefix.length + selectedText.length)
+    }, 50)
+  }
+
   // ── Effects: load data when tab changes ──────────────────────────────────
   useEffect(() => {
     if (activeTab === 'overview') { void loadDashboard(); void loadBookings(1, '', '') }
@@ -275,6 +432,9 @@ export default function AdminPage() {
     }
     if (activeTab === 'payments') {
       void loadPayments(1, paymentsSearch, paymentsStatusFilter)
+    }
+    if (activeTab === 'articles') {
+      void loadArticles(1, searchArticle)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab])
@@ -726,6 +886,7 @@ export default function AdminPage() {
     { id: 'groups', label: 'Groups' },
     { id: 'ical', label: 'iCal Sync' },
     { id: 'events', label: 'Events' },
+    { id: 'articles', label: 'Articles / Blog' },
   ]
 
   const cardStyle = { backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '24px' }
@@ -2176,7 +2337,7 @@ export default function AdminPage() {
             {/* Filters */}
             <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap', alignItems: 'center' }}>
               <input
-                placeholder="Search by name, email, hotel, city..."
+                placeholder="Search by name, email, property, city..."
                 value={eventsSearch}
                 onChange={e => handleEventsSearch(e.target.value)}
                 style={{
@@ -2294,7 +2455,7 @@ export default function AdminPage() {
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', borderTop: '1px solid var(--color-border)', paddingTop: '16px' }}>
                       <div>
-                        <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '2px', fontWeight: '600' }}>Destination / Hotel</p>
+                        <p style={{ fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '2px', fontWeight: '600' }}>Destination / Property</p>
                         <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)', textTransform: 'capitalize' }}>{ev.destination} - {ev.hotel}</p>
                       </div>
                       <div>
@@ -2319,6 +2480,219 @@ export default function AdminPage() {
                         <p style={{ whiteSpace: 'pre-line' }}>{ev.additional_details}</p>
                       </div>
                     )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Articles / Blog Tab */}
+        {activeTab === 'articles' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
+              <div>
+                <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '4px' }}>
+                  Articles & Journal
+                </h2>
+                <p style={{ color: 'var(--color-text-secondary)', fontSize: '14px', margin: 0 }}>
+                  Publish stories, destination guides, and lifestyle blog posts with Markdown support.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <div style={{ position: 'relative', width: '260px' }}>
+                  <input
+                    type="text"
+                    placeholder="Search articles…"
+                    value={searchArticle}
+                    onChange={e => {
+                      setSearchArticle(e.target.value)
+                      void loadArticles(1, e.target.value)
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      backgroundColor: '#ffffff',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+                <button
+                  onClick={openNewArticleModal}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '10px 20px',
+                    backgroundColor: 'var(--color-gold)',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Plus size={16} /> Write New Article
+                </button>
+              </div>
+            </div>
+
+            {/* Articles List */}
+            {articlesLoading ? (
+              <div style={{ textAlign: 'center', padding: '60px 0' }}>
+                <p style={{ color: 'var(--color-text-muted)', fontSize: '14px' }}>Loading articles…</p>
+              </div>
+            ) : adminArticles.length === 0 ? (
+              <div style={{ ...cardStyle, textAlign: 'center', padding: '60px 24px' }}>
+                <BookOpen size={48} style={{ color: 'var(--color-gold)', margin: '0 auto 16px', opacity: 0.7 }} />
+                <h3 style={{ fontSize: '18px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '8px' }}>
+                  No Articles Yet
+                </h3>
+                <p style={{ color: 'var(--color-text-secondary)', fontSize: '14px', marginBottom: '24px', maxWidth: '420px', margin: '0 auto 24px' }}>
+                  {searchArticle ? 'No articles matched your search term.' : 'Write your first blog post or travel story to inspire guests and boost SEO!'}
+                </p>
+                <button
+                  onClick={openNewArticleModal}
+                  style={{
+                    padding: '10px 22px',
+                    backgroundColor: 'var(--color-gold)',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  + Write Article Now
+                </button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {adminArticles.map(art => (
+                  <div
+                    key={art.id}
+                    style={{
+                      backgroundColor: '#ffffff',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: '12px',
+                      padding: '20px 24px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '20px',
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: 1, minWidth: '280px' }}>
+                      {art.cover_image_url ? (
+                        <div style={{ position: 'relative', width: '80px', height: '60px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, backgroundColor: 'var(--color-bg-soft)' }}>
+                          <Image src={art.cover_image_url} alt={art.title} fill style={{ objectFit: 'cover' }} unoptimized />
+                        </div>
+                      ) : (
+                        <div style={{ width: '80px', height: '60px', borderRadius: '8px', backgroundColor: 'var(--color-navbar)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--color-gold)', flexShrink: 0 }}>
+                          <FileText size={24} />
+                        </div>
+                      )}
+
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                          <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--color-text-primary)', margin: 0 }}>
+                            {art.title}
+                          </h3>
+                          <span
+                            style={{
+                              fontSize: '11px',
+                              padding: '2px 8px',
+                              borderRadius: '999px',
+                              fontWeight: 700,
+                              backgroundColor: art.is_published ? '#E8F5E9' : '#FFF3E0',
+                              color: art.is_published ? '#2E7D32' : '#E65100',
+                            }}
+                          >
+                            {art.is_published ? 'Published' : 'Draft'}
+                          </span>
+                        </div>
+
+                        <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '500px' }}>
+                          {art.excerpt || art.content.slice(0, 100) + '…'}
+                        </p>
+
+                        <div style={{ display: 'flex', gap: '12px', fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <span>By {art.author_name}</span>
+                          <span>•</span>
+                          <span>{new Date(art.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                          <span>•</span>
+                          <span>{art.read_time_minutes} min read</span>
+                          <span>•</span>
+                          <span style={{ fontFamily: 'monospace', color: 'var(--color-gold)' }}>/articles/{art.slug}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                      <Link
+                        href={`/articles/${art.slug}`}
+                        target="_blank"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '8px 14px',
+                          borderRadius: '8px',
+                          border: '1px solid var(--color-border)',
+                          backgroundColor: '#ffffff',
+                          color: 'var(--color-text-primary)',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          textDecoration: 'none',
+                        }}
+                      >
+                        <Eye size={13} /> View
+                      </Link>
+                      <button
+                        onClick={() => openEditArticleModal(art)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '8px 14px',
+                          borderRadius: '8px',
+                          border: '1px solid var(--color-border)',
+                          backgroundColor: '#ffffff',
+                          color: 'var(--color-text-primary)',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <Edit3 size={13} /> Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteArticle(art.id, art.title)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '8px 14px',
+                          borderRadius: '8px',
+                          border: '1px solid #FFCDD2',
+                          backgroundColor: '#FFEBEE',
+                          color: '#C62828',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <Trash2 size={13} /> Delete
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -2406,6 +2780,357 @@ export default function AdminPage() {
           onClose={() => setCalendarProperty(null)}
           fetchWithAuth={fetchWithAuth}
         />
+      )}
+
+      {/* Article Create / Edit Modal with Markdown Editor */}
+      {isArticleModalOpen && (
+        <div
+          onClick={() => setIsArticleModalOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 1050,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(3px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+            overflowY: 'auto',
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '16px',
+              maxWidth: '940px',
+              width: '100%',
+              maxHeight: '92vh',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 24px 60px rgba(0,0,0,0.3)',
+              overflow: 'hidden',
+              border: '1px solid var(--color-border)',
+            }}
+          >
+            {/* Header */}
+            <div
+              style={{
+                padding: '20px 24px',
+                borderBottom: '1px solid var(--color-border)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                backgroundColor: 'var(--color-navbar)',
+              }}
+            >
+              <div>
+                <h3 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--color-text-primary)', margin: 0 }}>
+                  {editingArticle ? 'Edit Article' : 'Write New Article'}
+                </h3>
+                <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: '2px 0 0' }}>
+                  Write your story with Markdown formatting and preview live.
+                </p>
+              </div>
+              <button
+                onClick={() => setIsArticleModalOpen(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '22px',
+                  cursor: 'pointer',
+                  color: 'var(--color-text-muted)',
+                  lineHeight: 1,
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Scrollable Form Body */}
+            <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
+              {articleError && (
+                <div style={{ padding: '10px 14px', backgroundColor: '#FFEBEE', border: '1px solid #FFCDD2', borderRadius: '8px', color: '#C62828', fontSize: '13px', marginBottom: '16px', fontWeight: 600 }}>
+                  {articleError}
+                </div>
+              )}
+              {articleSuccess && (
+                <div style={{ padding: '10px 14px', backgroundColor: '#E8F5E9', border: '1px solid #C8E6C9', borderRadius: '8px', color: '#2E7D32', fontSize: '13px', marginBottom: '16px', fontWeight: 600 }}>
+                  {articleSuccess}
+                </div>
+              )}
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+                <div>
+                  <label style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--color-text-muted)', display: 'block', marginBottom: '6px' }}>
+                    Article Title *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Hidden Waterfalls of South Goa"
+                    value={articleForm.title}
+                    onChange={e => setArticleForm(f => ({ ...f, title: e.target.value }))}
+                    style={{ width: '100%', padding: '10px 14px', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '14px', outline: 'none' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--color-text-muted)', display: 'block', marginBottom: '6px' }}>
+                    URL Slug (optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. hidden-waterfalls-south-goa (auto-generated if empty)"
+                    value={articleForm.slug}
+                    onChange={e => setArticleForm(f => ({ ...f, slug: e.target.value }))}
+                    style={{ width: '100%', padding: '10px 14px', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '13px', outline: 'none' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--color-text-muted)', display: 'block', marginBottom: '6px' }}>
+                  Cover Image URL
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://images.unsplash.com/... or image URL"
+                  value={articleForm.cover_image_url}
+                  onChange={e => setArticleForm(f => ({ ...f, cover_image_url: e.target.value }))}
+                  style={{ width: '100%', padding: '10px 14px', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '13px', outline: 'none' }}
+                />
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--color-text-muted)', display: 'block', marginBottom: '6px' }}>
+                  Short Excerpt / Summary
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Brief description shown in article card listings..."
+                  value={articleForm.excerpt}
+                  onChange={e => setArticleForm(f => ({ ...f, excerpt: e.target.value }))}
+                  style={{ width: '100%', padding: '10px 14px', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '13px', outline: 'none', resize: 'vertical' }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '20px' }}>
+                <div>
+                  <label style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--color-text-muted)', display: 'block', marginBottom: '6px' }}>
+                    Author Name
+                  </label>
+                  <input
+                    type="text"
+                    value={articleForm.author_name}
+                    onChange={e => setArticleForm(f => ({ ...f, author_name: e.target.value }))}
+                    style={{ width: '100%', padding: '10px 14px', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '13px', outline: 'none' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--color-text-muted)', display: 'block', marginBottom: '6px' }}>
+                    Est. Read Time (Minutes)
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={60}
+                    value={articleForm.read_time_minutes}
+                    onChange={e => setArticleForm(f => ({ ...f, read_time_minutes: parseInt(e.target.value) || 3 }))}
+                    style={{ width: '100%', padding: '10px 14px', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '13px', outline: 'none' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--color-text-muted)', display: 'block', marginBottom: '6px' }}>
+                    Tags (comma separated)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Travel, Goa, Retreat, Nature"
+                    value={articleForm.tags}
+                    onChange={e => setArticleForm(f => ({ ...f, tags: e.target.value }))}
+                    style={{ width: '100%', padding: '10px 14px', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '13px', outline: 'none' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                  <label style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--color-text-muted)', display: 'block', marginBottom: '6px' }}>
+                    Publication Status
+                  </label>
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 600 }}>
+                    <input
+                      type="checkbox"
+                      checked={articleForm.is_published}
+                      onChange={e => setArticleForm(f => ({ ...f, is_published: e.target.checked }))}
+                      style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                    />
+                    {articleForm.is_published ? 'Published (Live)' : 'Draft'}
+                  </label>
+                </div>
+              </div>
+
+              {/* Markdown Editor */}
+              <div style={{ border: '1px solid var(--color-border)', borderRadius: '12px', overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'var(--color-bg-soft)', borderBottom: '1px solid var(--color-border)', padding: '6px 12px', flexWrap: 'wrap', gap: '8px' }}>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setArticleEditorTab('write')}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        backgroundColor: articleEditorTab === 'write' ? '#ffffff' : 'transparent',
+                        color: articleEditorTab === 'write' ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        boxShadow: articleEditorTab === 'write' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
+                      }}
+                    >
+                      ✍️ Write
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setArticleEditorTab('preview')}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        backgroundColor: articleEditorTab === 'preview' ? '#ffffff' : 'transparent',
+                        color: articleEditorTab === 'preview' ? 'var(--color-text-primary)' : 'var(--color-text-muted)',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        boxShadow: articleEditorTab === 'preview' ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
+                      }}
+                    >
+                      👁️ Preview
+                    </button>
+                  </div>
+
+                  {articleEditorTab === 'write' && (
+                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                      {[
+                        { label: 'B', tip: 'Bold', action: () => insertMarkdown('**', '**') },
+                        { label: 'I', tip: 'Italic', action: () => insertMarkdown('*', '*') },
+                        { label: 'H2', tip: 'Heading 2', action: () => insertMarkdown('\n## ') },
+                        { label: 'H3', tip: 'Heading 3', action: () => insertMarkdown('\n### ') },
+                        { label: '“ ”', tip: 'Quote', action: () => insertMarkdown('\n> ') },
+                        { label: '• List', tip: 'Bullet List', action: () => insertMarkdown('\n- ') },
+                        { label: '1. List', tip: 'Numbered List', action: () => insertMarkdown('\n1. ') },
+                        { label: '🔗 Link', tip: 'Link', action: () => insertMarkdown('[Title](', ')') },
+                        { label: '🖼️ Image', tip: 'Image', action: () => insertMarkdown('![Alt](', ')') },
+                        { label: '< >', tip: 'Code block', action: () => insertMarkdown('\n```\n', '\n```\n') },
+                      ].map(tool => (
+                        <button
+                          key={tool.tip}
+                          type="button"
+                          title={tool.tip}
+                          onClick={tool.action}
+                          style={{
+                            padding: '4px 8px',
+                            backgroundColor: '#ffffff',
+                            border: '1px solid var(--color-border)',
+                            borderRadius: '4px',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            color: 'var(--color-text-secondary)',
+                          }}
+                        >
+                          {tool.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {articleEditorTab === 'write' ? (
+                  <textarea
+                    id="article-content-textarea"
+                    rows={15}
+                    placeholder="Write your article in Markdown here... Use ## for headings, **bold** text, > quotes, and images."
+                    value={articleForm.content}
+                    onChange={e => setArticleForm(f => ({ ...f, content: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '16px',
+                      border: 'none',
+                      outline: 'none',
+                      fontSize: '14px',
+                      lineHeight: '1.65',
+                      fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+                      resize: 'vertical',
+                      backgroundColor: '#ffffff',
+                    }}
+                  />
+                ) : (
+                  <div style={{ padding: '24px', minHeight: '320px', backgroundColor: '#fafafa', overflowY: 'auto' }}>
+                    {articleForm.content.trim() ? (
+                      <MarkdownRenderer content={articleForm.content} />
+                    ) : (
+                      <p style={{ color: 'var(--color-text-muted)', fontSize: '13px', fontStyle: 'italic' }}>
+                        Nothing to preview yet. Switch to the Write tab to draft your content.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div
+              style={{
+                padding: '16px 24px',
+                borderTop: '1px solid var(--color-border)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'flex-end',
+                gap: '12px',
+                backgroundColor: 'var(--color-navbar)',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setIsArticleModalOpen(false)}
+                style={{
+                  padding: '10px 18px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--color-border)',
+                  backgroundColor: '#ffffff',
+                  color: 'var(--color-text-primary)',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSaveArticle}
+                disabled={articleSaving}
+                style={{
+                  padding: '10px 24px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  backgroundColor: 'var(--color-gold)',
+                  color: '#ffffff',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: articleSaving ? 'not-allowed' : 'pointer',
+                  opacity: articleSaving ? 0.7 : 1,
+                }}
+              >
+                {articleSaving ? 'Saving…' : editingArticle ? 'Update Article' : 'Publish Article'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

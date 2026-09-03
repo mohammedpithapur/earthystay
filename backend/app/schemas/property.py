@@ -56,6 +56,7 @@ class PropertyOut(BaseModel):
     check_in_time: str = "2:00 PM"
     check_out_time: str = "11:00 AM"
     house_rules: list[str] = Field(default_factory=list)
+    local_recommendations: list[str] = Field(default_factory=list)
     price_per_night: int = 0
     cleaning_fee: int = 0
     extra_guest_charge_per_night: int = 0
@@ -136,7 +137,7 @@ class PropertyOut(BaseModel):
             return [item for item in v if isinstance(item, dict)]
         return []
 
-    @field_validator("amenities", "house_rules", mode="before")
+    @field_validator("amenities", "house_rules", "local_recommendations", mode="before")
     @classmethod
     def ensure_str_list(cls, v: Any) -> list[str]:
         if v is None:
@@ -173,6 +174,7 @@ class PropertyCreate(BaseModel):
     check_in_time: str = "2:00 PM"
     check_out_time: str = "11:00 AM"
     house_rules: list[str] = []
+    local_recommendations: list[str] = []
     price_per_night: int
     cleaning_fee: int = 0
     extra_guest_charge_per_night: int = 0
@@ -212,6 +214,7 @@ class PropertyUpdate(BaseModel):
     check_in_time: str | None = None
     check_out_time: str | None = None
     house_rules: list[str] | None = None
+    local_recommendations: list[str] | None = None
     price_per_night: int | None = None
     cleaning_fee: int | None = None
     extra_guest_charge_per_night: int | None = None
