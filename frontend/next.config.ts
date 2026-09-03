@@ -54,6 +54,7 @@ const nextConfig: NextConfig = {
     root: ".",
   },
   images: {
+    unoptimized: true,
     dangerouslyAllowLocalIP: process.env.NODE_ENV !== "production",
     remotePatterns: [
       {
