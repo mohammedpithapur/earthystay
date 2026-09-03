@@ -2,7 +2,9 @@ import asyncio
 import logging
 import uuid
 from datetime import date, timedelta
+from typing import Optional
 
+from pydantic import BaseModel
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, delete
