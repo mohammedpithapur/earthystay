@@ -9,7 +9,7 @@ from app.database import get_db
 from app.models.article import Article
 from app.models.user import User
 from app.schemas.article import ArticleCreate, ArticleUpdate, ArticleOut, ArticleListOut
-from app.services.auth import get_admin
+from app.dependencies import get_admin
 
 router = APIRouter(prefix="/articles", tags=["articles"])
 
