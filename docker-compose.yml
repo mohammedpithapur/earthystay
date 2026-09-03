@@ -22,16 +22,7 @@ services:
       redis:
         condition: service_started
 
-  frontend:
-    build:
-      context: ./frontend
-    env_file:
-      - ./frontend/.env.local
-    ports:
-      - "3000:3000"
-    depends_on:
-      backend:
-        condition: service_healthy
+  # frontend is deployed on Vercel — not needed on EC2
 
   redis:
     image: redis:7-alpine
