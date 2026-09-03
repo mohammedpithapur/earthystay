@@ -27,6 +27,7 @@ from app.services.upload import (
     delete_property_image_from_url,
     upload_property_image_from_bytes,
     upload_property_image_from_data_url,
+    async_generate_batch_presigned_upload_urls,
     UploadStorageError,
     UploadValidationError,
 )
@@ -550,6 +551,35 @@ async def duplicate_property(
 
 
 # ── Property Images ──
+
+class PresignedUrlRequestItem(BaseModel):
+    id: Optional[str] = None
+    mime_type: str = "image/webp"
+
+
+class PresignedBatchRequest(BaseModel):
+    items: list[PresignedUrlRequestItem]
+    folder: str = "properties"
+
+
+@router.post("/presigned-upload-urls")
+async def get_presigned_upload_urls(
+    payload: PresignedBatchRequest,
+    admin: User = Depends(get_admin),
+):
+    """Generate Supabase Storage signed upload URLs for high-speed direct S3 client uploads."""
+    if not payload.items:
+        raise HTTPException(status_code=400, detail="No items provided")
+    if len(payload.items) > 500:
+        raise HTTPException(status_code=400, detail="Batch size limit is 500 images")
+
+    try:
+        items_dict = [item.model_dump() for item in payload.items]
+        urls = await async_generate_batch_presigned_upload_urls(items_dict, folder=payload.folder)
+        return {"items": urls}
+    except UploadStorageError as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to generate upload URLs: {exc}") from exc
+
 
 @router.post("/upload-image")
 async def upload_image_file(

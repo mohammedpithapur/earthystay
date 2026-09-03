@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import binascii
 import re
@@ -132,3 +133,49 @@ def delete_property_image_from_url(image_url: str) -> None:
         raise
     except Exception as exc:
         raise UploadStorageError(f"Failed to delete image from Supabase Storage: {exc}") from exc
+
+
+async def async_generate_batch_presigned_upload_urls(
+    items: list[dict],
+    folder: str = "properties",
+) -> list[dict]:
+    """Generate Supabase Storage signed upload URLs in parallel for direct client-to-S3 uploads."""
+    if not settings.SUPABASE_URL or not settings.SUPABASE_SERVICE_KEY:
+        raise UploadStorageError("Supabase storage is not configured")
+
+    bucket = settings.SUPABASE_STORAGE_BUCKET
+    base_url = settings.SUPABASE_URL.rstrip('/')
+    headers = {
+        "Authorization": f"Bearer {settings.SUPABASE_SERVICE_KEY}",
+        "apikey": settings.SUPABASE_SERVICE_KEY,
+        "Content-Type": "application/json",
+    }
+
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        async def sign_one(item: dict) -> dict:
+            mime_type = item.get("mime_type", "image/webp")
+            if mime_type not in _ALLOWED_IMAGE_TYPES:
+                mime_type = "image/webp"
+            extension = _ALLOWED_IMAGE_TYPES.get(mime_type, "webp")
+            object_path = f"{folder}/{uuid4()}.{extension}"
+            sign_url = f"{base_url}/storage/v1/object/upload/sign/{bucket}/{object_path}"
+            
+            resp = await client.post(sign_url, json={}, headers=headers)
+            if resp.status_code != 200:
+                raise UploadStorageError(f"Supabase sign error ({resp.status_code}): {resp.text}")
+            
+            data = resp.json()
+            rel_url = data.get("url", "")
+            if not rel_url.startswith("/storage/v1"):
+                rel_url = f"/storage/v1{rel_url}"
+
+            return {
+                "id": item.get("id"),
+                "upload_url": f"{base_url}{rel_url}",
+                "public_url": f"{base_url}/storage/v1/object/public/{bucket}/{object_path}",
+                "object_path": object_path,
+                "mime_type": mime_type,
+            }
+
+        tasks = [sign_one(item) for item in items]
+        return await asyncio.gather(*tasks)

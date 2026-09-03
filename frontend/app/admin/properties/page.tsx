@@ -6,7 +6,7 @@ import { addPropertyGroupMember, createPropertyGroup, deleteAdminProperty, delet
 import CalendarModal from './CalendarModal'
 import { useAuth } from '@/lib/auth/AuthContext'
 import { useRequireAuth } from '@/lib/auth/useRequireAuth'
-import { uploadPropertyImage } from '@/lib/supabase/storage'
+import { uploadPropertyImage, uploadPropertyImagesBatch, type BatchUploadProgress } from '@/lib/supabase/storage'
 // NOTE: admin UI now loads properties from the API via `listAdminProperties`
 import { Property, type PropertyImage, type BathroomDetail, type SpaceDetail } from '@/lib/types'
 import { Folder, Pencil, Trash2, Camera, MapPin, AlertTriangle, Plus, X, Check, Calendar as CalendarIcon, Info, Lightbulb } from 'lucide-react'
@@ -864,6 +864,7 @@ function PhotosSection({
   const [newFolderName, setNewFolderName] = useState('')
   const [renamingFolder, setRenamingFolder] = useState<string | null>(null)
   const [renameInput, setRenameInput] = useState('')
+  const [batchProgress, setBatchProgress] = useState<BatchUploadProgress | null>(null)
 
   // Derive all active folders from photos and created folders
   const allFolders = useMemo(() => {
@@ -987,62 +988,42 @@ function PhotosSection({
     activeUploadCountRef.current += files.length
     setIsUploading(true)
 
-    // Upload with concurrency limit of 3 at a time
-    const CONCURRENCY = 3
-    const MAX_RETRIES = 2
-
-    const uploadOne = async ({ tempId, file, localPreviewUrl }: typeof fileQueue[0]) => {
-      let lastError: Error | null = null
-      for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-        try {
-          if (attempt > 0) {
-            // Wait before retry: 1s, 2s
-            await new Promise(r => setTimeout(r, attempt * 1000))
-          }
-          const publicUrl = await uploadPropertyImage(file, percent => {
-            setUploadProgress(prev => ({ ...prev, [tempId]: percent }))
-          }, fetchWithAuth)
-
-          try { URL.revokeObjectURL(localPreviewUrl) } catch {}
-
-          const realId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : tempId
-          setForm(prev => ({
-            ...prev,
-            images: prev.images.map(img =>
-              img.id === tempId
-                ? { ...img, id: realId, image_url: publicUrl }
-                : img
-            ),
-          }))
-          setUploadProgress(prev => { const n = { ...prev }; delete n[tempId]; return n })
-          delete uploadFilesRef.current[tempId]
-          return // success
-        } catch (error) {
-          lastError = error instanceof Error ? error : new Error('Upload failed')
-        }
+    try {
+      await uploadPropertyImagesBatch(
+        fileQueue.map(q => ({ tempId: q.tempId, file: q.file })),
+        fetchWithAuth,
+        {
+          onItemSuccess: (tempId, publicUrl) => {
+            const realId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : tempId
+            setForm(prev => ({
+              ...prev,
+              images: prev.images.map(img =>
+                img.id === tempId ? { ...img, id: realId, image_url: publicUrl } : img
+              ),
+            }))
+            delete uploadFilesRef.current[tempId]
+          },
+          onItemError: (tempId, errorMessage) => {
+            setUploadErrors(prev => ({ ...prev, [tempId]: errorMessage }))
+            setUploadNotice('Some images failed to upload. Please check errors or try again.')
+            delete uploadFilesRef.current[tempId]
+          },
+          onProgress: progress => {
+            setBatchProgress(progress)
+          },
+        },
+        8, // 8 parallel S3 streams
+      )
+    } finally {
+      // Clean up object URLs
+      fileQueue.forEach(q => {
+        try { URL.revokeObjectURL(q.localPreviewUrl) } catch {}
+      })
+      activeUploadCountRef.current = Math.max(0, activeUploadCountRef.current - files.length)
+      if (activeUploadCountRef.current === 0) {
+        setIsUploading(false)
+        setBatchProgress(null)
       }
-      // All retries failed
-      try { URL.revokeObjectURL(localPreviewUrl) } catch {}
-      const message = lastError?.message ?? 'Image upload failed'
-      setForm(prev => ({
-        ...prev,
-        images: prev.images.filter(img => img.id !== tempId),
-      }))
-      setUploadErrors(prev => ({ ...prev, [tempId]: message }))
-      setUploadNotice(`Some images failed to upload. Please try adding them again.`)
-      setUploadProgress(prev => { const n = { ...prev }; delete n[tempId]; return n })
-      delete uploadFilesRef.current[tempId]
-    }
-
-    // Run in batches of CONCURRENCY
-    for (let i = 0; i < fileQueue.length; i += CONCURRENCY) {
-      const batch = fileQueue.slice(i, i + CONCURRENCY)
-      await Promise.all(batch.map(uploadOne))
-    }
-
-    activeUploadCountRef.current = Math.max(0, activeUploadCountRef.current - files.length)
-    if (activeUploadCountRef.current === 0) {
-      setIsUploading(false)
     }
   }
 
@@ -1254,7 +1235,42 @@ function PhotosSection({
       </div>
 
       {isUploading && (
-        <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>Uploading {activeUploadCountRef.current} photo{activeUploadCountRef.current !== 1 ? 's' : ''}... please wait.</p>
+        <div style={{
+          backgroundColor: '#ffffff',
+          borderRadius: '12px',
+          padding: '16px 20px',
+          border: '1px solid var(--color-border)',
+          boxShadow: '0 4px 16px rgba(0,0,0,0.04)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '8px',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '16px', height: '16px', border: '2px solid var(--color-gold)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+              <p style={{ fontSize: '13px', fontWeight: '700', color: 'var(--color-text-primary)', margin: 0 }}>
+                {batchProgress
+                  ? `Uploading ${batchProgress.completed} of ${batchProgress.total} photos (${batchProgress.percent}%)`
+                  : `Optimizing & preparing ${activeUploadCountRef.current} photos for direct S3 upload...`}
+              </p>
+            </div>
+            <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--color-gold)' }}>
+              {batchProgress ? `${batchProgress.percent}%` : '0%'}
+            </span>
+          </div>
+          <div style={{ width: '100%', height: '6px', backgroundColor: 'var(--color-bg-soft)', borderRadius: '999px', overflow: 'hidden' }}>
+            <div style={{
+              height: '100%',
+              width: `${batchProgress?.percent || 0}%`,
+              backgroundColor: 'var(--color-gold)',
+              borderRadius: '999px',
+              transition: 'width 0.2s ease',
+            }} />
+          </div>
+          <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', margin: 0 }}>
+            ⚡ High-speed direct S3 upload (8 parallel streams • 0 server load)
+          </p>
+        </div>
       )}
 
       {uploadNotice && (
