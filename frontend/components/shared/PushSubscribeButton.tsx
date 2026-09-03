@@ -18,6 +18,7 @@ export default function PushSubscribeButton({ token, showTestButton = false, lab
   const [loading, setLoading] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testSuccess, setTestSuccess] = useState(false);
+  const [testError, setTestError] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission>("default");
 
   useEffect(() => {
@@ -31,8 +32,6 @@ export default function PushSubscribeButton({ token, showTestButton = false, lab
       }
     });
   }, [token]);
-
-  if (!supported) return null;
 
   const handleToggle = async () => {
     if (!token) return;
@@ -55,8 +54,6 @@ export default function PushSubscribeButton({ token, showTestButton = false, lab
     setLoading(false);
   };
 
-  const [testError, setTestError] = useState(false);
-
   const handleTest = async () => {
     if (!token || testing) return;
     setTesting(true);
@@ -71,6 +68,8 @@ export default function PushSubscribeButton({ token, showTestButton = false, lab
     }
     setTesting(false);
   };
+
+  if (!supported) return null;
 
   const blocked = permission === "denied";
 
