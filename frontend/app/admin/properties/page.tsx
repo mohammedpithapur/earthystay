@@ -958,35 +958,54 @@ function PhotosSection({
     setUploadNotice('')
     const targetAlbum = activeFolder === 'All' ? 'General' : activeFolder
 
-    // Add all files to form state immediately with local preview URLs
+    // 1. Prepare all preview records and file queue in one pass
     const fileQueue: Array<{ tempId: string; file: File; localPreviewUrl: string }> = []
-    
+    const newPreviews: PropertyImage[] = []
+    const initialImagesLen = form.images.length
+
     for (const [index, file] of files.entries()) {
       const tempId = `upload-${Date.now()}-${index}-${Math.random().toString(16).slice(2)}`
       const localPreviewUrl = URL.createObjectURL(file)
       uploadFilesRef.current[tempId] = file
       fileQueue.push({ tempId, file, localPreviewUrl })
 
-      setForm(prev => ({
-        ...prev,
-        images: [
-          ...prev.images,
-          {
-            id: tempId,
-            property_id: '',
-            image_url: localPreviewUrl,
-            is_primary: prev.images.length === 0 && index === 0,
-            display_order: prev.images.length + index + 1,
-            album_name: targetAlbum,
-          },
-        ],
-      }))
-      setUploadProgress(prev => ({ ...prev, [tempId]: 0 }))
-      setUploadErrors(prev => { const n = { ...prev }; delete n[tempId]; return n })
+      newPreviews.push({
+        id: tempId,
+        property_id: '',
+        image_url: localPreviewUrl,
+        is_primary: initialImagesLen === 0 && index === 0,
+        display_order: initialImagesLen + index + 1,
+        album_name: targetAlbum,
+      })
     }
+
+    // Single atomic React state update for adding all previews
+    setForm(prev => ({
+      ...prev,
+      images: [...prev.images, ...newPreviews],
+    }))
 
     activeUploadCountRef.current += files.length
     setIsUploading(true)
+
+    // 2. Throttled URL replacement buffer to avoid 200 separate re-renders
+    const completedUrls = new Map<string, string>()
+    let flushTimeout: ReturnType<typeof setTimeout> | null = null
+
+    const flushCompletedUrls = () => {
+      if (completedUrls.size === 0) return
+      setForm(prev => ({
+        ...prev,
+        images: prev.images.map(img => {
+          const publicUrl = completedUrls.get(img.id)
+          if (publicUrl) {
+            const realId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : img.id
+            return { ...img, id: realId, image_url: publicUrl }
+          }
+          return img
+        }),
+      }))
+    }
 
     try {
       await uploadPropertyImagesBatch(
@@ -994,14 +1013,14 @@ function PhotosSection({
         fetchWithAuth,
         {
           onItemSuccess: (tempId, publicUrl) => {
-            const realId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : tempId
-            setForm(prev => ({
-              ...prev,
-              images: prev.images.map(img =>
-                img.id === tempId ? { ...img, id: realId, image_url: publicUrl } : img
-              ),
-            }))
+            completedUrls.set(tempId, publicUrl)
             delete uploadFilesRef.current[tempId]
+            if (!flushTimeout) {
+              flushTimeout = setTimeout(() => {
+                flushCompletedUrls()
+                flushTimeout = null
+              }, 250)
+            }
           },
           onItemError: (tempId, errorMessage) => {
             setUploadErrors(prev => ({ ...prev, [tempId]: errorMessage }))
@@ -1012,10 +1031,13 @@ function PhotosSection({
             setBatchProgress(progress)
           },
         },
-        8, // 8 parallel S3 streams
+        6, // 6 parallel streaming workers
       )
     } finally {
-      // Clean up object URLs
+      if (flushTimeout) clearTimeout(flushTimeout)
+      flushCompletedUrls()
+
+      // Clean up local blob object URLs
       fileQueue.forEach(q => {
         try { URL.revokeObjectURL(q.localPreviewUrl) } catch {}
       })
