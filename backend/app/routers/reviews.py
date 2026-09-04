@@ -7,7 +7,6 @@ from app.database import get_db, utc_now
 from app.dependencies import get_admin
 from app.models.user import User
 from app.models.property import Property
-from app.models.property_group import PropertyGroupMember
 from app.models.review import Review
 from app.schemas.review import ReviewCreate, ReviewOut
 
@@ -15,26 +14,10 @@ router = APIRouter(tags=["reviews"])
 
 
 async def recalculate_property_ratings(db: AsyncSession, property_id: UUID):
-    # Find if property belongs to a group
-    group_member_res = await db.execute(
-        select(PropertyGroupMember).where(PropertyGroupMember.property_id == property_id)
-    )
-    group_member = group_member_res.scalar_one_or_none()
-
-    property_ids = [property_id]
-    if group_member:
-        # Fetch all property IDs in this group
-        members_res = await db.execute(
-            select(PropertyGroupMember.property_id).where(
-                PropertyGroupMember.group_id == group_member.group_id
-            )
-        )
-        property_ids = list(members_res.scalars().all())
-
-    # Calculate avg rating and count for these properties
+    """Calculate and update avg_rating and review_count individually for the given property."""
     stats_res = await db.execute(
         select(func.count(Review.id), func.avg(Review.rating)).where(
-            Review.property_id.in_(property_ids)
+            Review.property_id == property_id
         )
     )
     count, avg_rating = stats_res.fetchone()
@@ -42,39 +25,21 @@ async def recalculate_property_ratings(db: AsyncSession, property_id: UUID):
     count = count or 0
     avg_rating = round(float(avg_rating), 2) if avg_rating is not None else 0.0
 
-    # Update all affected properties
-    for p_id in property_ids:
-        prop = await db.get(Property, p_id)
-        if prop:
-            prop.avg_rating = avg_rating
-            prop.review_count = count
-            db.add(prop)
+    prop = await db.get(Property, property_id)
+    if prop:
+        prop.avg_rating = avg_rating
+        prop.review_count = count
+        db.add(prop)
 
     await db.commit()
 
 
 @router.get("/properties/{property_id}/reviews", response_model=list[ReviewOut])
 async def get_property_reviews(property_id: UUID, db: AsyncSession = Depends(get_db)):
-    # Check if property belongs to a group
-    group_member_res = await db.execute(
-        select(PropertyGroupMember).where(PropertyGroupMember.property_id == property_id)
-    )
-    group_member = group_member_res.scalar_one_or_none()
-
-    property_ids = [property_id]
-    if group_member:
-        # Fetch all property IDs in this group
-        members_res = await db.execute(
-            select(PropertyGroupMember.property_id).where(
-                PropertyGroupMember.group_id == group_member.group_id
-            )
-        )
-        property_ids = list(members_res.scalars().all())
-
-    # Retrieve all reviews for the group properties
+    """Retrieve all reviews belonging to this individual property."""
     reviews_res = await db.execute(
         select(Review)
-        .where(Review.property_id.in_(property_ids))
+        .where(Review.property_id == property_id)
         .order_by(Review.created_at.desc())
     )
     return reviews_res.scalars().all()

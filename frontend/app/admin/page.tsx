@@ -108,13 +108,14 @@ export default function AdminPage() {
   const [groupSuccess, setGroupSuccess] = useState('')
 
   // ── Reviews state ─────────────────────────────────────────────────────────
-  const [reviewsGroupId, setReviewsGroupId] = useState<string | null>(null)
-  const [groupReviews, setGroupReviews] = useState<Review[]>([])
+  const [reviewProperty, setReviewProperty] = useState<{ id: string; name: string } | null>(null)
+  const [propertyReviews, setPropertyReviews] = useState<Review[]>([])
   const [reviewsLoading, setReviewsLoading] = useState(false)
   const [editingReviewId, setEditingReviewId] = useState<string | null>(null)
   const [editReviewForm, setEditReviewForm] = useState<{ guest_name: string; rating: number; comment: string; platform: string }>({ guest_name: '', rating: 5, comment: '', platform: '' })
   const [newReview, setNewReview] = useState({ guest_name: '', rating: 5, comment: '', platform: '' })
   const [addingReview, setAddingReview] = useState(false)
+  const [reviewModalError, setReviewModalError] = useState('')
 
   // ── iCal state ────────────────────────────────────────────────────────────
   const [icalLinks, setIcalLinks] = useState<Record<string, ICalLink[]>>({})
@@ -722,11 +723,16 @@ export default function AdminPage() {
   }
 
 
-  const loadGroupReviews = async (propertyId: string) => {
+  const loadPropertyReviews = async (propertyId: string) => {
     setReviewsLoading(true)
+    setReviewModalError('')
     try {
-      setGroupReviews(await fetchPropertyReviews(propertyId))
-    } catch { /* noop */ } finally { setReviewsLoading(false) }
+      setPropertyReviews(await fetchPropertyReviews(propertyId))
+    } catch { 
+      setReviewModalError('Failed to load reviews')
+    } finally { 
+      setReviewsLoading(false) 
+    }
   }
 
   const handleCreateGroup = async () => {
@@ -804,6 +810,7 @@ export default function AdminPage() {
   const handleAddReview = async (propertyId: string) => {
     if (!newReview.guest_name.trim()) return
     setAddingReview(true)
+    setReviewModalError('')
     try {
       const payload: CreateReviewPayload = {
         property_id: propertyId,
@@ -814,12 +821,15 @@ export default function AdminPage() {
       }
       await createAdminReview(payload, fetchWithAuth)
       setNewReview({ guest_name: '', rating: 5, comment: '', platform: '' })
-      await loadGroupReviews(propertyId)
-    } catch { setGroupError('Failed to add review') }
+      await loadPropertyReviews(propertyId)
+      const refreshedProps = await listAdminProperties(fetchWithAuth)
+      setApiProperties(refreshedProps)
+    } catch { setReviewModalError('Failed to add review') }
     setAddingReview(false)
   }
 
   const handleUpdateReview = async (reviewId: string, propertyId: string) => {
+    setReviewModalError('')
     try {
       await fetchWithAuth(buildApiUrl(`/admin/reviews/${reviewId}`), {
         method: 'PATCH',
@@ -827,8 +837,10 @@ export default function AdminPage() {
         body: JSON.stringify(editReviewForm),
       })
       setEditingReviewId(null)
-      await loadGroupReviews(propertyId)
-    } catch { setGroupError('Failed to update review') }
+      await loadPropertyReviews(propertyId)
+      const refreshedProps = await listAdminProperties(fetchWithAuth)
+      setApiProperties(refreshedProps)
+    } catch { setReviewModalError('Failed to update review') }
   }
 
   const handleDeleteReview = (reviewId: string, propertyId: string) => {
@@ -843,8 +855,10 @@ export default function AdminPage() {
       onConfirm: async () => {
         try {
           await deleteAdminReview(reviewId, fetchWithAuth)
-          await loadGroupReviews(propertyId)
-        } catch { setGroupError('Failed to delete review') }
+          await loadPropertyReviews(propertyId)
+          const refreshedProps = await listAdminProperties(fetchWithAuth)
+          setApiProperties(refreshedProps)
+        } catch { setReviewModalError('Failed to delete review') }
       }
     })
   }
@@ -1928,26 +1942,8 @@ export default function AdminPage() {
                         <button onClick={() => handleDuplicateProperty(property.id, property.name)} style={buttonStyle}>Duplicate</button>
                         <button
                           onClick={() => {
-                            const group = groups.find(g => g.members.some(m => m.property_id === property.id))
-                            if (group) {
-                              setExpandedGroup(group.id)
-                              setReviewsGroupId(group.id)
-                              const masterMember = group.members.find(m => m.is_whole_property)
-                              if (masterMember) {
-                                loadGroupReviews(masterMember.property_id)
-                              }
-                              setActiveTab('groups')
-                            } else {
-                              setConfirmModal({
-                                isOpen: true,
-                                title: 'Group Required for Reviews',
-                                subtitle: `"${property.name}" is not assigned to a group.`,
-                                description: 'Please assign this property to a group in the Groups tab to view and manage its reviews.',
-                                isNoticeOnly: true,
-                                noticeActionLabel: 'Go to Groups',
-                                onNoticeAction: () => setActiveTab('groups'),
-                              })
-                            }
+                            setReviewProperty({ id: property.id, name: property.name })
+                            loadPropertyReviews(property.id)
                           }}
                           style={{ padding: '8px 16px', border: '1px solid var(--color-border)', borderRadius: '8px', backgroundColor: '#ffffff', color: 'var(--color-text-primary)', fontSize: '13px', cursor: 'pointer', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                         >
@@ -2109,100 +2105,6 @@ export default function AdminPage() {
                             <button onClick={() => { setAddingMemberGroupId(group.id); setGroupError('') }} style={{ padding: '9px 18px', backgroundColor: 'var(--color-bg-soft)', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer', color: 'var(--color-text-secondary)', marginBottom: '20px' }}>+ Add Property</button>
                           )}
 
-                          {/* Reviews section */}
-                          <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '20px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
-                              <h4 style={{ fontSize: '13px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-gold)', fontWeight: '700' }}>Reviews (Shared across group)</h4>
-                              {!isShowingReviews ? (
-                                <button onClick={() => { setReviewsGroupId(group.id); if (masterMember) loadGroupReviews(masterMember.property_id) }} style={{ padding: '7px 14px', backgroundColor: 'var(--color-bg-soft)', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', color: 'var(--color-text-secondary)' }}>Manage Reviews</button>
-                              ) : (
-                                <button onClick={() => setReviewsGroupId(null)} style={{ padding: '7px 14px', backgroundColor: 'var(--color-bg-soft)', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', color: 'var(--color-text-secondary)' }}>Close</button>
-                              )}
-                            </div>
-
-                            {isShowingReviews && (
-                              <div>
-                                {/* Add review form */}
-                                <div style={{ backgroundColor: '#f9f8f5', border: '1px solid var(--color-border)', borderRadius: '10px', padding: '16px', marginBottom: '16px' }}>
-                                  <h5 style={{ fontSize: '13px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '12px' }}>Add External Review</h5>
-                                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: '12px' }}>
-                                    <div>
-                                      <label style={{ fontSize: '11px', letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '6px', display: 'block', fontWeight: '700' }}>Guest Name *</label>
-                                      <input value={newReview.guest_name} onChange={e => setNewReview(r => ({ ...r, guest_name: e.target.value }))} placeholder="Jane Doe" style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '14px', outline: 'none', backgroundColor: '#fff', boxSizing: 'border-box' as const }} />
-                                    </div>
-                                    <div>
-                                      <label style={{ fontSize: '11px', letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '6px', display: 'block', fontWeight: '700' }}>Platform</label>
-                                      <input value={newReview.platform} onChange={e => setNewReview(r => ({ ...r, platform: e.target.value }))} placeholder="Airbnb / Booking.com" style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '14px', outline: 'none', backgroundColor: '#fff', boxSizing: 'border-box' as const }} />
-                                    </div>
-                                    <div>
-                                      <label style={{ fontSize: '11px', letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '6px', display: 'block', fontWeight: '700' }}>Rating</label>
-                                      <select value={newReview.rating} onChange={e => setNewReview(r => ({ ...r, rating: parseInt(e.target.value) }))} style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '14px', outline: 'none', backgroundColor: '#fff', cursor: 'pointer' }}>
-                                        {[5,4,3,2,1].map(n => <option key={n} value={n}>{n} star{n !== 1 ? 's' : ''} ({n}/5)</option>)}
-                                      </select>
-                                    </div>
-                                  </div>
-                                  <div style={{ marginBottom: '12px' }}>
-                                    <label style={{ fontSize: '11px', letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '6px', display: 'block', fontWeight: '700' }}>Comment</label>
-                                    <textarea value={newReview.comment} onChange={e => setNewReview(r => ({ ...r, comment: e.target.value }))} rows={3} placeholder="What did the guest say?" style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '14px', outline: 'none', backgroundColor: '#fff', resize: 'vertical', boxSizing: 'border-box' as const }} />
-                                  </div>
-                                  {masterMember && (
-                                    <button disabled={addingReview || !newReview.guest_name.trim()} onClick={() => handleAddReview(masterMember!.property_id)} style={{ padding: '10px 24px', backgroundColor: addingReview ? '#ccc' : 'var(--color-gold)', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '800', cursor: addingReview ? 'not-allowed' : 'pointer' }}>
-                                      {addingReview ? 'Adding…' : '+ Add Review'}
-                                    </button>
-                                  )}
-                                  {!masterMember && <p style={{ fontSize: '13px', color: '#C62828' }}>Set a master (Whole Property) first to add reviews.</p>}
-                                </div>
-
-                                {/* Reviews list */}
-                                {reviewsLoading ? (
-                                  <p style={{ color: 'var(--color-text-muted)', fontSize: '13px' }}>Loading reviews…</p>
-                                ) : groupReviews.length === 0 ? (
-                                  <p style={{ color: 'var(--color-text-muted)', fontSize: '13px' }}>No reviews yet for this group.</p>
-                                ) : (
-                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                    {groupReviews.map(review => (
-                                      <div key={review.id} style={{ padding: '14px 16px', backgroundColor: '#ffffff', borderRadius: '10px', border: '1px solid var(--color-border)' }}>
-                                        {editingReviewId === review.id ? (
-                                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                                              <input value={editReviewForm.guest_name} onChange={e => setEditReviewForm(f => ({ ...f, guest_name: e.target.value }))} placeholder="Guest name" style={{ padding: '8px 12px', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '13px', outline: 'none' }} />
-                                              <input value={editReviewForm.platform} onChange={e => setEditReviewForm(f => ({ ...f, platform: e.target.value }))} placeholder="Platform" style={{ padding: '8px 12px', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '13px', outline: 'none' }} />
-                                            </div>
-                                            <select value={editReviewForm.rating} onChange={e => setEditReviewForm(f => ({ ...f, rating: parseInt(e.target.value) }))} style={{ padding: '8px 12px', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '13px', outline: 'none', backgroundColor: '#fff', cursor: 'pointer' }}>
-                                              {[5,4,3,2,1].map(n => <option key={n} value={n}>{n} star{n !== 1 ? 's' : ''} ({n}/5)</option>)}
-                                            </select>
-                                            <textarea value={editReviewForm.comment} onChange={e => setEditReviewForm(f => ({ ...f, comment: e.target.value }))} rows={3} placeholder="Comment" style={{ padding: '8px 12px', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '13px', resize: 'vertical', outline: 'none', fontFamily: 'inherit' }} />
-                                            <div style={{ display: 'flex', gap: '8px' }}>
-                                              <button onClick={() => masterMember && handleUpdateReview(review.id, masterMember!.property_id)} style={{ padding: '7px 14px', backgroundColor: 'var(--color-gold)', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: '800', cursor: 'pointer' }}>Save</button>
-                                              <button onClick={() => setEditingReviewId(null)} style={{ padding: '7px 14px', backgroundColor: 'var(--color-bg-soft)', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>Cancel</button>
-                                            </div>
-                                          </div>
-                                        ) : (
-                                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap' }}>
-                                            <div style={{ flex: 1, minWidth: 0 }}>
-                                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
-                                                <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{review.guest_name}</p>
-                                                {review.platform && <span style={{ fontSize: '11px', backgroundColor: '#E3F2FD', color: '#1565C0', padding: '2px 8px', borderRadius: '999px', fontWeight: '700' }}>{review.platform}</span>}
-                                                <span style={{ display: 'inline-flex', gap: '1px' }}>
-                                                  {Array.from({ length: review.rating }).map((_, i) => <Star key={i} size={13} fill="currentColor" color="var(--color-gold)" />)}
-                                                </span>
-                                              </div>
-                                              {review.comment && <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.5' }}>{review.comment}</p>}
-                                              <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '4px' }}>{new Date(review.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-                                            </div>
-                                            <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
-                                              <button onClick={() => { setEditingReviewId(review.id); setEditReviewForm({ guest_name: review.guest_name, rating: review.rating, comment: review.comment ?? '', platform: review.platform ?? '' }) }} style={{ padding: '6px 12px', backgroundColor: '#E3F2FD', border: '1px solid #BBDEFB', borderRadius: '6px', fontSize: '11px', fontWeight: '700', cursor: 'pointer', color: '#1565C0' }}>Edit</button>
-                                              <button onClick={() => masterMember && handleDeleteReview(review.id, masterMember!.property_id)} style={{ padding: '6px 12px', backgroundColor: '#FFEBEE', border: '1px solid #FFCDD2', borderRadius: '6px', fontSize: '11px', fontWeight: '700', cursor: 'pointer', color: '#C62828' }}>Delete</button>
-                                            </div>
-                                          </div>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
                         </div>
                       )}
                     </div>
@@ -3128,6 +3030,189 @@ export default function AdminPage() {
               >
                 {articleSaving ? 'Saving…' : editingArticle ? 'Update Article' : 'Publish Article'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Individual Property Reviews Modal */}
+      {reviewProperty && (
+        <div
+          onClick={() => setReviewProperty(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.6)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+            backdropFilter: 'blur(3px)',
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '16px',
+              maxWidth: '680px',
+              width: '100%',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 24px 60px rgba(0,0,0,0.25)',
+              overflow: 'hidden',
+              border: '1px solid var(--color-border)',
+            }}
+          >
+            {/* Header */}
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--color-navbar)' }}>
+              <div>
+                <p style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--color-gold)', fontWeight: '700', marginBottom: '2px' }}>
+                  Property Reviews
+                </p>
+                <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--color-text-primary)', margin: 0 }}>
+                  {reviewProperty.name}
+                </h3>
+              </div>
+              <button
+                onClick={() => setReviewProperty(null)}
+                style={{ background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: 'var(--color-text-muted)', lineHeight: 1 }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: '24px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {reviewModalError && (
+                <div style={{ padding: '10px 14px', backgroundColor: '#FFEBEE', border: '1px solid #FFCDD2', borderRadius: '8px', color: '#C62828', fontSize: '13px', fontWeight: '600' }}>
+                  {reviewModalError}
+                </div>
+              )}
+
+              {/* Add Review Form */}
+              <div style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '18px' }}>
+                <h4 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)', marginBottom: '14px' }}>
+                  + Add Review for {reviewProperty.name}
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px', marginBottom: '12px' }}>
+                  <div>
+                    <label style={{ fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '6px', display: 'block', fontWeight: '700' }}>Guest Name *</label>
+                    <input
+                      value={newReview.guest_name}
+                      onChange={e => setNewReview(r => ({ ...r, guest_name: e.target.value }))}
+                      placeholder="e.g. Sarah Jenkins"
+                      style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '13px', outline: 'none', backgroundColor: '#fff', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '6px', display: 'block', fontWeight: '700' }}>Platform</label>
+                    <input
+                      value={newReview.platform}
+                      onChange={e => setNewReview(r => ({ ...r, platform: e.target.value }))}
+                      placeholder="Airbnb / Google / Direct"
+                      style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '13px', outline: 'none', backgroundColor: '#fff', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '6px', display: 'block', fontWeight: '700' }}>Rating</label>
+                    <select
+                      value={newReview.rating}
+                      onChange={e => setNewReview(r => ({ ...r, rating: parseInt(e.target.value) }))}
+                      style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '13px', outline: 'none', backgroundColor: '#fff', cursor: 'pointer', boxSizing: 'border-box' }}
+                    >
+                      {[5, 4, 3, 2, 1].map(n => (
+                        <option key={n} value={n}>{'★'.repeat(n)} ({n}/5)</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={{ fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-text-muted)', marginBottom: '6px', display: 'block', fontWeight: '700' }}>Guest Feedback</label>
+                  <textarea
+                    value={newReview.comment}
+                    onChange={e => setNewReview(r => ({ ...r, comment: e.target.value }))}
+                    rows={3}
+                    placeholder="What did the guest say about their stay?"
+                    style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '13px', outline: 'none', backgroundColor: '#fff', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                  />
+                </div>
+                <button
+                  disabled={addingReview || !newReview.guest_name.trim()}
+                  onClick={() => handleAddReview(reviewProperty.id)}
+                  style={{
+                    padding: '10px 22px',
+                    backgroundColor: addingReview || !newReview.guest_name.trim() ? 'var(--color-bg-soft)' : 'var(--color-gold)',
+                    color: addingReview || !newReview.guest_name.trim() ? 'var(--color-text-muted)' : 'var(--color-text-primary)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '13px',
+                    fontWeight: '800',
+                    cursor: addingReview || !newReview.guest_name.trim() ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {addingReview ? 'Adding…' : '+ Add Review'}
+                </button>
+              </div>
+
+              {/* Existing Reviews List */}
+              <div>
+                <h4 style={{ fontSize: '13px', letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700', marginBottom: '12px' }}>
+                  Existing Reviews ({propertyReviews.length})
+                </h4>
+
+                {reviewsLoading ? (
+                  <p style={{ color: 'var(--color-text-muted)', fontSize: '13px' }}>Loading reviews…</p>
+                ) : propertyReviews.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '32px', backgroundColor: 'var(--color-bg-soft)', borderRadius: '10px', border: '1px dashed var(--color-border)' }}>
+                    <p style={{ fontSize: '14px', fontWeight: '600', color: 'var(--color-text-primary)', marginBottom: '4px' }}>No reviews yet</p>
+                    <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: 0 }}>Add the first review using the form above.</p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {propertyReviews.map(review => (
+                      <div key={review.id} style={{ padding: '14px 16px', backgroundColor: '#ffffff', borderRadius: '10px', border: '1px solid var(--color-border)' }}>
+                        {editingReviewId === review.id ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                              <input value={editReviewForm.guest_name} onChange={e => setEditReviewForm(f => ({ ...f, guest_name: e.target.value }))} placeholder="Guest name" style={{ padding: '8px 12px', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '13px', outline: 'none' }} />
+                              <input value={editReviewForm.platform} onChange={e => setEditReviewForm(f => ({ ...f, platform: e.target.value }))} placeholder="Platform" style={{ padding: '8px 12px', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '13px', outline: 'none' }} />
+                            </div>
+                            <select value={editReviewForm.rating} onChange={e => setEditReviewForm(f => ({ ...f, rating: parseInt(e.target.value) }))} style={{ padding: '8px 12px', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '13px', outline: 'none', backgroundColor: '#fff', cursor: 'pointer' }}>
+                              {[5,4,3,2,1].map(n => <option key={n} value={n}>{'★'.repeat(n)} ({n}/5)</option>)}
+                            </select>
+                            <textarea value={editReviewForm.comment} onChange={e => setEditReviewForm(f => ({ ...f, comment: e.target.value }))} rows={3} placeholder="Comment" style={{ padding: '8px 12px', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '13px', resize: 'vertical', outline: 'none', fontFamily: 'inherit' }} />
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                              <button onClick={() => handleUpdateReview(review.id, reviewProperty.id)} style={{ padding: '7px 14px', backgroundColor: 'var(--color-gold)', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: '800', cursor: 'pointer' }}>Save</button>
+                              <button onClick={() => setEditingReviewId(null)} style={{ padding: '7px 14px', backgroundColor: 'var(--color-bg-soft)', border: '1px solid var(--color-border)', borderRadius: '6px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>Cancel</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', flexWrap: 'wrap' }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                                <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--color-text-primary)', margin: 0 }}>{review.guest_name}</p>
+                                {review.platform && <span style={{ fontSize: '11px', backgroundColor: '#E3F2FD', color: '#1565C0', padding: '2px 8px', borderRadius: '999px', fontWeight: '700' }}>{review.platform}</span>}
+                                <span style={{ display: 'inline-flex', gap: '1px' }}>
+                                  {Array.from({ length: review.rating }).map((_, i) => <Star key={i} size={13} fill="currentColor" color="var(--color-gold)" />)}
+                                </span>
+                              </div>
+                              {review.comment && <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', lineHeight: '1.5', margin: '4px 0 0' }}>{review.comment}</p>}
+                              <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '6px', margin: 0 }}>{new Date(review.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                            </div>
+                            <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+                              <button onClick={() => { setEditingReviewId(review.id); setEditReviewForm({ guest_name: review.guest_name, rating: review.rating, comment: review.comment ?? '', platform: review.platform ?? '' }) }} style={{ padding: '6px 12px', backgroundColor: '#E3F2FD', border: '1px solid #BBDEFB', borderRadius: '6px', fontSize: '11px', fontWeight: '700', cursor: 'pointer', color: '#1565C0' }}>Edit</button>
+                              <button onClick={() => handleDeleteReview(review.id, reviewProperty.id)} style={{ padding: '6px 12px', backgroundColor: '#FFEBEE', border: '1px solid #FFCDD2', borderRadius: '6px', fontSize: '11px', fontWeight: '700', cursor: 'pointer', color: '#C62828' }}>Delete</button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
