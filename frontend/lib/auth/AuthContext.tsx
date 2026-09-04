@@ -52,18 +52,22 @@ function parseJwtExp(token: string): number | null {
   }
 }
 
-const TOKEN_KEY = 'earthystay_token'
-const USER_KEY = 'earthystay_user'
+const TOKEN_KEY = 'earthystays_token'
+const USER_KEY = 'earthystays_user'
+const LEGACY_TOKEN_KEY = 'earthystay_token'
+const LEGACY_USER_KEY = 'earthystay_user'
 
 function getStoredToken(): string | null {
   if (typeof window === 'undefined') return null
-  try { return localStorage.getItem(TOKEN_KEY) } catch { return null }
+  try {
+    return localStorage.getItem(TOKEN_KEY) || localStorage.getItem(LEGACY_TOKEN_KEY)
+  } catch { return null }
 }
 
 function getStoredUser(): User | null {
   if (typeof window === 'undefined') return null
   try {
-    const raw = localStorage.getItem(USER_KEY)
+    const raw = localStorage.getItem(USER_KEY) || localStorage.getItem(LEGACY_USER_KEY)
     return raw ? JSON.parse(raw) : null
   } catch { return null }
 }
@@ -74,9 +78,13 @@ function setStoredSession(token: string | null, u: User | null) {
     if (token && u) {
       localStorage.setItem(TOKEN_KEY, token)
       localStorage.setItem(USER_KEY, JSON.stringify(u))
+      localStorage.removeItem(LEGACY_TOKEN_KEY)
+      localStorage.removeItem(LEGACY_USER_KEY)
     } else {
       localStorage.removeItem(TOKEN_KEY)
       localStorage.removeItem(USER_KEY)
+      localStorage.removeItem(LEGACY_TOKEN_KEY)
+      localStorage.removeItem(LEGACY_USER_KEY)
     }
   } catch {}
 }

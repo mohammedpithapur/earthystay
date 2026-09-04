@@ -5,13 +5,13 @@ import PropertiesClient from './PropertiesClient'
 export const revalidate = 3600
 
 export const metadata: Metadata = {
-  title: 'Property | EarthyStay',
-  description: 'A hand-picked property - book now on EarthyStay',
+  title: 'Property | Earthy stays',
+  description: 'A hand-picked property - book now on Earthy stays',
   openGraph: {
-    title: 'Property | EarthyStay',
-    description: 'A hand-picked property - book now on EarthyStay',
+    title: 'Property | Earthy stays',
+    description: 'A hand-picked property - book now on Earthy stays',
     url: 'https://earthystays.in/properties',
-    siteName: 'EarthyStay',
+    siteName: 'Earthy stays',
     type: 'website',
     images: [
       {
@@ -19,14 +19,14 @@ export const metadata: Metadata = {
         secureUrl: 'https://earthystays.in/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'EarthyStay Properties',
+        alt: 'Earthy stays Properties',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Property | EarthyStay',
-    description: 'A hand-picked property - book now on EarthyStay',
+    title: 'Property | Earthy stays',
+    description: 'A hand-picked property - book now on Earthy stays',
     images: ['https://earthystays.in/og-image.jpg'],
   },
 }

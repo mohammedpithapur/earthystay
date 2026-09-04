@@ -49,14 +49,14 @@ def build_ical(property_name: str, bookings: list[Booking]) -> str:
     lines = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
-        "PRODID:-//EarthyStay//EarthyStay//EN",
+        "PRODID:-//EarthyStays//EarthyStays//EN",
         "CALSCALE:GREGORIAN",
         "METHOD:PUBLISH",
         f"X-WR-CALNAME:{property_name}",
         "X-WR-TIMEZONE:UTC",
     ]
     for booking in bookings:
-        uid = f"{booking.id}@earthystay.com"
+        uid = f"{booking.id}@earthystays.com"
         if booking.is_admin_block:
             summary = booking.note or "Blocked by Host"
             desc = f"Host Date Block\\nRef: {booking.booking_ref}"

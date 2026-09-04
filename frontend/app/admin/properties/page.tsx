@@ -1991,7 +1991,7 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
   const propId = property?.id || 'new'
 
   useEffect(() => {
-    const draftKey = `earthystay_draft_${propId}`
+    const draftKey = `earthystays_draft_${propId}`
     let restoredForm = createFormFromProperty(property)
     try {
       const savedDraft = localStorage.getItem(draftKey)
@@ -2014,7 +2014,7 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
 
   // Auto-save form draft to localStorage
   useEffect(() => {
-    const draftKey = `earthystay_draft_${propId}`
+    const draftKey = `earthystays_draft_${propId}`
     try {
       if (form.name || form.description || form.address || form.images.length > 0) {
         localStorage.setItem(draftKey, JSON.stringify(form))
@@ -2230,7 +2230,7 @@ function PropertyEditorModal({ property, onClose, onSave }: PropertyEditorProps)
         return [saved, ...prev]
       })
 
-      try { localStorage.removeItem(`earthystay_draft_${propId}`) } catch {}
+      try { localStorage.removeItem(`earthystays_draft_${propId}`) } catch {}
       onSave?.(saved)
       setSaveStatus('saved')
       setTimeout(() => setSaveStatus('idle'), 2000)

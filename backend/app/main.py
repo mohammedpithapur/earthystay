@@ -18,7 +18,7 @@ from app.routers import admin, auth, bookings, ical, payments, properties, revie
 from app.models import push_subscription, price_override  # noqa: F401 — ensures table is created
 
 
-logger = logging.getLogger("earthystay.api")
+logger = logging.getLogger("earthystays.api")
 logging.basicConfig(level=logging.INFO)
 
 if settings.SENTRY_DSN:

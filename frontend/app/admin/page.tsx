@@ -271,7 +271,7 @@ export default function AdminPage() {
     excerpt: '',
     content: '',
     cover_image_url: '',
-    author_name: 'EarthyStay Team',
+    author_name: 'Earthy stays Team',
     read_time_minutes: 3,
     tags: '',
     is_published: true,
@@ -304,7 +304,7 @@ export default function AdminPage() {
       excerpt: '',
       content: '',
       cover_image_url: '',
-      author_name: 'EarthyStay Team',
+      author_name: 'Earthy stays Team',
       read_time_minutes: 3,
       tags: '',
       is_published: true,
@@ -323,7 +323,7 @@ export default function AdminPage() {
       excerpt: art.excerpt || '',
       content: art.content,
       cover_image_url: art.cover_image_url || '',
-      author_name: art.author_name || 'EarthyStay Team',
+      author_name: art.author_name || 'Earthy stays Team',
       read_time_minutes: art.read_time_minutes || 3,
       tags: (art.tags || []).join(', '),
       is_published: art.is_published,
@@ -353,7 +353,7 @@ export default function AdminPage() {
         excerpt: articleForm.excerpt.trim() || undefined,
         content: articleForm.content,
         cover_image_url: articleForm.cover_image_url.trim() || undefined,
-        author_name: articleForm.author_name.trim() || 'EarthyStay Team',
+        author_name: articleForm.author_name.trim() || 'Earthy stays Team',
         read_time_minutes: Number(articleForm.read_time_minutes) || 3,
         tags: tagsList,
         is_published: articleForm.is_published,
@@ -1166,7 +1166,7 @@ export default function AdminPage() {
                     const encodedUri = encodeURI(csvContent)
                     const link = document.createElement('a')
                     link.setAttribute('href', encodedUri)
-                    link.setAttribute('download', `earthystay_analytics_${timeframeMode}.csv`)
+                    link.setAttribute('download', `earthystays_analytics_${timeframeMode}.csv`)
                     document.body.appendChild(link)
                     link.click()
                     document.body.removeChild(link)

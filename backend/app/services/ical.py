@@ -99,7 +99,7 @@ async def sync_single_ical_link(
 ) -> int:
     """
     Fetch and sync a single iCal import link.
-    Creates or updates admin date blocks in EarthyStay.
+    Creates or updates admin date blocks in Earthy stays.
     Returns the count of imported events.
     """
     if link.direction != ICalDirection.import_:
@@ -119,7 +119,7 @@ async def sync_single_ical_link(
         url = "https://" + url
 
     headers = {
-        "User-Agent": "Mozilla/5.0 (compatible; EarthyStayCalendarSync/1.0; +https://earthystays.in)"
+        "User-Agent": "Mozilla/5.0 (compatible; EarthyStaysCalendarSync/1.0; +https://earthystays.in)"
     }
 
     try:

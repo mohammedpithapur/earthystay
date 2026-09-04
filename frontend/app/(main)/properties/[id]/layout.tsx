@@ -15,11 +15,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
     if (!res.ok) {
       return {
-        title: 'Property | EarthyStay',
-        description: 'A hand-picked property - book now on EarthyStay',
+        title: 'Property | Earthy stays',
+        description: 'A hand-picked property - book now on Earthy stays',
         openGraph: {
-          title: 'Property | EarthyStay',
-          description: 'A hand-picked property - book now on EarthyStay',
+          title: 'Property | Earthy stays',
+          description: 'A hand-picked property - book now on Earthy stays',
           images: ['https://earthystays.in/og-image.jpg'],
         },
       }
@@ -31,8 +31,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     const rawCover = primaryImg || firstImg || 'https://earthystays.in/og-image.jpg'
     const coverImage = rawCover.startsWith('blob:') ? 'https://earthystays.in/og-image.jpg' : rawCover
 
-    const title = property.name ? `Property | EarthyStay | ${property.name}` : 'Property | EarthyStay'
-    const description = 'A hand-picked property - book now on EarthyStay'
+    const title = property.name ? `Property | Earthy stays | ${property.name}` : 'Property | Earthy stays'
+    const description = 'A hand-picked property - book now on Earthy stays'
     const url = `https://earthystays.in/properties/${id}`
 
     return {
@@ -42,7 +42,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
         title,
         description,
         url,
-        siteName: 'EarthyStay',
+        siteName: 'Earthy stays',
         type: 'website',
         images: [
           {
@@ -63,11 +63,11 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     }
   } catch {
     return {
-      title: 'Property | EarthyStay',
-      description: 'A hand-picked property - book now on EarthyStay',
+      title: 'Property | Earthy stays',
+      description: 'A hand-picked property - book now on Earthy stays',
       openGraph: {
-        title: 'Property | EarthyStay',
-        description: 'A hand-picked property - book now on EarthyStay',
+        title: 'Property | Earthy stays',
+        description: 'A hand-picked property - book now on Earthy stays',
         images: ['https://earthystays.in/og-image.jpg'],
       },
     }

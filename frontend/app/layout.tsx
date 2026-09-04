@@ -6,13 +6,13 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: {
-    default: 'EarthyStay | Unique Earthy Properties Across India',
-    template: '%s | EarthyStay',
+    default: 'Earthy stays | Unique Earthy Properties Across India',
+    template: '%s | Earthy stays',
   },
   description: 'Discover and book one-of-a-kind earthy villas, cottages, and estates across India. Perfect for boutique stays, destination weddings, and corporate retreats.',
   keywords: [
-    'EarthyStay',
-    'Earthy Stays',
+    'Earthy stays',
+    'EarthyStays',
     'earthystays.in',
     'earthy properties',
     'luxury villas India',
@@ -28,8 +28,8 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     url: 'https://earthystays.in',
-    siteName: 'EarthyStay',
-    title: 'EarthyStay | Unique Earthy Properties Across India',
+    siteName: 'Earthy stays',
+    title: 'Earthy stays | Unique Earthy Properties Across India',
     description: 'Discover and book one-of-a-kind earthy villas, cottages, and estates across India. Perfect for stays, weddings, and corporate retreats.',
     images: [
       {
@@ -38,13 +38,13 @@ export const metadata: Metadata = {
         width: 1200,
         height: 630,
         type: 'image/jpeg',
-        alt: 'EarthyStay — Unique Earthy Properties Across India',
+        alt: 'Earthy stays — Unique Earthy Properties Across India',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'EarthyStay | Unique Earthy Properties Across India',
+    title: 'Earthy stays | Unique Earthy Properties Across India',
     description: 'Discover and book one-of-a-kind earthy villas, cottages, and estates across India. Perfect for stays, weddings, and corporate retreats.',
     images: ['https://earthystays.in/og-image.jpg'],
   },
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'EarthyStay',
+    title: 'Earthy stays',
   },
   icons: {
     icon: [
@@ -76,14 +76,14 @@ const jsonLd = {
       '@type': 'WebSite',
       '@id': 'https://earthystays.in/#website',
       url: 'https://earthystays.in',
-      name: 'EarthyStay',
-      alternateName: ['Earthy Stays', 'EarthyStay India', 'earthystays.in'],
+      name: 'Earthy stays',
+      alternateName: ['Earthy stays', 'Earthy Stays', 'EarthyStays India', 'earthystays.in'],
       description: 'Discover and book unique earthy properties across India. Boutique villas, heritage stays, wedding estates, and retreats.',
     },
     {
       '@type': 'Organization',
       '@id': 'https://earthystays.in/#organization',
-      name: 'EarthyStay',
+      name: 'Earthy stays',
       url: 'https://earthystays.in',
       logo: 'https://earthystays.in/Untitled_design-removebg-preview.png',
     },

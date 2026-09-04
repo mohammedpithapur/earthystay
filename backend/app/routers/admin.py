@@ -994,7 +994,7 @@ async def create_admin_block(
         is_shadow_block=False,
         note=data.note,
         guest_name="Admin Block",
-        guest_email="admin@earthystay.com",
+        guest_email="admin@earthystays.com",
     )
     db.add(block)
     await db.flush()  # Populate block.id before group blocking

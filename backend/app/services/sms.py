@@ -71,7 +71,7 @@ async def send_booking_confirmation_sms(
         f"Check-in: {check_in}\n"
         f"Check-out: {check_out}\n"
         f"Total: INR {total}\n"
-        f"Thank you for choosing EarthyStay!"
+        f"Thank you for choosing Earthy stays!"
     )
     return await send_sms(phone, message)
 

@@ -37,7 +37,7 @@ async def send_password_reset_email(to_email: str, reset_url: str) -> bool:
             json={
                 "from": settings.RESEND_FROM_EMAIL,
                 "to": [to_email],
-                "subject": "Reset your EarthyStay password",
+                "subject": "Reset your Earthy stays password",
                 "html": html,
             },
         )
@@ -61,7 +61,7 @@ async def send_verification_otp_email(to_email: str, code: str) -> bool:
                 json={
                     "from": settings.RESEND_FROM_EMAIL,
                     "to": [to_email],
-                    "subject": f"{code} is your EarthyStay verification code",
+                    "subject": f"{code} is your Earthy stays verification code",
                     "html": html,
                 },
             )
@@ -298,7 +298,7 @@ async def send_event_enquiry_confirmation_email(
         phone=phone,
         email=to_email,
     )
-    subject = f"Enquiry Received: {nature_of_event} at {destination} — EarthyStay"
+    subject = f"Enquiry Received: {nature_of_event} at {destination} — Earthy stays"
 
     if not settings.RESEND_API_KEY:
         if settings.ENVIRONMENT == "development":
