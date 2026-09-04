@@ -129,14 +129,14 @@ export default function PropertyDetailPage() {
   }, [propertyId])
 
   useEffect(() => {
-    if (activeTab === 'reviews' && propertyId) {
+    if (propertyId) {
       setReviewsLoading(true)
       fetchPropertyReviews(propertyId)
         .then(setReviews)
         .catch(() => {})
         .finally(() => setReviewsLoading(false))
     }
-  }, [activeTab, propertyId])
+  }, [propertyId])
 
   const formatDateInputValue = (value?: Date) => {
     if (!value) return ''

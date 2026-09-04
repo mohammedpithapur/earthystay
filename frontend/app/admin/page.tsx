@@ -1972,7 +1972,7 @@ export default function AdminPage() {
             {/* Create Group */}
             <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', padding: '24px', marginBottom: '24px', boxShadow: '0 8px 24px rgba(26,26,26,0.04)' }}>
               <h2 style={{ fontSize: '22px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '4px' }}>Property Groups</h2>
-              <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '20px' }}>Group sub-properties together. One property must be the &quot;Whole Property&quot; — it acts as the master for shared amenities, house rules, and reviews.</p>
+              <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '20px' }}>Group sub-properties together for shared availability calendar blocking.</p>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                 <input
                   id="new-group-name"
@@ -2008,7 +2008,6 @@ export default function AdminPage() {
                   const isExpanded = expandedGroup === group.id
                   const isEditingName = editingGroupId === group.id
                   const masterMember = group.members.find(m => m.is_whole_property)
-                  const isShowingReviews = reviewsGroupId === group.id
 
                   return (
                     <div key={group.id} style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '14px', boxShadow: '0 8px 24px rgba(26,26,26,0.04)', overflow: 'hidden' }}>
