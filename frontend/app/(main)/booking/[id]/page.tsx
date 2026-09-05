@@ -484,25 +484,21 @@ function BookingPageContent() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--color-text-secondary)' }}>
-                <span>{basePrice !== property.price_per_night * nights ? `Base rate (${nights} nights · custom rate)` : `₹${property.price_per_night.toLocaleString('en-IN')} × ${nights} nights`}</span>
+                <span>₹{nights > 0 ? Math.round(basePrice / nights).toLocaleString('en-IN') : property.price_per_night.toLocaleString('en-IN')} × {nights} night{nights !== 1 ? 's' : ''}</span>
                 <span>₹{basePrice.toLocaleString('en-IN')}</span>
               </div>
-              {property && basePrice < property.price_per_night * nights && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#137333', fontWeight: '600', backgroundColor: '#e6f4ea', padding: '6px 10px', borderRadius: '6px' }}>
-                  <span>🎉 Coupon Discount Applied</span>
-                  <span>−₹{((property.price_per_night * nights) - basePrice).toLocaleString('en-IN')}</span>
-                </div>
-              )}
               {pets > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--color-text-secondary)' }}>
-                  <span>{pets} pet{pets > 1 ? 's' : ''} × {nights} nights</span>
+                  <span>{pets} pet{pets > 1 ? 's' : ''} × {nights} night{nights > 1 ? 's' : ''}</span>
                   <span>₹{petCharge.toLocaleString('en-IN')}</span>
                 </div>
               )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--color-text-secondary)' }}>
-                <span>Cleaning fee</span>
-                <span>₹{property.cleaning_fee.toLocaleString('en-IN')}</span>
-              </div>
+              {property.cleaning_fee > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', color: 'var(--color-text-secondary)' }}>
+                  <span>Cleaning fee</span>
+                  <span>₹{property.cleaning_fee.toLocaleString('en-IN')}</span>
+                </div>
+              )}
             </div>
 
             <div style={{ height: '1px', backgroundColor: 'var(--color-border)', marginBottom: '16px' }} />

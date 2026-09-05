@@ -250,51 +250,7 @@ export default function PropertyDetailPage() {
     return sum
   }, [checkIn, checkOut, property, nights, priceOverrides])
 
-  const hasCustomPricing = useMemo(() => {
-    return property && nights > 0 ? basePrice !== property.price_per_night * nights : false
-  }, [basePrice, property, nights])
 
-  const appliedDiscount = useMemo(() => {
-    if (!checkIn || !checkOut || !property || nights <= 0) return null
-    const [y, m, d] = checkIn.split('-').map(Number)
-    let totalDiscountAmount = 0
-    const labels: string[] = []
-    let maxPct = 0
-    for (let i = 0; i < nights; i++) {
-      const cur = new Date(y, m - 1, d + i)
-      const yr = cur.getFullYear()
-      const mo = String(cur.getMonth() + 1).padStart(2, '0')
-      const da = String(cur.getDate()).padStart(2, '0')
-      const curStr = `${yr}-${mo}-${da}`
-      const ov = priceOverrides.find(o => curStr >= o.start_date && curStr < o.end_date)
-      if (ov && (ov.discount_percent || ov.price_per_night < property.price_per_night)) {
-        const diff = property.price_per_night - ov.price_per_night
-        if (diff > 0) totalDiscountAmount += diff
-        const pct = ov.discount_percent || Math.round((diff / property.price_per_night) * 100)
-        if (pct > maxPct) maxPct = pct
-        if (ov.label && !labels.includes(ov.label)) labels.push(ov.label)
-      }
-    }
-    if (totalDiscountAmount > 0) {
-      return {
-        amount: totalDiscountAmount,
-        percent: maxPct,
-        label: labels.join(', ') || `${maxPct}% Discount Applied`,
-      }
-    }
-    return null
-  }, [checkIn, checkOut, property, nights, priceOverrides])
-
-  const upcomingDiscount = useMemo(() => {
-    const todayStr = new Date().toISOString().slice(0, 10)
-    const activeDiscounts = priceOverrides.filter(ov => ov.end_date > todayStr && (ov.discount_percent || (property && ov.price_per_night < property.price_per_night)))
-    if (activeDiscounts.length === 0) return null
-    const maxPct = Math.max(...activeDiscounts.map(d => d.discount_percent || (property ? Math.round(((property.price_per_night - d.price_per_night) / property.price_per_night) * 100) : 0)))
-    return {
-      maxPercent: maxPct,
-      count: activeDiscounts.length,
-    }
-  }, [priceOverrides, property])
 
   const handleDetailShare = useCallback(async () => {
     if (!property) return
@@ -1208,39 +1164,12 @@ export default function PropertyDetailPage() {
         {/* Booking Widget */}
         <div style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '16px', padding: '24px', boxShadow: '0 12px 36px rgba(0,0,0,0.06)' }} className="sticky-desktop md:sticky">
           <div style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: '1px solid var(--color-bg-soft)' }}>
-            {appliedDiscount ? (
-              <div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                  <span style={{ fontSize: '30px', fontWeight: '900', color: 'var(--color-text-primary)' }}>
-                    ₹{Math.round(basePrice / nights).toLocaleString('en-IN')}
-                  </span>
-                  <span style={{ fontSize: '18px', color: 'var(--color-text-muted)', textDecoration: 'line-through' }}>
-                    ₹{property.price_per_night.toLocaleString('en-IN')}
-                  </span>
-                  <span style={{ fontSize: '14px', color: 'var(--color-text-muted)' }}>/ night</span>
-                </div>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginTop: '6px', backgroundColor: '#e6f4ea', color: '#137333', padding: '3px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: '700' }}>
-                  🎉 {appliedDiscount.label || `${appliedDiscount.percent}% OFF Applied`}
-                </div>
-              </div>
-            ) : upcomingDiscount ? (
-              <div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-                  <span style={{ fontSize: '30px', fontWeight: '900', color: 'var(--color-text-primary)' }}>
-                    ₹{property.price_per_night.toLocaleString('en-IN')}
-                  </span>
-                  <span style={{ fontSize: '14px', color: 'var(--color-text-muted)', marginLeft: '6px' }}>/ night</span>
-                </div>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginTop: '6px', backgroundColor: '#e6f4ea', color: '#137333', padding: '3px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: '700' }}>
-                  🏷️ Up to {upcomingDiscount.maxPercent}% OFF on select dates
-                </div>
-              </div>
-            ) : (
-              <div>
-                <span style={{ fontSize: '30px', fontWeight: '900', color: 'var(--color-text-primary)' }}>&#8377;{property.price_per_night.toLocaleString('en-IN')}</span>
-                <span style={{ fontSize: '14px', color: 'var(--color-text-muted)', marginLeft: '6px' }}>/ night</span>
-              </div>
-            )}
+            <div>
+              <span style={{ fontSize: '30px', fontWeight: '900', color: 'var(--color-text-primary)' }}>
+                ₹{(nights > 0 ? Math.round(basePrice / nights) : property.price_per_night).toLocaleString('en-IN')}
+              </span>
+              <span style={{ fontSize: '14px', color: 'var(--color-text-muted)', marginLeft: '6px' }}>/ night</span>
+            </div>
           </div>
 
           <div style={{ border: '1px solid var(--color-border)', borderRadius: '12px', overflow: 'hidden', marginBottom: '20px' }}>
@@ -1330,35 +1259,31 @@ export default function PropertyDetailPage() {
           {nights > 0 && (
             <div style={{ backgroundColor: 'var(--color-bg-soft)', padding: '16px', marginBottom: '16px', fontSize: '14px', borderRadius: '8px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: 'var(--color-text-secondary)' }}>
-                <span>{hasCustomPricing ? `Base rate (${nights} nights · custom rates apply)` : `₹${property.price_per_night.toLocaleString('en-IN')} x ${nights} nights`}</span>
-                <span>&#8377;{basePrice.toLocaleString('en-IN')}</span>
+                <span>₹{Math.round(basePrice / nights).toLocaleString('en-IN')} × {nights} night{nights !== 1 ? 's' : ''}</span>
+                <span>₹{basePrice.toLocaleString('en-IN')}</span>
               </div>
-              {appliedDiscount && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: '#137333', fontWeight: '600', backgroundColor: '#e6f4ea', padding: '6px 10px', borderRadius: '6px' }}>
-                  <span>🎉 Coupon Discount ({appliedDiscount.label})</span>
-                  <span>−₹{appliedDiscount.amount.toLocaleString('en-IN')}</span>
-                </div>
-              )}
               {extraGuestCharge > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: 'var(--color-text-secondary)' }}>
-                  <span>Extra guest charge ({extraGuests} guest{extraGuests > 1 ? 's' : ''} x {nights} night{nights > 1 ? 's' : ''})</span>
-                  <span>&#8377;{extraGuestCharge.toLocaleString('en-IN')}</span>
+                  <span>Extra guest charge ({extraGuests} guest{extraGuests > 1 ? 's' : ''} × {nights} night{nights > 1 ? 's' : ''})</span>
+                  <span>₹{extraGuestCharge.toLocaleString('en-IN')}</span>
                 </div>
               )}
               {pets > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: 'var(--color-text-secondary)' }}>
-                  <span>{pets} pet{pets > 1 ? 's' : ''} x {nights} nights</span>
-                  <span>&#8377;{petCharge.toLocaleString('en-IN')}</span>
+                  <span>{pets} pet{pets > 1 ? 's' : ''} × {nights} night{nights > 1 ? 's' : ''}</span>
+                  <span>₹{petCharge.toLocaleString('en-IN')}</span>
                 </div>
               )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: 'var(--color-text-secondary)' }}>
-                <span>Cleaning fee</span>
-                <span>&#8377;{property.cleaning_fee.toLocaleString('en-IN')}</span>
-              </div>
+              {property.cleaning_fee > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: 'var(--color-text-secondary)' }}>
+                  <span>Cleaning fee</span>
+                  <span>₹{property.cleaning_fee.toLocaleString('en-IN')}</span>
+                </div>
+              )}
               <div style={{ height: '1px', backgroundColor: 'var(--color-border)', margin: '12px 0' }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '700', color: 'var(--color-text-primary)', fontSize: '15px' }}>
                 <span>Total</span>
-                <span>&#8377;{totalPrice.toLocaleString('en-IN')}</span>
+                <span>₹{totalPrice.toLocaleString('en-IN')}</span>
               </div>
             </div>
           )}
