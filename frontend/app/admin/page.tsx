@@ -21,7 +21,8 @@ import {
   type AdminPayment, type AdminPaymentList, type SettlementBatch, type PaymentSummary,
 } from '@/lib/api'
 import type { Property, Review, Article } from '@/lib/types'
-import { Printer, Building2, Users, Calendar, Download, Share2, Plus, Trash2, Edit3, Star, Check, X, Bed, Mail, Phone, Wallet, BadgeCheck, Clock, RefreshCw, AlertTriangle, CheckCircle, XCircle, CreditCard, BookOpen, Eye, FileText, Sparkles } from 'lucide-react'
+import { Printer, Building2, Users, Calendar, Download, Share2, Plus, Trash2, Edit3, Star, Check, X, Bed, Mail, Phone, Wallet, BadgeCheck, Clock, RefreshCw, AlertTriangle, CheckCircle, XCircle, CreditCard, BookOpen, Eye, FileText, Sparkles, Upload, Image as ImageIcon } from 'lucide-react'
+import { uploadPropertyImage } from '@/lib/supabase/storage'
 import CalendarModal from './properties/CalendarModal'
 import MarkdownRenderer from '@/components/shared/MarkdownRenderer'
 
@@ -280,6 +281,26 @@ export default function AdminPage() {
   const [articleError, setArticleError] = useState<string | null>(null)
   const [articleSuccess, setArticleSuccess] = useState<string | null>(null)
   const [articleEditorTab, setArticleEditorTab] = useState<'write' | 'preview'>('write')
+  const [coverUploading, setCoverUploading] = useState(false)
+  const [coverUploadError, setCoverUploadError] = useState<string | null>(null)
+  const articleFileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleCoverFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setCoverUploading(true)
+    setCoverUploadError(null)
+    try {
+      const publicUrl = await uploadPropertyImage(file, undefined, fetchWithAuth)
+      setArticleForm(f => ({ ...f, cover_image_url: publicUrl }))
+    } catch (err: unknown) {
+      console.error('Failed to upload article cover image:', err)
+      setCoverUploadError(err instanceof Error ? err.message : 'Failed to upload image')
+    } finally {
+      setCoverUploading(false)
+      if (e.target) e.target.value = ''
+    }
+  }
 
   const loadArticles = useCallback(async (page = 1, search = '') => {
     if (loading || !user) return
@@ -311,6 +332,8 @@ export default function AdminPage() {
     })
     setArticleError(null)
     setArticleSuccess(null)
+    setCoverUploadError(null)
+    setCoverUploading(false)
     setArticleEditorTab('write')
     setIsArticleModalOpen(true)
   }
@@ -330,6 +353,8 @@ export default function AdminPage() {
     })
     setArticleError(null)
     setArticleSuccess(null)
+    setCoverUploadError(null)
+    setCoverUploading(false)
     setArticleEditorTab('write')
     setIsArticleModalOpen(true)
   }
@@ -2790,17 +2815,138 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--color-text-muted)', display: 'block', marginBottom: '6px' }}>
-                  Cover Image URL
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://images.unsplash.com/... or image URL"
-                  value={articleForm.cover_image_url}
-                  onChange={e => setArticleForm(f => ({ ...f, cover_image_url: e.target.value }))}
-                  style={{ width: '100%', padding: '10px 14px', border: '1px solid var(--color-border)', borderRadius: '8px', fontSize: '13px', outline: 'none' }}
-                />
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <label style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--color-text-muted)', margin: 0 }}>
+                    Cover Image
+                  </label>
+                  {articleForm.cover_image_url && (
+                    <button
+                      type="button"
+                      onClick={() => setArticleForm(f => ({ ...f, cover_image_url: '' }))}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#C62828',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        padding: 0,
+                      }}
+                    >
+                      <Trash2 size={12} /> Remove Image
+                    </button>
+                  )}
+                </div>
+
+                {/* Live Preview if cover image exists */}
+                {articleForm.cover_image_url ? (
+                  <div
+                    style={{
+                      position: 'relative',
+                      width: '100%',
+                      height: '180px',
+                      borderRadius: '10px',
+                      overflow: 'hidden',
+                      marginBottom: '10px',
+                      border: '1px solid var(--color-border)',
+                      backgroundColor: 'var(--color-bg-soft)',
+                    }}
+                  >
+                    <Image
+                      src={articleForm.cover_image_url}
+                      alt="Cover Preview"
+                      fill
+                      style={{ objectFit: 'cover' }}
+                      unoptimized
+                    />
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: '8px',
+                        left: '8px',
+                        backgroundColor: 'rgba(0,0,0,0.65)',
+                        color: '#ffffff',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        padding: '3px 8px',
+                        borderRadius: '4px',
+                        backdropFilter: 'blur(2px)',
+                      }}
+                    >
+                      Cover Preview
+                    </div>
+                  </div>
+                ) : null}
+
+                {/* Upload or URL Controls */}
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <input
+                    type="url"
+                    placeholder="Paste image URL (https://...) or upload directly →"
+                    value={articleForm.cover_image_url}
+                    onChange={e => setArticleForm(f => ({ ...f, cover_image_url: e.target.value }))}
+                    style={{
+                      flex: 1,
+                      minWidth: '220px',
+                      padding: '10px 14px',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      outline: 'none',
+                    }}
+                  />
+                  <input
+                    ref={articleFileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/jpg"
+                    onChange={handleCoverFileUpload}
+                    style={{ display: 'none' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => articleFileInputRef.current?.click()}
+                    disabled={coverUploading}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '10px 16px',
+                      backgroundColor: 'var(--color-navbar)',
+                      border: '1px solid var(--color-gold)',
+                      borderRadius: '8px',
+                      color: 'var(--color-text-primary)',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      cursor: coverUploading ? 'not-allowed' : 'pointer',
+                      whiteSpace: 'nowrap',
+                      opacity: coverUploading ? 0.7 : 1,
+                    }}
+                  >
+                    {coverUploading ? (
+                      <>
+                        <RefreshCw size={14} style={{ animation: 'spin 1s linear infinite' }} />
+                        Uploading…
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={14} style={{ color: 'var(--color-gold)' }} />
+                        Upload Photo
+                      </>
+                    )}
+                  </button>
+                </div>
+                {coverUploadError && (
+                  <p style={{ fontSize: '12px', color: '#C62828', marginTop: '6px', fontWeight: 600 }}>
+                    {coverUploadError}
+                  </p>
+                )}
+                <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', marginTop: '4px' }}>
+                  Supports WebP, JPG, PNG up to 10MB. Images are automatically optimized and served via CDN.
+                </p>
               </div>
 
               <div style={{ marginBottom: '16px' }}>
