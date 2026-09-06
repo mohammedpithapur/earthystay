@@ -377,7 +377,7 @@ export default function AdminPage() {
         slug: articleForm.slug.trim() || undefined,
         excerpt: articleForm.excerpt.trim() || undefined,
         content: articleForm.content,
-        cover_image_url: articleForm.cover_image_url.trim() || undefined,
+        cover_image_url: articleForm.cover_image_url.trim() ? articleForm.cover_image_url.trim() : null,
         author_name: articleForm.author_name.trim() || 'Earthy stays Team',
         read_time_minutes: Number(articleForm.read_time_minutes) || 3,
         tags: tagsList,
@@ -2848,7 +2848,7 @@ export default function AdminPage() {
                     style={{
                       position: 'relative',
                       width: '100%',
-                      height: '180px',
+                      height: '200px',
                       borderRadius: '10px',
                       overflow: 'hidden',
                       marginBottom: '10px',
@@ -2866,18 +2866,67 @@ export default function AdminPage() {
                     <div
                       style={{
                         position: 'absolute',
-                        bottom: '8px',
-                        left: '8px',
+                        bottom: '10px',
+                        left: '10px',
                         backgroundColor: 'rgba(0,0,0,0.65)',
                         color: '#ffffff',
                         fontSize: '11px',
                         fontWeight: 700,
-                        padding: '3px 8px',
-                        borderRadius: '4px',
-                        backdropFilter: 'blur(2px)',
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        backdropFilter: 'blur(3px)',
                       }}
                     >
                       Cover Preview
+                    </div>
+
+                    {/* Quick Action Overlay Buttons */}
+                    <div style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', gap: '8px', zIndex: 5 }}>
+                      <button
+                        type="button"
+                        onClick={() => articleFileInputRef.current?.click()}
+                        disabled={coverUploading}
+                        style={{
+                          backgroundColor: 'rgba(255,255,255,0.92)',
+                          color: 'var(--color-text-primary)',
+                          border: '1px solid rgba(0,0,0,0.1)',
+                          borderRadius: '6px',
+                          padding: '6px 12px',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          cursor: coverUploading ? 'not-allowed' : 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                          backdropFilter: 'blur(4px)',
+                        }}
+                      >
+                        <RefreshCw size={12} style={coverUploading ? { animation: 'spin 1s linear infinite' } : {}} />
+                        {coverUploading ? 'Uploading…' : 'Change Photo'}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setArticleForm(f => ({ ...f, cover_image_url: '' }))}
+                        style={{
+                          backgroundColor: 'rgba(198,40,40,0.9)',
+                          color: '#ffffff',
+                          border: 'none',
+                          borderRadius: '6px',
+                          padding: '6px 10px',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                        }}
+                      >
+                        <Trash2 size={12} />
+                        Remove
+                      </button>
                     </div>
                   </div>
                 ) : null}
@@ -2934,7 +2983,7 @@ export default function AdminPage() {
                     ) : (
                       <>
                         <Upload size={14} style={{ color: 'var(--color-gold)' }} />
-                        Upload Photo
+                        {articleForm.cover_image_url ? 'Upload New Photo' : 'Upload Photo'}
                       </>
                     )}
                   </button>

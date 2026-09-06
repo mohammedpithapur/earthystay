@@ -194,35 +194,35 @@ async def update_article(
     if not article:
         raise HTTPException(status_code=404, detail="Article not found")
 
-    if data.title is not None:
+    if "title" in data.model_fields_set and data.title is not None:
         article.title = data.title.strip()
 
-    if data.slug is not None and data.slug.strip():
+    if "slug" in data.model_fields_set and data.slug is not None and data.slug.strip():
         base_slug = slugify(data.slug)
         article.slug = await get_unique_slug(db, base_slug, exclude_id=article.id)
 
-    if data.excerpt is not None:
+    if "excerpt" in data.model_fields_set:
         article.excerpt = data.excerpt.strip() if data.excerpt else None
 
-    if data.content is not None:
+    if "content" in data.model_fields_set and data.content is not None:
         article.content = data.content
         if data.read_time_minutes is None:
             word_count = len(article.content.split())
             article.read_time_minutes = max(1, round(word_count / 200))
 
-    if data.read_time_minutes is not None:
+    if "read_time_minutes" in data.model_fields_set and data.read_time_minutes is not None:
         article.read_time_minutes = data.read_time_minutes
 
-    if data.cover_image_url is not None:
-        article.cover_image_url = data.cover_image_url.strip() if data.cover_image_url else None
+    if "cover_image_url" in data.model_fields_set:
+        article.cover_image_url = data.cover_image_url.strip() if (data.cover_image_url and data.cover_image_url.strip()) else None
 
-    if data.author_name is not None:
+    if "author_name" in data.model_fields_set and data.author_name is not None:
         article.author_name = data.author_name.strip()
 
-    if data.tags is not None:
+    if "tags" in data.model_fields_set and data.tags is not None:
         article.tags = [t.strip() for t in data.tags if t and t.strip()]
 
-    if data.is_published is not None:
+    if "is_published" in data.model_fields_set and data.is_published is not None:
         article.is_published = data.is_published
 
     await db.commit()
