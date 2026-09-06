@@ -2816,31 +2816,9 @@ export default function AdminPage() {
               </div>
 
               <div style={{ marginBottom: '20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--color-text-muted)', margin: 0 }}>
-                    Cover Image
-                  </label>
-                  {articleForm.cover_image_url && (
-                    <button
-                      type="button"
-                      onClick={() => setArticleForm(f => ({ ...f, cover_image_url: '' }))}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#C62828',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        padding: 0,
-                      }}
-                    >
-                      <Trash2 size={12} /> Remove Image
-                    </button>
-                  )}
-                </div>
+                <label style={{ fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--color-text-muted)', display: 'block', marginBottom: '6px' }}>
+                  Cover Image
+                </label>
 
                 {/* Live Preview if cover image exists */}
                 {articleForm.cover_image_url ? (
