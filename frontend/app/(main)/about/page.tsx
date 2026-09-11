@@ -29,6 +29,12 @@ const team = [
     description: 'Sunita Gupta looks after design aesthetics, decor detailing, and cleaning management across Earthy Stays. She ensures every property feels warm, well-styled, and thoughtfully arranged for guests. Her attention to detail keeps each home fresh, welcoming, and comfortable.',
   },
   {
+    name: 'Pratiksha',
+    role: 'Co-Host',
+    initial: 'P',
+    description: 'Pratiksha is a friendly and dedicated co-host at Earthy Stays, committed to making every stay comfortable, smooth, and memorable. With a strong focus on hospitality and guest experience, she takes care of the little details that make a big difference—from ensuring properties are well-prepared and maintained to assisting guests throughout their stay with warmth, quick communication, and thoughtful care.',
+  },
+  {
     name: 'Laasya Nalluri',
     role: 'Marketing & Creative Strategy',
     initial: 'L',
