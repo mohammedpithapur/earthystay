@@ -15,6 +15,7 @@ interface TeamMember {
   role: string
   initial: string
   image?: string
+  imagePosition?: string
   description: string
 }
 
@@ -202,7 +203,7 @@ export default function AboutPage() {
                       src={member.image}
                       alt={member.name}
                       fill
-                      style={{ objectFit: 'cover' }}
+                      style={{ objectFit: 'cover', objectPosition: member.imagePosition || 'top center' }}
                       unoptimized
                     />
                   </div>
