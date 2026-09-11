@@ -1074,7 +1074,7 @@ export default function AdminPage() {
                 </table>
               </div>
 
-              <div className="md:hidden" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div className="flex md:hidden flex-col gap-3">
                 {bookings.slice(0, 4).map(booking => renderBookingCard(booking))}
               </div>
             </div>
@@ -1805,7 +1805,7 @@ export default function AdminPage() {
                   </div>
 
                   {/* Mobile Booking Cards */}
-                  <div className="md:hidden" style={{ display: 'flex', flexDirection: 'column', gap: '12px', padding: '16px 12px' }}>
+                  <div className="flex md:hidden flex-col gap-3 p-4">
                     {bookings.map(booking => renderBookingCard(booking, true))}
                   </div>
 
