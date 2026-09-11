@@ -1,3 +1,5 @@
+import asyncio
+from contextlib import asynccontextmanager
 import json
 import logging
 import time
@@ -12,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from starlette.responses import JSONResponse
 
 from app.config import settings
-from app.database import get_db
+from app.database import get_db, _IS_LAMBDA
 from app.rate_limit import limiter
 from app.routers import admin, auth, bookings, ical, payments, properties, reviews, users, events, push, contact, articles
 from app.models import push_subscription, price_override  # noqa: F401 — ensures table is created
@@ -27,7 +29,44 @@ if settings.SENTRY_DSN:
 
 from fastapi.middleware.gzip import GZipMiddleware
 
-app = FastAPI(title="Earthy Stays API")
+
+async def ical_background_worker():
+    """Periodic worker: automatically syncs all import iCal links every 30 minutes (1800s)."""
+    # Brief initial wait after server boot
+    await asyncio.sleep(20)
+    while True:
+        try:
+            from app.services.ical import sync_all_active_ical_links
+            logger.info("Starting scheduled 30-minute background iCal synchronization...")
+            count = await sync_all_active_ical_links()
+            logger.info("Scheduled iCal sync completed: %d events processed", count)
+        except asyncio.CancelledError:
+            break
+        except Exception as e:
+            logger.exception("Error in background iCal sync loop: %s", e)
+
+        try:
+            await asyncio.sleep(1800)  # 30 minutes
+        except asyncio.CancelledError:
+            break
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Launch background iCal periodic sync if running on a persistent server
+    task = None
+    if not _IS_LAMBDA:
+        task = asyncio.create_task(ical_background_worker())
+    yield
+    if task:
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+
+
+app = FastAPI(title="Earthy Stays API", lifespan=lifespan)
 app.add_middleware(GZipMiddleware, minimum_size=500)
 app.state.limiter = limiter
 app.add_exception_handler(

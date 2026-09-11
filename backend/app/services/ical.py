@@ -215,3 +215,36 @@ async def sync_property_ical_links(
         count = await sync_single_ical_link(db, l, admin_user)
         results[str(l.id)] = count
     return results
+
+
+async def sync_all_active_ical_links() -> int:
+    """Periodic background task: sync all active import iCal links across all properties."""
+    from app.database import async_session
+    from app.models.user import UserRole
+
+    async with async_session() as db:
+        admin_res = await db.execute(
+            select(User).where(User.role == UserRole.admin).limit(1)
+        )
+        admin = admin_res.scalar_one_or_none()
+        if not admin:
+            logger.warning("No admin user found for background iCal sync")
+            return 0
+
+        links_res = await db.execute(
+            select(ICalLink).where(ICalLink.direction == ICalDirection.import_)
+        )
+        links = links_res.scalars().all()
+        if not links:
+            return 0
+
+        total_imported = 0
+        for link in links:
+            try:
+                count = await sync_single_ical_link(db, link, admin)
+                total_imported += count
+            except Exception as e:
+                logger.exception("Error syncing iCal link %s (%s): %s", link.id, link.calendar_name, e)
+
+        return total_imported
+
