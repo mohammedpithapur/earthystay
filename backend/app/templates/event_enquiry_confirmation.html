@@ -56,7 +56,7 @@
         <!-- Additional Details -->
         <div style="background:#fffaf4;border-left:3px solid #ead0af;border-radius:0 8px 8px 0;padding:18px 20px;margin-bottom:24px;">
           <p style="margin:0 0 8px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#b7895f;font-weight:700;">Your Message</p>
-          <div style="font-size:14px;line-height:1.7;color:#000000;">{{ additional_details }}</div>
+          <div style="font-size:14px;line-height:1.7;color:#000000;">{{ additional_details | replace('\n', '<br>') | safe }}</div>
         </div>
         {% endif %}
 

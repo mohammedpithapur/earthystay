@@ -28,7 +28,7 @@
       <!-- Message -->
       <div style="background:#fffaf4;border-left:3px solid #b7895f;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:24px;">
         <p style="margin:0 0 6px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#b7895f;font-weight:700;">Message</p>
-        <p style="margin:0;font-size:14px;color:#2b2017;line-height:1.7;">{{ additional_details }}</p>
+        <p style="margin:0;font-size:14px;color:#2b2017;line-height:1.7;">{{ additional_details | replace('\n', '<br>') | safe }}</p>
       </div>
       {% endif %}
 

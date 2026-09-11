@@ -22,7 +22,7 @@
       </div>
       <div style="background:#fffaf4;border-left:3px solid #b7895f;border-radius:0 8px 8px 0;padding:16px 20px;margin-bottom:24px;">
         <p style="margin:0 0 6px;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:#b7895f;font-weight:700;">Message</p>
-        <p style="margin:0;font-size:14px;color:#2b2017;line-height:1.7;">{{ message }}</p>
+        <p style="margin:0;font-size:14px;color:#2b2017;line-height:1.7;">{{ message | replace('\n', '<br>') | safe }}</p>
       </div>
       <div style="text-align:center;">
         <a href="mailto:{{ email }}" style="display:inline-block;background:#b7895f;color:#ffffff;text-decoration:none;border-radius:6px;padding:12px 28px;font-size:13px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;">Reply to {{ name }}</a>
