@@ -95,9 +95,11 @@ export type AdminAnalyticsResponse = {
 
 export type AdminDashboard = {
   total_bookings: number
+  confirmed_bookings?: number
+  completed_bookings?: number
+  pending_bookings: number
   total_properties: number
   total_revenue: number
-  pending_bookings: number
   monthly_stats?: MonthlyStat[]
 }
 
@@ -406,7 +408,17 @@ export async function duplicateAdminProperty(propertyId: string, fetcher: ApiFet
 export async function getAdminDashboard(fetcher: ApiFetcher): Promise<AdminDashboard> {
   const response = await fetcher(buildApiUrl("/admin/dashboard"))
   if (!response.ok) throw new Error(`Failed to load dashboard (${response.status})`)
-  return response.json()
+  const data = await response.json()
+  const stats = data?.stats || data || {}
+  return {
+    total_bookings: stats.total_bookings ?? data.total_bookings ?? 0,
+    confirmed_bookings: stats.confirmed_bookings ?? data.confirmed_bookings ?? 0,
+    completed_bookings: stats.completed_bookings ?? data.completed_bookings ?? 0,
+    pending_bookings: stats.pending_bookings ?? data.pending_bookings ?? 0,
+    total_properties: stats.total_properties ?? data.total_properties ?? 0,
+    total_revenue: stats.total_revenue ?? data.total_revenue ?? 0,
+    monthly_stats: data.monthly_revenue || data.monthly_stats || [],
+  }
 }
 
 // ─── Admin Bookings ───────────────────────────────────────────────────────────

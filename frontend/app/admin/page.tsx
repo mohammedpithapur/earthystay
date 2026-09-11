@@ -477,9 +477,9 @@ export default function AdminPage() {
   }
 
   const totalRevenue = dashStats?.total_revenue ?? 0
-  const confirmedBookings = dashStats ? (dashStats.total_bookings - dashStats.pending_bookings) : 0
+  const confirmedBookings = dashStats?.confirmed_bookings ?? (dashStats ? Math.max(0, (dashStats.total_bookings || 0) - (dashStats.pending_bookings || 0)) : 0)
   const pendingBookings = dashStats?.pending_bookings ?? 0
-  const completedBookings = 0  // not in dashboard summary — use booking list
+  const completedBookings = dashStats?.completed_bookings ?? 0
   const totalBookingsCount = dashStats?.total_bookings ?? 0
 
   const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })

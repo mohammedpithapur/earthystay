@@ -131,28 +131,36 @@ async def dashboard(admin: User = Depends(get_admin), db: AsyncSession = Depends
     if cached:
         return cached
 
-    total_bookings = await db.scalar(
+    confirmed = await db.scalar(
         select(func.count(Booking.id)).where(
-            Booking.status.in_([BookingStatus.confirmed, BookingStatus.completed]),
+            Booking.status == BookingStatus.confirmed,
             Booking.is_admin_block == False,
             Booking.is_shadow_block == False,
         )
-    )
-    total_properties = await db.scalar(select(func.count(Property.id)))
-    revenue = await db.scalar(
-        select(func.coalesce(func.sum(Booking.total), 0)).where(
-            Booking.status.in_([BookingStatus.confirmed, BookingStatus.completed]),
+    ) or 0
+    completed = await db.scalar(
+        select(func.count(Booking.id)).where(
+            Booking.status == BookingStatus.completed,
             Booking.is_admin_block == False,
             Booking.is_shadow_block == False,
         )
-    )
+    ) or 0
     pending = await db.scalar(
         select(func.count(Booking.id)).where(
             Booking.status == BookingStatus.pending,
             Booking.is_admin_block == False,
             Booking.is_shadow_block == False,
         )
-    )
+    ) or 0
+    total_bookings = confirmed + completed + pending
+    total_properties = await db.scalar(select(func.count(Property.id))) or 0
+    revenue = await db.scalar(
+        select(func.coalesce(func.sum(Booking.total), 0)).where(
+            Booking.status.in_([BookingStatus.confirmed, BookingStatus.completed]),
+            Booking.is_admin_block == False,
+            Booking.is_shadow_block == False,
+        )
+    ) or 0
 
     today = date.today()
     monthly_stats = []
@@ -182,14 +190,19 @@ async def dashboard(admin: User = Depends(get_admin), db: AsyncSession = Depends
         )
         monthly_stats.append({"month": month_label, "revenue": m_rev})
 
+    stats_dict = {
+        "total_bookings": total_bookings,
+        "confirmed_bookings": confirmed,
+        "completed_bookings": completed,
+        "pending_bookings": pending,
+        "total_properties": total_properties,
+        "total_revenue": revenue,
+    }
+
     res_data = {
-        "stats": {
-            "total_bookings": total_bookings or 0,
-            "total_properties": total_properties or 0,
-            "total_revenue": revenue or 0,
-            "pending_bookings": pending or 0,
-        },
-        "monthly_revenue": monthly_stats
+        **stats_dict,
+        "stats": stats_dict,
+        "monthly_revenue": monthly_stats,
     }
     await cache_set_json(cache_key, res_data, ttl_seconds=300)
     return res_data
