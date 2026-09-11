@@ -131,22 +131,38 @@ async def dashboard(admin: User = Depends(get_admin), db: AsyncSession = Depends
         return cached
 
     total_bookings = await db.scalar(
-        select(func.count(Booking.id)).where(Booking.status.in_([BookingStatus.confirmed, BookingStatus.completed]))
+        select(func.count(Booking.id)).where(
+            Booking.status.in_([BookingStatus.confirmed, BookingStatus.completed]),
+            Booking.is_admin_block == False,
+            Booking.is_shadow_block == False,
+        )
     )
     total_properties = await db.scalar(select(func.count(Property.id)))
     revenue = await db.scalar(
         select(func.coalesce(func.sum(Booking.total), 0)).where(
-            Booking.status.in_([BookingStatus.confirmed, BookingStatus.completed])
+            Booking.status.in_([BookingStatus.confirmed, BookingStatus.completed]),
+            Booking.is_admin_block == False,
+            Booking.is_shadow_block == False,
         )
     )
-    pending = await db.scalar(select(func.count(Booking.id)).where(Booking.status == BookingStatus.pending))
+    pending = await db.scalar(
+        select(func.count(Booking.id)).where(
+            Booking.status == BookingStatus.pending,
+            Booking.is_admin_block == False,
+            Booking.is_shadow_block == False,
+        )
+    )
 
     today = date.today()
     monthly_stats = []
     
     result = await db.execute(
         select(Booking.created_at, Booking.total)
-        .where(Booking.status.in_([BookingStatus.confirmed, BookingStatus.completed]))
+        .where(
+            Booking.status.in_([BookingStatus.confirmed, BookingStatus.completed]),
+            Booking.is_admin_block == False,
+            Booking.is_shadow_block == False,
+        )
     )
     bookings_data = result.all()
 
@@ -190,7 +206,11 @@ async def get_admin_analytics(admin: User = Depends(get_admin), db: AsyncSession
     result = await db.execute(
         select(Booking, Property)
         .join(Property, Booking.property_id == Property.id)
-        .where(Booking.status.in_([BookingStatus.confirmed, BookingStatus.completed]))
+        .where(
+            Booking.status.in_([BookingStatus.confirmed, BookingStatus.completed]),
+            Booking.is_admin_block == False,  # Exclude iCal/admin block dates
+            Booking.is_shadow_block == False,  # Exclude shadow blocks
+        )
     )
     rows = result.all()
 
