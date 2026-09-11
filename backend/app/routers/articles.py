@@ -85,28 +85,6 @@ async def list_public_articles(
     )
 
 
-@router.get("/{slug_or_id}", response_model=ArticleOut)
-async def get_article(slug_or_id: str, db: AsyncSession = Depends(get_db)):
-    """Retrieve an article by its slug or UUID."""
-    # Check if slug_or_id is a UUID
-    article = None
-    try:
-        art_uuid = uuid.UUID(slug_or_id)
-        article = await db.get(Article, art_uuid)
-    except ValueError:
-        pass
-
-    if not article:
-        article = await db.scalar(
-            select(Article).where(Article.slug == slug_or_id.lower().strip())
-        )
-
-    if not article:
-        raise HTTPException(status_code=404, detail="Article not found")
-
-    return ArticleOut.model_validate(article)
-
-
 # ─────────────────────────────────────────────────────────────────────────────
 # Admin Endpoints
 # ─────────────────────────────────────────────────────────────────────────────
@@ -146,6 +124,32 @@ async def list_admin_articles(
         page=page,
         limit=limit,
     )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Public Article Detail
+# ─────────────────────────────────────────────────────────────────────────────
+
+@router.get("/{slug_or_id}", response_model=ArticleOut)
+async def get_article(slug_or_id: str, db: AsyncSession = Depends(get_db)):
+    """Retrieve an article by its slug or UUID."""
+    # Check if slug_or_id is a UUID
+    article = None
+    try:
+        art_uuid = uuid.UUID(slug_or_id)
+        article = await db.get(Article, art_uuid)
+    except ValueError:
+        pass
+
+    if not article:
+        article = await db.scalar(
+            select(Article).where(Article.slug == slug_or_id.lower().strip())
+        )
+
+    if not article:
+        raise HTTPException(status_code=404, detail="Article not found")
+
+    return ArticleOut.model_validate(article)
 
 
 @router.post("/admin", response_model=ArticleOut, status_code=status.HTTP_201_CREATED)

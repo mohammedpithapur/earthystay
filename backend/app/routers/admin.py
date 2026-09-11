@@ -18,6 +18,7 @@ from app.models.property_group import PropertyGroup, PropertyGroupMember
 from app.models.booking import Booking, BookingStatus, PaymentStatus
 from app.models.payment import Payment
 from app.models.review import Review
+from app.models.ical import ICalLink
 from app.models.price_override import PropertyPriceOverride
 from app.schemas.booking import AdminBlockCreate, CalendarEventOut, CalendarOut
 from app.schemas.price_override import PriceOverrideCreate, PriceOverrideOut
@@ -448,6 +449,9 @@ async def delete_property(
 
         # 3. Delete property group memberships
         await db.execute(delete(PropertyGroupMember).where(PropertyGroupMember.property_id == prop_uuid))
+
+        # 3b. Delete iCal links for this property
+        await db.execute(delete(ICalLink).where(ICalLink.property_id == prop_uuid))
 
         # 4. Delete payments associated with bookings of this property
         booking_ids_subq = select(Booking.id).where(Booking.property_id == prop_uuid)
