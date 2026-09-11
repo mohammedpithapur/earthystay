@@ -138,11 +138,21 @@ async def register(request: Request, data: RegisterIn, response: Response, db: A
 @router.post("/login", response_model=TokenOut)
 @limiter.limit("10/minute")
 async def login(request: Request, data: LoginIn, response: Response, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(User).where(User.email == data.email))
+    identifier = data.identifier.strip()
+
+    # Detect if the identifier is a phone number (digits only, optionally starts with +)
+    is_phone = identifier.replace("+", "").replace(" ", "").isdigit()
+
+    if is_phone:
+        result = await db.execute(select(User).where(User.phone == identifier))
+    else:
+        result = await db.execute(select(User).where(User.email == identifier.lower()))
+
     user = result.scalar_one_or_none()
 
     if not user:
-        raise HTTPException(status_code=404, detail="No account found with this email. Please sign up or register first.")
+        detail = "No account found with this phone number. Please sign up first." if is_phone else "No account found with this email. Please sign up or register first."
+        raise HTTPException(status_code=404, detail=detail)
 
     if not user.is_active:
         raise HTTPException(status_code=403, detail="User account is inactive.")

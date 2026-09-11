@@ -12,7 +12,7 @@ export default function LoginClient() {
   const resetSuccess = searchParams.get('reset') === 'success'
   const { login, user, loading } = useAuth()
 
-  const [form, setForm] = useState({ email: '', password: '' })
+  const [form, setForm] = useState({ identifier: '', password: '' })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [apiError, setApiError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -27,8 +27,7 @@ export default function LoginClient() {
 
   const validate = () => {
     const e: Record<string, string> = {}
-    if (!form.email.trim()) e.email = 'Email is required'
-    else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = 'Enter a valid email'
+    if (!form.identifier.trim()) e.identifier = 'Email or phone number is required'
     if (!form.password) e.password = 'Password is required'
     setErrors(e)
     return Object.keys(e).length === 0
@@ -39,7 +38,7 @@ export default function LoginClient() {
     setApiError('')
     setSubmitting(true)
     try {
-      await login(form.email, form.password)
+      await login(form.identifier, form.password)
     } catch (err) {
       setApiError(err instanceof Error ? err.message : 'Login failed')
     } finally {
@@ -124,17 +123,17 @@ export default function LoginClient() {
           )}
 
           <div style={{ marginBottom: '20px' }}>
-            <label style={labelStyle}>Email Address</label>
+            <label style={labelStyle}>Email or Phone Number</label>
             <input
-              type="email"
-              id="login-email"
-              placeholder="you@example.com"
-              value={form.email}
-              onChange={e => setForm({ ...form, email: e.target.value })}
+              type="text"
+              id="login-identifier"
+              placeholder="you@example.com or 9876543210"
+              value={form.identifier}
+              onChange={e => setForm({ ...form, identifier: e.target.value })}
               onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-              style={inputStyle('email')}
+              style={inputStyle('identifier')}
             />
-            {errors.email && <p style={{ color: '#E53E3E', fontSize: '12px', marginTop: '4px' }}>{errors.email}</p>}
+            {errors.identifier && <p style={{ color: '#E53E3E', fontSize: '12px', marginTop: '4px' }}>{errors.identifier}</p>}
           </div>
 
           <div style={{ marginBottom: '12px' }}>

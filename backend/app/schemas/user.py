@@ -38,7 +38,7 @@ class RegisterIn(BaseModel):
 
 
 class LoginIn(BaseModel):
-    email: EmailStr
+    identifier: str  # email address or phone number
     password: str
 
 

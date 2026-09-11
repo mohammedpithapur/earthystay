@@ -23,7 +23,7 @@ export interface AuthContextType {
   user: User | null
   accessToken: string | null
   loading: boolean
-  login: (email: string, password: string) => Promise<void>
+  login: (identifier: string, password: string) => Promise<void>
   register: (email: string, password: string, fullName: string, phone?: string) => Promise<void>
   googleLoginCallback: (code: string) => Promise<User>
   logout: () => Promise<void>
@@ -217,11 +217,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // ── Auth actions ─────────────────────────────────────────────────────────────
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (identifier: string, password: string) => {
     const res = await fetch(`${API_BASE}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ identifier, password }),
       credentials: 'include',
     })
     if (!res.ok) {
