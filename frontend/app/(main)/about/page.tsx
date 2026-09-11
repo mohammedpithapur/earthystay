@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import Copy from '@/lib/copy'
 import { Sparkles, Trees, BadgeCheck, Heart } from 'lucide-react'
@@ -9,7 +10,15 @@ const values = [
   { icon: Heart, title: 'Guest First', description: 'Every decision we make starts with one question — is this better for our guests? That will never change.' },
 ]
 
-const team = [
+interface TeamMember {
+  name: string
+  role: string
+  initial: string
+  image?: string
+  description: string
+}
+
+const team: TeamMember[] = [
   {
     name: 'Megha Gupta',
     role: 'Founder',
@@ -178,14 +187,30 @@ export default function AboutPage() {
                 backgroundColor: '#ffffff', borderRadius: '12px',
                 padding: '32px 28px', border: '1px solid var(--color-border)', textAlign: 'center'
               }}>
-                <div style={{
-                  width: '72px', height: '72px', backgroundColor: 'var(--color-gold)',
-                  borderRadius: '50%', display: 'flex', alignItems: 'center',
-                  justifyContent: 'center', margin: '0 auto 20px',
-                  fontSize: '28px', fontWeight: '800', color: 'var(--color-text-primary)'
-                }}>
-                  {member.initial}
-                </div>
+                {member.image ? (
+                  <div style={{
+                    width: '84px', height: '84px', margin: '0 auto 20px',
+                    position: 'relative', borderRadius: '50%', overflow: 'hidden',
+                    border: '2px solid var(--color-gold)', boxShadow: '0 4px 12px rgba(0,0,0,0.06)'
+                  }}>
+                    <Image
+                      src={member.image}
+                      alt={member.name}
+                      fill
+                      style={{ objectFit: 'cover' }}
+                      unoptimized
+                    />
+                  </div>
+                ) : (
+                  <div style={{
+                    width: '72px', height: '72px', backgroundColor: 'var(--color-gold)',
+                    borderRadius: '50%', display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', margin: '0 auto 20px',
+                    fontSize: '28px', fontWeight: '800', color: 'var(--color-text-primary)'
+                  }}>
+                    {member.initial}
+                  </div>
+                )}
                 <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '6px' }}>{member.name}</h3>
                 <p style={{ fontSize: '12px', letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--color-gold)', fontWeight: '600', marginBottom: '16px' }}>{member.role}</p>
                 <div style={{ width: '32px', height: '2px', backgroundColor: 'var(--color-border)', margin: '0 auto 16px' }} />
