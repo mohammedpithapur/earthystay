@@ -93,6 +93,7 @@ export default function AdminPage() {
   const [statusFilter, setStatusFilter] = useState('')
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [voucherBooking, setVoucherBooking] = useState<AdminBooking | null>(null)
+  const [expandedBookingId, setExpandedBookingId] = useState<string | null>(null)
 
   // ── Groups state ──────────────────────────────────────────────────────────
   const [groups, setGroups] = useState<PropertyGroup[]>([])
@@ -671,76 +672,69 @@ export default function AdminPage() {
   const renderBookingCard = (booking: AdminBooking, showActions = false) => {
     const property = getProperty(booking.property_id)
     if (!property) return null
+    const isExpanded = expandedBookingId === booking.id
+    const toggle = () => setExpandedBookingId(isExpanded ? null : booking.id)
 
     return (
-      <div key={booking.id} style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '14px', padding: '18px', boxShadow: '0 8px 24px rgba(26,26,26,0.04)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '14px' }}>
-          <div style={{ minWidth: 0 }}>
-            <p style={{ fontSize: '10px', letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700', marginBottom: '4px' }}>Booking Ref</p>
-            <p style={{ fontSize: '14px', color: 'var(--color-gold)', fontWeight: '800' }}>{booking.booking_ref}</p>
+      <div key={booking.id} style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '12px', overflow: 'hidden' }}>
+        {/* Summary row — always visible, click to toggle */}
+        <div
+          onClick={toggle}
+          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', cursor: 'pointer', gap: '10px' }}
+        >
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <p style={{ fontSize: '13px', color: 'var(--color-gold)', fontWeight: '800', marginBottom: '2px' }}>{booking.booking_ref}</p>
+            <p style={{ fontSize: '12px', color: 'var(--color-text-primary)', fontWeight: '600', marginBottom: '1px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{booking.guest_name}</p>
+            <p style={{ fontSize: '11px', color: 'var(--color-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{property.name}</p>
           </div>
-          <span style={{ backgroundColor: statusColors[booking.status]?.bg, color: statusColors[booking.status]?.color, padding: '5px 10px', fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', borderRadius: '999px', letterSpacing: '0.6px', flexShrink: 0 }}>
-            {booking.status}
-          </span>
-        </div>
-
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px' }}>
-          {(() => {
-            const primaryImage = property.images.find(i => i.is_primary)?.image_url || property.images[0]?.image_url
-            if (primaryImage) {
-              return (
-                <Image
-                  src={primaryImage}
-                  alt={property.name}
-                  width={72}
-                  height={72}
-                  style={{ width: '72px', height: '72px', objectFit: 'cover', flexShrink: 0, borderRadius: '12px' }}
-                />
-              )
-            }
-            return <div style={{ width: 72, height: 72, borderRadius: 12, backgroundColor: 'var(--color-bg-card)' }} />
-          })()}
-          <div style={{ minWidth: 0 }}>
-            <h3 style={{ fontSize: '16px', fontWeight: '800', color: 'var(--color-text-primary)', marginBottom: '4px' }}>{property.name}</h3>
-            <p style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>{booking.guest_name}</p>
-            <p style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>{property.city}, {property.state}</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+            <span style={{ backgroundColor: statusColors[booking.status]?.bg, color: statusColors[booking.status]?.color, padding: '4px 8px', fontSize: '10px', fontWeight: '800', textTransform: 'uppercase', borderRadius: '999px' }}>
+              {booking.status}
+            </span>
+            <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--color-text-primary)' }}>&#8377;{booking.total.toLocaleString('en-IN')}</span>
+            <span style={{ fontSize: '14px', color: 'var(--color-text-muted)', lineHeight: 1 }}>{isExpanded ? '▲' : '▼'}</span>
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '10px', marginBottom: '14px' }}>
-          {[
-            { label: 'Check In', value: formatDate(booking.check_in) },
-            { label: 'Check Out', value: formatDate(booking.check_out) },
-            { label: 'Guests', value: `${booking.guests}${(booking.pets || 0) > 0 ? ` + ${booking.pets} pet${(booking.pets || 0) > 1 ? 's' : ''}` : ''}` },
-            { label: 'Amount', value: `₹${booking.total.toLocaleString('en-IN')}` },
-          ].map(detail => (
-            <div key={detail.label} style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: '10px', padding: '10px 12px' }}>
-              <p style={{ fontSize: '10px', letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700', marginBottom: '4px' }}>{detail.label}</p>
-              <p style={{ fontSize: '13px', color: 'var(--color-text-primary)', fontWeight: '700', lineHeight: '1.35' }}>{detail.value}</p>
+        {/* Expanded detail */}
+        {isExpanded && (
+          <div style={{ borderTop: '1px solid var(--color-border)', padding: '14px 16px', backgroundColor: 'var(--color-bg-card)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px', marginBottom: '12px' }}>
+              {[
+                { label: 'Check In', value: formatDate(booking.check_in) },
+                { label: 'Check Out', value: formatDate(booking.check_out) },
+                { label: 'Guests', value: `${booking.guests}${(booking.pets || 0) > 0 ? ` + ${booking.pets} pet${(booking.pets || 0) > 1 ? 's' : ''}` : ''}` },
+                { label: 'Nights', value: `${booking.nights}` },
+              ].map(detail => (
+                <div key={detail.label} style={{ backgroundColor: '#ffffff', border: '1px solid var(--color-border)', borderRadius: '8px', padding: '8px 12px' }}>
+                  <p style={{ fontSize: '10px', letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700', marginBottom: '2px' }}>{detail.label}</p>
+                  <p style={{ fontSize: '13px', color: 'var(--color-text-primary)', fontWeight: '700' }}>{detail.value}</p>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
 
-        {showActions && (
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {booking.status === 'pending' && (
-              <>
-                <button onClick={() => handleUpdateBookingStatus(booking.id, 'confirmed')} style={{ padding: '9px 12px', backgroundColor: '#E8F5E9', color: '#2E7D32', border: 'none', fontSize: '12px', cursor: 'pointer', fontWeight: '800', borderRadius: '8px' }}>
-                  Confirm
+            {showActions && (
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {booking.status === 'pending' && (
+                  <>
+                    <button onClick={e => { e.stopPropagation(); handleUpdateBookingStatus(booking.id, 'confirmed') }} style={{ padding: '8px 12px', backgroundColor: '#E8F5E9', color: '#2E7D32', border: 'none', fontSize: '12px', cursor: 'pointer', fontWeight: '800', borderRadius: '8px' }}>
+                      Confirm
+                    </button>
+                    <button onClick={e => { e.stopPropagation(); handleCancelWithRefund(booking) }} style={{ padding: '8px 12px', backgroundColor: '#FFEBEE', color: '#C62828', border: 'none', fontSize: '12px', cursor: 'pointer', fontWeight: '800', borderRadius: '8px' }}>
+                      {(booking as AdminBooking & { payment_status?: string }).payment_status === 'paid' ? 'Cancel + Refund' : 'Cancel'}
+                    </button>
+                  </>
+                )}
+                {booking.status === 'confirmed' && (
+                  <button onClick={e => { e.stopPropagation(); handleUpdateBookingStatus(booking.id, 'completed') }} style={{ padding: '8px 12px', backgroundColor: '#E3F2FD', color: '#1565C0', border: 'none', fontSize: '12px', cursor: 'pointer', fontWeight: '800', borderRadius: '8px' }}>
+                    Complete
+                  </button>
+                )}
+                <button onClick={e => { e.stopPropagation(); setVoucherBooking(booking) }} style={{ padding: '8px 12px', backgroundColor: 'var(--color-bg-soft)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)', fontSize: '12px', cursor: 'pointer', borderRadius: '8px', fontWeight: '700' }}>
+                  Voucher
                 </button>
-                <button onClick={() => handleCancelWithRefund(booking)} style={{ padding: '9px 12px', backgroundColor: '#FFEBEE', color: '#C62828', border: 'none', fontSize: '12px', cursor: 'pointer', fontWeight: '800', borderRadius: '8px' }}>
-                  {(booking as AdminBooking & { payment_status?: string }).payment_status === 'paid' ? 'Cancel + Refund' : 'Cancel'}
-                </button>
-              </>
+              </div>
             )}
-            {booking.status === 'confirmed' && (
-              <button onClick={() => handleUpdateBookingStatus(booking.id, 'completed')} style={{ padding: '9px 12px', backgroundColor: '#E3F2FD', color: '#1565C0', border: 'none', fontSize: '12px', cursor: 'pointer', fontWeight: '800', borderRadius: '8px' }}>
-                Complete
-              </button>
-            )}
-            <button onClick={() => setVoucherBooking(booking)} style={{ padding: '9px 12px', backgroundColor: 'var(--color-bg-soft)', color: 'var(--color-text-secondary)', border: '1px solid var(--color-border)', fontSize: '12px', cursor: 'pointer', borderRadius: '8px', fontWeight: '700' }}>
-              Voucher
-            </button>
           </div>
         )}
       </div>
