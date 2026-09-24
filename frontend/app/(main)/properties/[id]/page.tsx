@@ -1238,7 +1238,7 @@ export default function PropertyDetailPage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <button onClick={() => setGuests(Math.max(1, guests - 1))} style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg-card)', width: '34px', height: '34px', fontSize: '16px', cursor: 'pointer', borderRadius: '6px', fontWeight: '700' }}>−</button>
                 <span style={{ minWidth: '32px', textAlign: 'center', fontSize: '15px', fontWeight: '700', color: 'var(--color-text-primary)' }}>{guests}</span>
-                <button onClick={() => setGuests(Math.min(property.max_guests || 20, guests + 1))} style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg-card)', width: '34px', height: '34px', fontSize: '16px', cursor: 'pointer', borderRadius: '6px', fontWeight: '700' }}>+</button>
+                <button onClick={() => setGuests(Math.min(property.max_guests || 30, guests + 1))} style={{ border: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg-card)', width: '34px', height: '34px', fontSize: '16px', cursor: 'pointer', borderRadius: '6px', fontWeight: '700' }}>+</button>
               </div>
             </div>
             {property.pets_allowed && (
