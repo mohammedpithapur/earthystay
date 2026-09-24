@@ -61,7 +61,7 @@ class PropertyOut(BaseModel):
     cleaning_fee: int = 0
     extra_guest_charge_per_night: int = 0
     base_guests: int = 2
-    max_guests: int = 1
+    max_guests: int = 30
     bedrooms: int = 1
     bathrooms: int = 1
     bathrooms_detail: list[dict] = Field(default_factory=list)

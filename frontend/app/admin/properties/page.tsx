@@ -141,7 +141,7 @@ const EMPTY_FORM: PropertyFormState = {
   name: '', description: '', bedrooms: 1, bathrooms: 1,
   bathrooms_detail: [{ type: 'ensuite' as const, count: 1 }],
   spaces_detail: [] as SpaceDetail[],
-  max_guests: 2, check_in_time: '2:00 PM', check_out_time: '11:00 AM',
+  max_guests: 30, check_in_time: '2:00 PM', check_out_time: '11:00 AM',
   contact_phone: '', contact_email: '', contact_whatsapp: '', contact_spare_phone: '',
   booking_email_instructions: '',
   address: '', city: '', state: '', country: 'India',
