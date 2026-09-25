@@ -1423,6 +1423,8 @@ function AmenitiesSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm:
     }
   }
 
+  const customAmenities = form.amenities.filter(a => !AMENITY_OPTIONS.includes(a))
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
       <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', lineHeight: '1.6', margin: 0 }}>
@@ -1458,7 +1460,7 @@ function AmenitiesSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm:
         </div>
       ))}
 
-      {/* Custom amenity */}
+      {/* Custom amenity input */}
       <div>
         <FieldLabel>Add Custom Amenity</FieldLabel>
         <div style={{ display: 'flex', gap: '10px' }}>
@@ -1484,6 +1486,42 @@ function AmenitiesSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm:
         </div>
       </div>
 
+      {/* Custom amenities display — removable chips */}
+      {customAmenities.length > 0 && (
+        <div>
+          <p style={{ fontSize: '12px', letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--color-text-muted)', fontWeight: '700', marginBottom: '12px' }}>Custom Amenities</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {customAmenities.map(amenity => (
+              <span
+                key={amenity}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '6px',
+                  padding: '8px 14px',
+                  border: '1.5px solid var(--color-gold)',
+                  borderRadius: '100px',
+                  backgroundColor: 'rgba(201,168,76,0.12)',
+                  color: 'var(--color-text-primary)',
+                  fontSize: '13px', fontWeight: '700',
+                  fontFamily: "'Figtree', sans-serif",
+                }}
+              >
+                <Check size={12} style={{ display: 'inline', verticalAlign: '-1px' }} />
+                {amenity}
+                <button
+                  onClick={() => setForm({ ...form, amenities: form.amenities.filter(a => a !== amenity) })}
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: 'var(--color-text-muted)', fontSize: '16px', lineHeight: 1,
+                    padding: '0 0 0 2px', display: 'flex', alignItems: 'center',
+                  }}
+                  title="Remove"
+                >×</button>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       {form.amenities.length > 0 && (
         <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', margin: 0 }}>
           {form.amenities.length} amenit{form.amenities.length === 1 ? 'y' : 'ies'} selected
@@ -1492,6 +1530,7 @@ function AmenitiesSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm:
     </div>
   )
 }
+
 
 function PricingSection({ form, setForm }: { form: typeof EMPTY_FORM; setForm: (f: typeof EMPTY_FORM) => void }) {
   const priceInput = (label: string, value: number, key: keyof typeof EMPTY_FORM, hint?: string) => (
