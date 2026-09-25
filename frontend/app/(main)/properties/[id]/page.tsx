@@ -804,7 +804,7 @@ export default function PropertyDetailPage() {
                       Curated recommendations from your host for nearby spots, food, and attractions
                     </p>
                     <div style={{ width: '40px', height: '2px', backgroundColor: 'var(--color-gold)', marginBottom: '20px' }} />
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '12px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(260px, 100%), 1fr))', gap: '12px' }}>
                       {property.local_recommendations!.map((rec, i) => (
                         <div
                           key={i}
